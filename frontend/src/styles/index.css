@@ -1,0 +1,57 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  padding: 1.5rem;
+  background: #f5f7fa;
+  color: #1a1a1a;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+button {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  background: white;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+button.primary {
+  background: #1d4ed8;
+  color: white;
+  border: none;
+}
+
+.announcement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-top: 1.5rem;
+}
+
+textarea {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  font-family: inherit;
+  min-height: 80px;
+}

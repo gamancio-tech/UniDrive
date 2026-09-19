@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DailyStatusValue {
+  vai_normal
+  so_ida
+  so_volta
+  nao_vai
+}
+
+enum MarkedBy {
+  student
+  driver
+}
+
+model Driver {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  pixKey        String?
+  createdAt     DateTime @default(now())
+
+  students          Student[]
+  tripCancellations TripCancellation[]
+  announcements     Announcement[]
+  pushSubscriptions PushSubscription[]
+}
+
+model Student {
+  id            String   @id @default(uuid())
+  driverId      String
+  driver        Driver   @relation(fields: [driverId], references: [id])
+  name          String
+  email         String   @unique
+  passwordHash  String
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  dailyStatuses     DailyStatus[]
+  paymentCycles     PaymentCycle[]
+  pushSubscriptions PushSubscription[]
+
+  @@index([driverId])
+}
+
+// Um registro por aluno por dia. Se não existir registro para a data, o sistema
+// assume "vai_normal" (ver regra em docs/03-modelo-dados.md).
+model DailyStatus {
+  id        String            @id @default(uuid())
+  studentId String
+  student   Student           @relation(fields: [studentId], references: [id])
+  date      DateTime          @db.Date
+  status    DailyStatusValue  @default(vai_normal)
+  boardedAt DateTime?
+  updatedAt DateTime          @updatedAt
+
+  @@unique([studentId, date])
+  @@index([date])
+}
+
+model TripCancellation {
+  id        String   @id @default(uuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id])
+  date      DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@unique([driverId, date])
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([driverId, createdAt])
+}
+
+model PaymentCycle {
+  id                  String    @id @default(uuid())
+  studentId           String
+  student             Student   @relation(fields: [studentId], references: [id])
+  referenceMonth      DateTime  @db.Date
+  reminderDaysBefore  Int       @default(3)
+  paidAt              DateTime?
+  markedBy            MarkedBy?
+
+  @@unique([studentId, referenceMonth])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id])
+  driverId  String?
+  driver    Driver?  @relation(fields: [driverId], references: [id])
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now())
+}
