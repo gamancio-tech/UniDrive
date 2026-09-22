@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { apiRequest } from "../api/client";
+import { apiRequest, authStorage } from "../api/client";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 
 export function DriverHome() {
@@ -39,6 +39,7 @@ export function DriverHome() {
         <button className="primary" onClick={publishAnnouncement}>
           Publicar aviso
         </button>
+        <button onClick={() => { authStorage.clear(); window.location.reload(); }}>Logout</button>
       </div>
     </main>
   );

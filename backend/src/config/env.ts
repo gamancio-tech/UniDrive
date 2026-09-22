@@ -12,7 +12,9 @@ export const env = {
   port: Number(process.env.PORT ?? 3333),
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
-  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
+  frontendUrls: (process.env.FRONTEND_URL ?? "http://localhost:5173")
+    .split(",")
+    .map((url) => url.trim().replace(/\/$/, "")),
   vapid: {
     publicKey: process.env.VAPID_PUBLIC_KEY ?? "",
     privateKey: process.env.VAPID_PRIVATE_KEY ?? "",
