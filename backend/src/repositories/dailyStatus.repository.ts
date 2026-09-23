@@ -25,7 +25,11 @@ export const dailyStatusRepository = {
       create: { studentId, date, boardedAt: new Date() },
     });
   },
-
+  cancelBoarded(studentId: string, date: Date) {
+    return prisma.dailyStatus.delete({
+      where: { studentId_date: { studentId, date } },
+    });
+  },
   /**
    * Lista os alunos ativos do motorista junto com o status do dia (se existir).
    * Quando não existe registro para a data, o aluno não vem com dailyStatuses —

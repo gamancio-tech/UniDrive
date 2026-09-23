@@ -8,5 +8,6 @@ dailyStatusRoutes.use(authMiddleware);
 
 dailyStatusRoutes.post("/", requireRole("student"), dailyStatusController.setStatus);
 dailyStatusRoutes.post("/checkin", requireRole("student"), dailyStatusController.checkInSelf);
+dailyStatusRoutes.post("/cancel-boarded", requireRole("student"), dailyStatusController.cancelBoardedSelf);
 dailyStatusRoutes.post("/checkin/:studentId", requireRole("driver"), dailyStatusController.checkInByDriver);
 dailyStatusRoutes.get("/missing-count", dailyStatusController.getMissingCount);

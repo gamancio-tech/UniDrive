@@ -3,7 +3,7 @@ import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { authStorage } from "../api/client";
 
 export function StudentHome() {
-  const { missingCount, cancelled, loading, setStatus, checkIn } = useDailyStatus();
+  const { missingCount, cancelled, loading, setStatus, checkIn, cancelBoardedSelf } = useDailyStatus();
 
   return (
     <main>
@@ -14,6 +14,7 @@ export function StudentHome() {
         loading={loading}
         onSetStatus={setStatus}
         onCheckIn={checkIn}
+        onCancelBoardedSelf={cancelBoardedSelf}
       />
       <button onClick={() => { authStorage.clear(); window.location.reload(); }}>Logout</button>
     </main>

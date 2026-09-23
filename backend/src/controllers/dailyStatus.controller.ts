@@ -26,6 +26,16 @@ export const dailyStatusController = {
     }
   },
 
+  /** RF04 — POST /api/daily-status/cancel-boarded (aluno cancela o próprio embarque) */
+  async cancelBoardedSelf(req: Request, res: Response, next: NextFunction) {
+    try {
+      const studentId = req.user!.id;
+      const updated = await dailyStatusService.cancelBoarded(studentId, new Date());
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
   /** RF04 — POST /api/daily-status/checkin/:studentId (motorista marca por um aluno) */
   async checkInByDriver(req: Request, res: Response, next: NextFunction) {
     try {

@@ -41,6 +41,13 @@ export const dailyStatusService = {
     return updated;
   },
 
+  async cancelBoarded(studentId: string, date: Date) {
+    const normalizedDate = toDateOnly(date);
+    const updated = await dailyStatusRepository.cancelBoarded(studentId, normalizedDate);
+
+    return updated;
+  },
+
   /**
    * RF02: calcula quantos e quais alunos ainda faltam embarcar na volta de hoje.
    * Aplica a regra do padrão "vai_normal" quando o aluno não definiu status (RF01)

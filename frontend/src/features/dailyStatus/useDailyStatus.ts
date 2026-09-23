@@ -46,5 +46,10 @@ export function useDailyStatus() {
     await fetchMissingCount();
   }, [fetchMissingCount]);
 
-  return { missingCount, cancelled, loading, setStatus, checkIn };
+  const cancelBoardedSelf = useCallback(async () => {
+    await apiRequest("/daily-status/cancel-boarded", { method: "POST" });
+    await fetchMissingCount();
+  }, [fetchMissingCount]);
+
+  return { missingCount, cancelled, loading, setStatus, checkIn, cancelBoardedSelf };
 }
