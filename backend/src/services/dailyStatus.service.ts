@@ -48,6 +48,13 @@ export const dailyStatusService = {
     return updated;
   },
 
+  /** Verifica se o aluno já realizou o embarque na data indicada. */
+  async isStudentBoarded(studentId: string, date: Date): Promise<boolean> {
+    const normalizedDate = toDateOnly(date);
+    const status = await dailyStatusRepository.findByStudentAndDate(studentId, normalizedDate);
+    return Boolean(status?.boardedAt);
+  },
+
   /**
    * RF02: calcula quantos e quais alunos ainda faltam embarcar na volta de hoje.
    * Aplica a regra do padrão "vai_normal" quando o aluno não definiu status (RF01)

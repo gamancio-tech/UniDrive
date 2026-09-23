@@ -3,7 +3,7 @@ import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { authStorage } from "../api/client";
 
 export function StudentHome() {
-  const { missingCount, cancelled, loading, setStatus, checkIn, cancelBoardedSelf } = useDailyStatus();
+  const { missingCount, cancelled, loading, isBoarded, setStatus, checkIn, cancelBoardedSelf } = useDailyStatus();
 
   return (
     <main>
@@ -12,6 +12,7 @@ export function StudentHome() {
         missingCount={missingCount}
         cancelled={cancelled}
         loading={loading}
+        isBoarded={isBoarded}
         onSetStatus={setStatus}
         onCheckIn={checkIn}
         onCancelBoardedSelf={cancelBoardedSelf}

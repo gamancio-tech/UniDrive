@@ -1,4 +1,4 @@
-# VanApp (nome provisório)
+# UniDrive
 
 Aplicativo web (PWA) para motoristas de van universitária e seus alunos. Resolve o problema de comunicação de presença — hoje feito manualmente em grupo de WhatsApp — substituindo por um estado compartilhado em tempo real: cada aluno confirma se vai/não vai, o motorista vê quem falta para a van sair sem precisar perguntar, e os alunos só recebem notificação quando o número de faltantes fica baixo.
 

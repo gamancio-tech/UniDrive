@@ -43,7 +43,7 @@ Registradas no formato "decisão → alternativas consideradas → motivo → tr
 |---|---|---|
 | Backend (Express + Prisma) | Render (free tier) | Gratuito; aceita o cold start de ~20-30s como trade-off dado o padrão de uso concentrado em horários previsíveis. |
 | Banco de dados | Neon (free tier) | Gratuito, serverless, integra bem com Prisma. |
-| Frontend (build estático do PWA) | HostGator (plano já contratado) | É apenas HTML/JS/CSS estático após o build do Vite — cabe em hospedagem compartilhada comum, aproveitando o domínio já existente. |
+| Frontend (build estático do PWA) | Vercel | Gratuito e oferece os recursos suficientes para essa apliacação. |
 
 ## Organização do repositório: monorepo simples
 

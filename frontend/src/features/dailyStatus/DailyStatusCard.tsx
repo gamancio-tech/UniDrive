@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { DailyStatusValue } from "./useDailyStatus";
 
 interface DailyStatusCardProps {
   missingCount: number | null;
   cancelled: boolean;
   loading: boolean;
+  isBoarded: boolean;
   onSetStatus: (status: DailyStatusValue) => void;
   onCheckIn: () => void;
   onCancelBoardedSelf: () => void;
@@ -17,11 +17,15 @@ const STATUS_OPTIONS: { value: DailyStatusValue; label: string }[] = [
   { value: "nao_vai", label: "Não vou hoje" },
 ];
 
-export function DailyStatusCard(
-  { missingCount, cancelled, loading, onSetStatus, onCheckIn, onCancelBoardedSelf }: DailyStatusCardProps
-) {
-  const [isBoarded, setIsBoarded] = useState(false);
-
+export function DailyStatusCard({
+  missingCount,
+  cancelled,
+  loading,
+  isBoarded,
+  onSetStatus,
+  onCheckIn,
+  onCancelBoardedSelf,
+}: DailyStatusCardProps) {
   if (loading) {
     return <p>Carregando status do dia...</p>;
   }
@@ -35,14 +39,6 @@ export function DailyStatusCard(
     );
   }
 
-  const handleCheckIn = () => {
-    setIsBoarded(true);
-    onCheckIn();
-  };
-  const handleCancel = () => {
-    setIsBoarded(false);
-    onCancelBoardedSelf();
-  };
   return (
     <div className="card">
       <h2>Faltam {missingCount} para a van sair</h2>
@@ -57,12 +53,15 @@ export function DailyStatusCard(
 
       {isBoarded ? (
         <>
-          <button className="primary" onClick={handleCancel}>Cancelar embarque</button>
+          <button className="primary" onClick={onCancelBoardedSelf}>
+            Cancelar embarque
+          </button>
           <p>Você marcou que já embarcou.</p>
         </>
       ) : (
-        <button className="primary" onClick={handleCheckIn}>Já cheguei na van</button>
-
+        <button className="primary" onClick={onCheckIn}>
+          Já cheguei na van
+        </button>
       )}
     </div>
   );

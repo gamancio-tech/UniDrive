@@ -53,7 +53,17 @@ export const dailyStatusController = {
     try {
       const driverId = req.user!.driverId;
       const result = await dailyStatusService.getMissingStudents(driverId, new Date());
-      res.json({ cancelled: result.cancelled, missingCount: result.missingStudentIds.length });
+
+      let isBoarded = false;
+      if (req.user?.role === "student") {
+        isBoarded = await dailyStatusService.isStudentBoarded(req.user.id, new Date());
+      }
+
+      res.json({
+        cancelled: result.cancelled,
+        missingCount: result.missingStudentIds.length,
+        isBoarded,
+      });
     } catch (err) {
       next(err);
     }

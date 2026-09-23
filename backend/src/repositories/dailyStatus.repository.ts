@@ -25,9 +25,12 @@ export const dailyStatusRepository = {
       create: { studentId, date, boardedAt: new Date() },
     });
   },
+  /** Cancela o embarque do aluno no dia (RF04), mantendo o status já definido. */
   cancelBoarded(studentId: string, date: Date) {
-    return prisma.dailyStatus.delete({
+    return prisma.dailyStatus.upsert({
       where: { studentId_date: { studentId, date } },
+      update: { boardedAt: null },
+      create: { studentId, date, boardedAt: null },
     });
   },
   /**
