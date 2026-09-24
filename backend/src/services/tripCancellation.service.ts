@@ -9,4 +9,9 @@ export const tripCancellationService = {
   async cancelDay(driverId: string, date: Date, reason?: string) {
     return tripCancellationRepository.create(driverId, toDateOnly(date), reason);
   },
+
+  /** RF06: motorista desfaz o cancelamento do dia inteiro. */
+  async uncancelDay(driverId: string, date: Date) {
+    return tripCancellationRepository.delete(driverId, toDateOnly(date));
+  },
 };

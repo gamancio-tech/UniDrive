@@ -6,3 +6,4 @@ export const tripCancellationRoutes = Router();
 
 tripCancellationRoutes.use(authMiddleware, requireRole("driver"));
 tripCancellationRoutes.post("/", tripCancellationController.cancelToday);
+tripCancellationRoutes.delete("/", tripCancellationController.uncancelToday);

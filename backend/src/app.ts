@@ -7,7 +7,8 @@ import { routes } from "./routes";
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: env.frontendUrls }));
+  const corsOrigin = env.frontendUrls.includes("*") ? "*" : env.frontendUrls;
+  app.use(cors({ origin: corsOrigin }));
   app.use(express.json());
 
   app.get("/health", (_req, res) => res.json({ ok: true }));

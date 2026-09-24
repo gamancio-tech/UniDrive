@@ -58,5 +58,30 @@ export function useDailyStatus() {
     await fetchMissingCount();
   }, [fetchMissingCount]);
 
-  return { missingCount, cancelled, loading, isBoarded, setStatus, checkIn, cancelBoardedSelf };
+  const cancelTrip = useCallback(
+    async (reason = "Cancelado pelo motorista") => {
+      setCancelled(true);
+      await apiRequest("/trip-cancellations", { method: "POST", body: { reason } });
+      await fetchMissingCount();
+    },
+    [fetchMissingCount],
+  );
+
+  const uncancelTrip = useCallback(async () => {
+    setCancelled(false);
+    await apiRequest("/trip-cancellations", { method: "DELETE" });
+    await fetchMissingCount();
+  }, [fetchMissingCount]);
+
+  return {
+    missingCount,
+    cancelled,
+    loading,
+    isBoarded,
+    setStatus,
+    checkIn,
+    cancelBoardedSelf,
+    cancelTrip,
+    uncancelTrip,
+  };
 }

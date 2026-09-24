@@ -15,4 +15,11 @@ export const tripCancellationRepository = {
       create: { driverId, date, reason },
     });
   },
+
+  /** Remove o cancelamento do dia para o motorista, reativando a viagem (RF06). */
+  delete(driverId: string, date: Date) {
+    return prisma.tripCancellation.deleteMany({
+      where: { driverId, date },
+    });
+  },
 };

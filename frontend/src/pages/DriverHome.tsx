@@ -3,17 +3,13 @@ import { apiRequest, authStorage } from "../api/client";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 
 export function DriverHome() {
-  const { missingCount, cancelled, loading } = useDailyStatus();
+  const { missingCount, cancelled, loading, cancelTrip, uncancelTrip } = useDailyStatus();
   const [message, setMessage] = useState("");
 
   async function publishAnnouncement() {
     if (!message.trim()) return;
     await apiRequest("/announcements", { method: "POST", body: { message } });
     setMessage("");
-  }
-
-  async function cancelToday() {
-    await apiRequest("/trip-cancellations", { method: "POST", body: { reason: "Cancelado pelo motorista" } });
   }
 
   return (
@@ -23,12 +19,19 @@ export function DriverHome() {
       {loading ? (
         <p>Carregando...</p>
       ) : cancelled ? (
-        <p>Você cancelou a viagem de hoje.</p>
+        <div className="card">
+          <h2>Viagem cancelada</h2>
+          <p>Você cancelou a viagem de hoje.</p>
+          <button className="primary" onClick={() => uncancelTrip()}>
+            Desfazer cancelamento da viagem
+          </button>
+        </div>
       ) : (
-        <p>Faltam {missingCount} aluno(s) para embarcar.</p>
+        <div className="card">
+          <h2>Faltam {missingCount} aluno(s) para embarcar</h2>
+          <button onClick={() => cancelTrip()}>Cancelar viagem de hoje</button>
+        </div>
       )}
-
-      <button onClick={cancelToday}>Cancelar viagem de hoje</button>
 
       <div className="announcement-form">
         <textarea
