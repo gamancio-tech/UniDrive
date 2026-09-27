@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { dailyStatusService } from "../services/dailyStatus.service";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
-import { hasRole } from "../types/express";
+import { hasRole } from "../utils/roles";
 
 export const dailyStatusController = {
   /** RF01 — POST /api/daily-status */

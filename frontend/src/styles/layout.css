@@ -1,0 +1,235 @@
+/* ============================================
+   LAYOUT — Estrutura, navegação e arranjos
+   ============================================ */
+
+/* --- Header da página --- */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.header-row h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.1rem;
+}
+
+.header-row p {
+  margin: 0;
+}
+
+/* --- Tabs horizontais (usado no Admin) --- */
+.tabs-container {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.3rem;
+  border-radius: var(--radius-sm);
+  gap: 0.3rem;
+  margin-bottom: 1.25rem;
+}
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: hsl(var(--text-secondary));
+  font-size: 0.9rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: auto;
+}
+
+.tab-btn:hover {
+  color: hsl(var(--text-primary));
+  background: rgba(255, 255, 255, 0.05);
+  transform: none;
+}
+
+.tab-btn.active {
+  background: hsl(var(--accent-primary));
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(116, 92, 237, 0.35);
+  transform: none;
+}
+
+/* --- Listas de itens --- */
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  gap: 0.75rem;
+}
+
+.list-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.list-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-item-sub {
+  font-size: 0.82rem;
+  color: hsl(var(--text-secondary));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Em telas muito pequenas, list-item empilha verticalmente */
+@media (max-width: 380px) {
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .list-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* --- Botão group vertical --- */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+/* --- Announcement form --- */
+.announcement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* --- Stats / Dashboard --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: hsl(var(--accent-primary));
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: hsl(var(--text-secondary));
+  margin-top: 0.3rem;
+  line-height: 1.3;
+}
+
+/* --- Bottom Navigation --- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: hsl(var(--bg-secondary));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  z-index: 100;
+  /* Suporte a notch/home indicator do iOS */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.65rem 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: hsl(var(--text-secondary));
+  font-size: 0.7rem;
+  font-weight: 500;
+  font-family: inherit;
+  transition: color var(--transition-fast);
+  text-decoration: none;
+  width: auto;
+  transform: none;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: hsl(var(--accent-primary));
+  background: transparent;
+  transform: none;
+}
+
+.bottom-nav-item.active {
+  font-weight: 600;
+}
+
+.bottom-nav-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  display: block;
+}
+
+.bottom-nav-label {
+  display: block;
+  line-height: 1;
+}
+
+/* Indicador visual no item ativo */
+.bottom-nav-item.active .bottom-nav-icon {
+  filter: drop-shadow(0 0 6px hsla(var(--accent-primary), 0.6));
+}

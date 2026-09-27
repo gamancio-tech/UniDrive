@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { studentService } from "../services/student.service";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
-import { hasRole } from "../types/express";
+import { hasRole } from "../utils/roles";
 
 export const studentController = {
   /** RF09 — POST /api/students (somente motorista) */

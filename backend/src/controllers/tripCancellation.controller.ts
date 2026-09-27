@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { tripCancellationService } from "../services/tripCancellation.service";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
-import { hasRole } from "../types/express";
+import { hasRole } from "../utils/roles";
 
 export const tripCancellationController = {
   /** RF06 — POST /api/trip-cancellations (somente motorista) */

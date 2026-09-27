@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { paymentService } from "../services/payment.service";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
-import { hasRole } from "../types/express";
+import { hasRole } from "../utils/roles";
 
 export const paymentController = {
   /** GET /api/payments/me */

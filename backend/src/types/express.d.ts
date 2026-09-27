@@ -18,12 +18,6 @@ export interface AdminUser {
 
 export type AuthenticatedUser = DriveUser | StudentUser | AdminUser;
 
-export function hasRole<R extends AuthenticatedUser["role"]>(
-  user: AuthenticatedUser,
-  role: R
-): user is Extract<AuthenticatedUser, { role: R }> {
-  return user.role === role;
-}
 
 declare global {
   namespace Express {

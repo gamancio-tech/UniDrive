@@ -1,4 +1,7 @@
 import { DailyStatusValue } from "./useDailyStatus";
+import { Card } from "../../components/Card";
+import { Button } from "../../components/Button";
+import { Badge } from "../../components/Badge";
 
 interface DailyStatusCardProps {
   missingCount: number | null;
@@ -10,11 +13,11 @@ interface DailyStatusCardProps {
   onCancelBoardedSelf: () => void;
 }
 
-const STATUS_OPTIONS: { value: DailyStatusValue; label: string }[] = [
-  { value: "vai_normal", label: "Vou normal (ida e volta)" },
-  { value: "so_ida", label: "Só vou na ida" },
-  { value: "so_volta", label: "Só volto" },
-  { value: "nao_vai", label: "Não vou hoje" },
+const STATUS_OPTIONS: { value: DailyStatusValue; label: string; icon: string }[] = [
+  { value: "vai_normal", label: "Vou normal (ida e volta)", icon: "🚌" },
+  { value: "so_ida", label: "Só vou na ida", icon: "🌅" },
+  { value: "so_volta", label: "Só volto", icon: "🌃" },
+  { value: "nao_vai", label: "Não vou hoje", icon: "🏠" },
 ];
 
 export function DailyStatusCard({
@@ -27,42 +30,80 @@ export function DailyStatusCard({
   onCancelBoardedSelf,
 }: DailyStatusCardProps) {
   if (loading) {
-    return <p>Carregando status do dia...</p>;
+    return (
+      <Card title="Status do Dia">
+        <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))" }}>Carregando dados da van...</p>
+      </Card>
+    );
   }
 
   if (cancelled) {
     return (
-      <div className="card">
-        <h2>Hoje não tem van</h2>
-        <p>O motorista cancelou a viagem de hoje.</p>
-      </div>
+      <Card
+        title="Hoje não tem van"
+        subtitle="Aviso do motorista"
+        action={<Badge variant="danger">Cancelada</Badge>}
+      >
+        <p style={{ color: "hsl(var(--text-secondary))", lineHeight: 1.6 }}>
+          O motorista cancelou as viagens de hoje. Verifique o mural de avisos para mais detalhes ou entre em contato se necessário.
+        </p>
+      </Card>
     );
   }
 
   return (
-    <div className="card">
-      <h2>Faltam {missingCount} para a van sair</h2>
-
-      <div className="button-group">
-        {STATUS_OPTIONS.map((option) => (
-          <button key={option.value} onClick={() => onSetStatus(option.value)}>
-            {option.label}
-          </button>
-        ))}
+    <Card
+      title="Volta da Faculdade"
+      subtitle="Informe sua presença para ajudar a coordenar a van"
+      action={
+        <Badge variant={isBoarded ? "success" : "info"}>
+          {isBoarded ? "Embarcado" : "Aguardando"}
+        </Badge>
+      }
+    >
+      <div style={{ textAlign: "center", padding: "1.25rem 0" }}>
+        <div className="stat-number" style={{ fontSize: "3.5rem" }}>
+          {missingCount ?? 0}
+        </div>
+        <div className="stat-label">aluno(s) restante(s) para a van sair</div>
       </div>
 
-      {isBoarded ? (
-        <>
-          <button className="primary" onClick={onCancelBoardedSelf}>
-            Cancelar embarque
-          </button>
-          <p>Você marcou que já embarcou.</p>
-        </>
-      ) : (
-        <button className="primary" onClick={onCheckIn}>
-          Já cheguei na van
-        </button>
-      )}
-    </div>
+      <div style={{ margin: "1rem 0" }}>
+        <p className="input-label" style={{ marginBottom: "0.5rem" }}>
+          Seu status programado para hoje:
+        </p>
+        <div className="button-group" style={{ margin: "0.5rem 0" }}>
+          {STATUS_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              variant="secondary"
+              style={{ justifyContent: "flex-start", textAlign: "left" }}
+              onClick={() => onSetStatus(option.value)}
+            >
+              <span style={{ fontSize: "1.2rem", marginRight: "0.4rem" }}>{option.icon}</span>
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "1rem", marginTop: "1rem" }}>
+        {isBoarded ? (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", color: "hsl(var(--success))" }}>
+              <span>✅</span>
+              <strong>Você marcou que já está na van!</strong>
+            </div>
+            <Button variant="danger" onClick={onCancelBoardedSelf} style={{ width: "100%" }}>
+              Desfazer / Não estou na van
+            </Button>
+          </div>
+        ) : !cancelled ? (
+          <Button variant="primary" onClick={onCheckIn} style={{ width: "100%", padding: "0.9rem" }}>
+            🎒 Já cheguei na van (Check-in)
+          </Button>
+        ) : null}
+      </div>
+    </Card>
   );
 }

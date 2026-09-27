@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
 import { studentService } from "../services/student.service";
 import { adminService } from "../services/admin.service";
-import { hasRole } from "../types/express";
+import { hasRole } from "../utils/roles";
 import { driverService } from "../services/driver.service";
 
 export const adminController = {

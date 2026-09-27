@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { announcementService } from "../services/announcement.service";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
-import { hasRole } from "../types/express";
+import { hasRole } from "../utils/roles";
 
 export const announcementController = {
   /** RF05 — POST /api/announcements (somente motorista) */
