@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma";
 
 export const driverRepository = {
+  
+  findAll() {
+    return prisma.driver.findMany();
+  },
+  
   findByEmail(email: string) {
     return prisma.driver.findUnique({ where: { email } });
   },

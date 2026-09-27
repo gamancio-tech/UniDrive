@@ -2,8 +2,9 @@ import { MarkedBy } from "@prisma/client";
 import { paymentRepository } from "../repositories/payment.repository";
 import { studentRepository } from "../repositories/student.repository";
 import { pushService } from "./push.service";
+import { env } from "../config/env";
 
-const DEFAULT_REMINDER_DAYS_BEFORE = 3;
+const DEFAULT_REMINDER_DAYS_BEFORE = env.reminderDaysBeforePayment;
 
 function firstDayOfCurrentMonth(): Date {
   const now = new Date();

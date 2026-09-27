@@ -20,6 +20,16 @@ enum MarkedBy {
   driver
 }
 
+model Admin {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  createdAt     DateTime @default(now())
+
+  pushSubscriptions PushSubscription[]
+}
+
 model Driver {
   id            String   @id @default(uuid())
   name          String
@@ -105,6 +115,8 @@ model PushSubscription {
   student   Student? @relation(fields: [studentId], references: [id])
   driverId  String?
   driver    Driver?  @relation(fields: [driverId], references: [id])
+  adminId String?
+  admin Admin? @relation(fields: [adminId], references: [id])
   endpoint  String   @unique
   keys      Json
   createdAt DateTime @default(now())

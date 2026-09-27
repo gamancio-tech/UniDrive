@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { AuthenticatedUser } from "../types/express";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
 
 /**
  * Verifica o token JWT enviado no header "Authorization: Bearer <token>"
@@ -11,7 +12,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   const header = req.headers.authorization;
 
   if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Token de autenticação ausente." });
+    return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Token de autenticação ausente." });
   }
 
   const token = header.replace("Bearer ", "");
@@ -21,7 +22,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     req.user = payload;
     next();
   } catch {
-    return res.status(401).json({ error: "Token inválido ou expirado." });
+    return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Token inválido ou expirado." });
   }
 }
 
@@ -32,7 +33,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 export function requireRole(role: AuthenticatedUser["role"]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.user?.role !== role) {
-      return res.status(403).json({ error: "Acesso não permitido para este perfil." });
+      return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Acesso não permitido para este perfil." });
     }
     next();
   };

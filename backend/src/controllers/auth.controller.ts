@@ -1,12 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { authService } from "../services/auth.service";
 
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
+
 export const authController = {
-  async registerDriver(req: Request, res: Response, next: NextFunction) {
+  async loginAdmin(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, email, password, pixKey } = req.body;
-      const { driver, token } = await authService.registerDriver(name, email, password, pixKey);
-      res.status(201).json({ driver: { id: driver.id, name: driver.name, email: driver.email }, token });
+      const { email, password } = req.body;
+      const { admin, token } = await authService.loginAdmin(email, password);
+      res.status(StatusCodeHttp.OK).json({ admin: { id: admin.id, name: admin.name, email: admin.email }, token });
     } catch (err) {
       next(err);
     }

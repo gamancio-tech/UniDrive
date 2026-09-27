@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { studentRepository } from "../repositories/student.repository";
 import { AppError } from "../middlewares/errorHandler.middleware";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
 
 const SALT_ROUNDS = 10;
 
@@ -12,15 +13,34 @@ export const studentService = {
   async create(driverId: string, name: string, email: string, temporaryPassword: string) {
     const existing = await studentRepository.findByEmail(email);
     if (existing) {
-      throw new AppError("Já existe um aluno cadastrado com este e-mail.", 409);
+      throw new AppError("Já existe um aluno cadastrado com este e-mail.", StatusCodeHttp.CONFLICT);
     }
 
     const passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
     return studentRepository.create({ driverId, name, email, passwordHash });
   },
 
-  list(driverId: string) {
-    return studentRepository.listActiveByDriver(driverId);
+  async list(driverId: string) {
+    const students = await studentRepository.listActiveByDriver(driverId);
+    return students;
+  },
+
+  async listByStatus(status: string) {
+    if (status === "true") {
+      return await studentRepository.listActiveAll();
+    } else if (status === "false") {
+      return await studentRepository.listDisableAll();
+    } else {
+      throw new AppError("Status inválido.", StatusCodeHttp.BAD_REQUEST);
+    }
+  },
+
+  async findById(id: string) {
+    const student = await studentRepository.findById(id);
+    if (!student) {
+      throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
+    }
+    return student;
   },
 
   /** RF09: remove o aluno sem apagar seu histórico (soft delete). */

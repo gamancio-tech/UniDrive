@@ -12,6 +12,7 @@ export const pushService = {
     keys: { p256dh: string; auth: string };
     studentId?: string;
     driverId?: string;
+    adminId?: string;
   }) {
     return pushSubscriptionRepository.save(input);
   },

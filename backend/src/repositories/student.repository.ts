@@ -16,6 +16,20 @@ export const studentRepository = {
     });
   },
 
+  listActiveAll() {
+    return prisma.student.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+    });
+  },
+
+  listDisableAll() {
+    return prisma.student.findMany({
+      where: { active: false },
+      orderBy: { name: "asc" },
+    });
+  },
+
   create(data: { driverId: string; name: string; email: string; passwordHash: string }) {
     return prisma.student.create({ data });
   },

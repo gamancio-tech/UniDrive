@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { dailyStatusService } from "../services/dailyStatus.service";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
+import { hasRole } from "../types/express";
 
 export const dailyStatusController = {
   /** RF01 — POST /api/daily-status */
@@ -8,7 +10,7 @@ export const dailyStatusController = {
       const studentId = req.user!.id;
       const { status, date } = req.body;
       const updated = await dailyStatusService.setStatus(studentId, new Date(date ?? Date.now()), status);
-      res.json(updated);
+      res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {
       next(err);
     }
@@ -17,10 +19,13 @@ export const dailyStatusController = {
   /** RF04 — POST /api/daily-status/checkin (aluno marca o próprio embarque) */
   async checkInSelf(req: Request, res: Response, next: NextFunction) {
     try {
-      const studentId = req.user!.id;
-      const driverId = req.user!.driverId;
+      if (!hasRole(req.user!, "student")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas alunos podem marcar o próprio embarque" });
+      }
+      const studentId = req.user.id;
+      const driverId = req.user.driverId;
       const updated = await dailyStatusService.checkIn(studentId, new Date(), driverId);
-      res.json(updated);
+      res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {
       next(err);
     }
@@ -31,7 +36,7 @@ export const dailyStatusController = {
     try {
       const studentId = req.user!.id;
       const updated = await dailyStatusService.cancelBoarded(studentId, new Date());
-      res.json(updated);
+      res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {
       next(err);
     }
@@ -39,10 +44,13 @@ export const dailyStatusController = {
   /** RF04 — POST /api/daily-status/checkin/:studentId (motorista marca por um aluno) */
   async checkInByDriver(req: Request, res: Response, next: NextFunction) {
     try {
-      const driverId = req.user!.driverId;
+      if (!hasRole(req.user!, "driver")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
+      }
+      const driverId = req.user.id;
       const { studentId } = req.params;
       const updated = await dailyStatusService.checkIn(studentId, new Date(), driverId);
-      res.json(updated);
+      res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {
       next(err);
     }
@@ -51,15 +59,21 @@ export const dailyStatusController = {
   /** RF02 — GET /api/daily-status/missing-count (consultado via polling pelo frontend) */
   async getMissingCount(req: Request, res: Response, next: NextFunction) {
     try {
-      const driverId = req.user!.driverId;
+      if(!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      }
+      if (hasRole(req.user, "admin")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
+      }
+      const driverId = req.user.id;
       const result = await dailyStatusService.getMissingStudents(driverId, new Date());
 
       let isBoarded = false;
-      if (req.user?.role === "student") {
+      if (req.user.role === "student") {
         isBoarded = await dailyStatusService.isStudentBoarded(req.user.id, new Date());
       }
 
-      res.json({
+      res.status(StatusCodeHttp.OK).json({
         cancelled: result.cancelled,
         missingCount: result.missingStudentIds.length,
         isBoarded,

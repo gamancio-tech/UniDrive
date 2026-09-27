@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { pushService } from "../services/push.service";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
 
 export const pushController = {
   /** GET /api/push/public-key — usado pelo frontend para se inscrever no Web Push */
   getPublicKey(_req: Request, res: Response) {
-    res.json({ publicKey: pushService.publicKey });
+    res.status(StatusCodeHttp.OK).json({ publicKey: pushService.publicKey });
   },
 
   /** POST /api/push/subscribe */
@@ -18,7 +19,7 @@ export const pushController = {
         studentId: isDriver ? undefined : req.user!.id,
         driverId: isDriver ? req.user!.id : undefined,
       });
-      res.status(201).json({ ok: true });
+      res.status(StatusCodeHttp.CREATED).json({ ok: true });
     } catch (err) {
       next(err);
     }

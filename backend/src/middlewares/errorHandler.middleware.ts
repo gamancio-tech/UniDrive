@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
 
 export class AppError extends Error {
   constructor(
     message: string,
-    public statusCode: number = 400,
+    public statusCode: number = StatusCodeHttp.BAD_REQUEST,
   ) {
     super(message);
   }
@@ -20,5 +21,5 @@ export function errorHandlerMiddleware(err: unknown, req: Request, res: Response
   }
 
   console.error(err);
-  return res.status(500).json({ error: "Erro interno do servidor." });
+  return res.status(StatusCodeHttp.INTERNAL_SERVER_ERROR).json({ error: "Erro interno do servidor." });
 }

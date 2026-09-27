@@ -1,9 +1,28 @@
-export type AuthenticatedRole = "driver" | "student";
+export type AuthenticatedRole = "driver" | "student" | "admin";
 
-export interface AuthenticatedUser {
+export interface DriveUser {
   id: string;
-  role: AuthenticatedRole;
-  driverId: string; // para aluno: o motorista ao qual pertence; para motorista: o próprio id
+  role: "driver";
+}
+
+export interface StudentUser {
+  id: string;
+  role: "student";
+  driverId: string;
+}
+
+export interface AdminUser {
+  id: string;
+  role: "admin";
+}
+
+export type AuthenticatedUser = DriveUser | StudentUser | AdminUser;
+
+export function hasRole<R extends AuthenticatedUser["role"]>(
+  user: AuthenticatedUser,
+  role: R
+): user is Extract<AuthenticatedUser, { role: R }> {
+  return user.role === role;
 }
 
 declare global {

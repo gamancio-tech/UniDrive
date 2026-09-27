@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { paymentService } from "../services/payment.service";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
+import { hasRole } from "../types/express";
 
 export const paymentController = {
   /** GET /api/payments/me */
@@ -7,7 +9,7 @@ export const paymentController = {
     try {
       const studentId = req.user!.id;
       const cycle = await paymentService.getOrCreateCurrentCycle(studentId);
-      res.json(cycle);
+      res.status(StatusCodeHttp.OK).json(cycle);
     } catch (err) {
       next(err);
     }
@@ -18,7 +20,7 @@ export const paymentController = {
     try {
       const studentId = req.user!.id;
       const cycles = await paymentService.history(studentId);
-      res.json(cycles);
+      res.status(StatusCodeHttp.OK).json(cycles);
     } catch (err) {
       next(err);
     }
@@ -30,7 +32,7 @@ export const paymentController = {
       const studentId = req.user!.id;
       const markedBy = req.user!.role === "driver" ? "driver" : "student";
       const cycle = await paymentService.markCurrentCyclePaid(studentId, markedBy);
-      res.json(cycle);
+      res.status(StatusCodeHttp.OK).json(cycle);
     } catch (err) {
       next(err);
     }
@@ -39,10 +41,13 @@ export const paymentController = {
   /** RF07 — PATCH /api/payments/me/reminder */
   async updateReminderDays(req: Request, res: Response, next: NextFunction) {
     try {
+      if (!hasRole(req.user!, "student")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas alunos podem atualizar os dias de lembrete" });
+      }
       const studentId = req.user!.id;
       const { days } = req.body;
       const cycle = await paymentService.updateReminderDays(studentId, Number(days));
-      res.json(cycle);
+      res.status(StatusCodeHttp.OK).json(cycle);
     } catch (err) {
       next(err);
     }

@@ -22,4 +22,5 @@ export const env = {
   },
   // Quando restam este número (ou menos) de alunos para embarcar, dispara notificação (RF03).
   missingCountNotificationThreshold: 2,
+  reminderDaysBeforePayment: Number(process.env.REMINDER_DAYS_BEFORE_PAYMENT ?? 3),
 };
