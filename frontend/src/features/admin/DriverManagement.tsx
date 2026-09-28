@@ -39,6 +39,21 @@ export const DriverManagement: React.FC = () => {
     }
   };
 
+  const deleteDriver = async (driverId: string) => {
+    try {
+      setLoading(true);
+      await apiRequest(`/admin/driver/${driverId}`, {
+        method: "DELETE",
+      });
+      await loadDrivers();
+      alert("Motorista deletado com sucesso!");
+    } catch (err: unknown) {
+      console.error("Erro ao deletar motorista:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadDrivers();
   }, []);
@@ -100,6 +115,7 @@ export const DriverManagement: React.FC = () => {
                 </div>
                 <div>
                   <Badge variant="info">Motorista</Badge>
+                  <Button variant="danger" onClick={() => deleteDriver(driver.id)}>Desativar motorista</Button>
                 </div>
               </div>
             ))}

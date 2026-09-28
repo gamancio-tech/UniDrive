@@ -37,4 +37,8 @@ export const studentRepository = {
   deactivate(id: string) {
     return prisma.student.update({ where: { id }, data: { active: false } });
   },
+
+  reactivate(id: string) {
+    return prisma.student.update({ where: { id }, data: { active: true } });
+  }
 };

@@ -1,7 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { dailyStatusService } from "../services/dailyStatus.service";
+import { dailyStatusRepository } from "../repositories/dailyStatus.repository";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
 import { hasRole } from "../utils/roles";
+
+function toDateOnly(date: Date): Date {
+  return new Date(date.toISOString().slice(0, 10));
+}
 
 export const dailyStatusController = {
   /** RF01 — POST /api/daily-status */
@@ -41,6 +46,7 @@ export const dailyStatusController = {
       next(err);
     }
   },
+
   /** RF04 — POST /api/daily-status/checkin/:studentId (motorista marca por um aluno) */
   async checkInByDriver(req: Request, res: Response, next: NextFunction) {
     try {
@@ -56,27 +62,45 @@ export const dailyStatusController = {
     }
   },
 
+  /** RF04 — POST /api/daily-status/cancel-boarded/:studentId (motorista desfaz embarque de um aluno) */
+  async cancelBoardedByDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!hasRole(req.user!, "driver")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
+      }
+      const { studentId } = req.params;
+      const updated = await dailyStatusService.cancelBoarded(studentId, new Date());
+      res.status(StatusCodeHttp.OK).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   /** RF02 — GET /api/daily-status/missing-count (consultado via polling pelo frontend) */
   async getMissingCount(req: Request, res: Response, next: NextFunction) {
     try {
-      if(!req.user) {
+      if (!req.user) {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
       }
       if (hasRole(req.user, "admin")) {
-        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas e alunos podem realizar essa ação" });
       }
-      const driverId = req.user.id;
+      const driverId = req.user.role === "student" ? req.user.driverId : req.user.id;
       const result = await dailyStatusService.getMissingStudents(driverId, new Date());
 
       let isBoarded = false;
+      let currentStatus = "vai_normal";
       if (req.user.role === "student") {
         isBoarded = await dailyStatusService.isStudentBoarded(req.user.id, new Date());
+        const statusRecord = await dailyStatusRepository.findByStudentAndDate(req.user.id, toDateOnly(new Date()));
+        currentStatus = statusRecord?.status ?? "vai_normal";
       }
 
       res.status(StatusCodeHttp.OK).json({
         cancelled: result.cancelled,
         missingCount: result.missingStudentIds.length,
         isBoarded,
+        currentStatus,
       });
     } catch (err) {
       next(err);

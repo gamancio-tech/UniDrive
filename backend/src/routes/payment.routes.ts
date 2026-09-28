@@ -4,9 +4,12 @@ import { authMiddleware, requireRole } from "../middlewares/auth.middleware";
 
 export const paymentRoutes = Router();
 
-paymentRoutes.use(authMiddleware, requireRole("student"));
+paymentRoutes.use(authMiddleware);
 
-paymentRoutes.get("/me", paymentController.getCurrentCycle);
-paymentRoutes.get("/me/history", paymentController.history);
-paymentRoutes.post("/me/pay", paymentController.markPaid);
-paymentRoutes.patch("/me/reminder", paymentController.updateReminderDays);
+paymentRoutes.get("/me", requireRole("student"), paymentController.getCurrentCycle);
+paymentRoutes.get("/me/history", requireRole("student"), paymentController.history);
+paymentRoutes.post("/me/pay", requireRole("student"), paymentController.markPaid);
+paymentRoutes.patch("/me/reminder", requireRole("student"), paymentController.updateReminderDays);
+
+paymentRoutes.post("/:studentId/pay", requireRole("driver"), paymentController.markPaidByDriver);
+paymentRoutes.get("/student/:studentId", requireRole("driver"), paymentController.getStudentPaymentStatus);

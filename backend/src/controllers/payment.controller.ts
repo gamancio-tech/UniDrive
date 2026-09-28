@@ -30,8 +30,29 @@ export const paymentController = {
   async markPaid(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.user!.id;
-      const markedBy = req.user!.role === "driver" ? "driver" : "student";
-      const cycle = await paymentService.markCurrentCyclePaid(studentId, markedBy);
+      const cycle = await paymentService.markCurrentCyclePaid(studentId, "student");
+      res.status(StatusCodeHttp.OK).json(cycle);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** RF08 — POST /api/payments/:studentId/pay */
+  async markPaidByDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { studentId } = req.params;
+      const cycle = await paymentService.markCurrentCyclePaid(studentId, "driver");
+      res.status(StatusCodeHttp.OK).json(cycle);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** GET /api/payments/student/:studentId */
+  async getStudentPaymentStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { studentId } = req.params;
+      const cycle = await paymentService.getOrCreateCurrentCycle(studentId);
       res.status(StatusCodeHttp.OK).json(cycle);
     } catch (err) {
       next(err);

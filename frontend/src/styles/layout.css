@@ -19,6 +19,11 @@
   margin: 0;
 }
 
+.header-row button {
+  width: 80px;
+  
+}
+
 /* --- Tabs horizontais (usado no Admin) --- */
 .tabs-container {
   display: flex;

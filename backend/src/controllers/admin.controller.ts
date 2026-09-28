@@ -41,6 +41,38 @@ export const adminController = {
     }
   },
 
+  async deactivateDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+      }
+
+      const { id } = req.params;
+      const driver = await driverService.deactivate(id);
+      res.status(StatusCodeHttp.OK).json(driver);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async reactivateDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+      }
+
+      const { id } = req.params;
+      const driver = await driverService.reactivate(id);
+      res.status(StatusCodeHttp.OK).json(driver);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async createStudent(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
@@ -58,6 +90,38 @@ export const adminController = {
     }
   },
 
+  async deactivateStudent(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+      }
+
+      const { id } = req.params;
+      const student = await studentService.deactivate(id);
+      res.status(StatusCodeHttp.OK).json(student);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async reactivateStudent(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+      }
+
+      const { id } = req.params;
+      const student = await studentService.reactivate(id);
+      res.status(StatusCodeHttp.OK).json(student);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async getDrivers(req: Request, res: Response, next: NextFunction) {
     try {
       const drivers = await driverService.getAllDrivers();
@@ -69,7 +133,7 @@ export const adminController = {
 
   async getStudentByStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      const { status } = req.params;
+      const status = (req.query.status as string) || "true";
       const students = await studentService.listByStatus(status);
       res.status(StatusCodeHttp.OK).json(students);
     } catch (err) {

@@ -36,6 +36,7 @@ model Driver {
   email         String   @unique
   passwordHash  String
   pixKey        String?
+  active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
   students          Student[]

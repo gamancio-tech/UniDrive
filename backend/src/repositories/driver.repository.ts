@@ -17,4 +17,12 @@ export const driverRepository = {
   create(data: { name: string; email: string; passwordHash: string; pixKey?: string }) {
     return prisma.driver.create({ data });
   },
+
+  deactivate(id: string) {
+    return prisma.driver.update({ where: { id }, data: { active: false } });
+  },
+
+  reactivate(id: string) {
+    return prisma.driver.update({ where: { id }, data: { active: true } });
+  },
 };

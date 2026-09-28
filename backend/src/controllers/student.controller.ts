@@ -25,18 +25,22 @@ export const studentController = {
   /** GET /api/students (somente motorista e admin) */
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      let students;
       if (!req.user) {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
-      } else if (hasRole(req.user, "driver")) {
-        const driverId = req.user.id;
-        students = await studentService.list(driverId);
-      } else if (hasRole(req.user, "admin")) {
-        students = await studentService.listActiveAll();
-      } else {
-        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
       }
-      res.status(StatusCodeHttp.OK).json(students.map((s) => ({ id: s.id, name: s.name, email: s.email })));
+
+      if (hasRole(req.user, "driver")) {
+        const driverId = req.user.id;
+        const students = await studentService.list(driverId);
+        return res.status(StatusCodeHttp.OK).json(students);
+      }
+
+      if (hasRole(req.user, "admin")) {
+        const students = await studentService.listActiveByDriver(req.user.id);
+        return res.status(StatusCodeHttp.OK).json(students.map((s) => ({ id: s.id, name: s.name, email: s.email })));
+      }
+
+      return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
     } catch (err) {
       next(err);
     }
