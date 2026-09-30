@@ -13,7 +13,12 @@ export type Role = "driver" | "student" | "admin" | null;
 function InitialMenu({ setPerfil }: { setPerfil: (perfil: Role) => void }) {
   return (
     <main style={{ padding: "1.25rem 1rem", paddingBottom: "2rem" }}>
-      <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+      <div className="brand-hero-container">
+        <img
+          src="/icons/icon.png"
+          alt="Logo UniDrive"
+          className="brand-logo-hero"
+        />
         <h1>UniDrive</h1>
         <p className="list-item-sub">Controle inteligente e em tempo real para vans universitárias</p>
       </div>
@@ -66,7 +71,16 @@ function LoginForm({
 
   if (role === null) {
     return (
-      <main>
+      <main style={{ padding: "1.25rem 1rem", paddingBottom: "2rem" }}>
+        <div className="brand-hero-container">
+          <img
+            src="/icons/icon.png"
+            alt="Logo UniDrive"
+            className="brand-logo-hero"
+          />
+          <h1>UniDrive</h1>
+          <p className="list-item-sub">Controle inteligente e em tempo real para vans universitárias</p>
+        </div>
         <LoginFormComponent
           perfil={perfil}
           setPerfil={setPerfil}

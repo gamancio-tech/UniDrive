@@ -58,9 +58,12 @@ export function DriverHome() {
     <>
       <main>
         <div className="header-row">
-          <div>
-            <h1>UniDrive</h1>
-            <p className="list-item-sub">Painel do Motorista</p>
+          <div className="brand-header">
+            <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
+            <div>
+              <h1>UniDrive</h1>
+              <p className="list-item-sub">Painel do Motorista</p>
+            </div>
           </div>
           <Button variant="ghost" onClick={handleLogout}>
             Sair

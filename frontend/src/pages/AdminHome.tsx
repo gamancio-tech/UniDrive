@@ -16,9 +16,12 @@ export function AdminHome() {
   return (
     <main>
       <div className="header-row">
-        <div>
-          <h1>UniDrive — Admin</h1>
-          <p className="list-item-sub">Painel Geral de Gestão do Sistema</p>
+        <div className="brand-header">
+          <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
+          <div>
+            <h1>UniDrive — Admin</h1>
+            <p className="list-item-sub">Painel Geral de Gestão do Sistema</p>
+          </div>
         </div>
         <Button variant="ghost" onClick={handleLogout}>
           Sair

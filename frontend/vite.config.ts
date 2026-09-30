@@ -22,8 +22,8 @@ export default defineConfig({
       srcDir: "src",
       filename: "sw.ts",
       manifest: {
-        name: "VanApp",
-        short_name: "VanApp",
+        name: "UniDrive",
+        short_name: "UniDrive",
         description: "Presença e avisos da van universitária, sem depender de grupo de WhatsApp.",
         start_url: "/",
         display: "standalone",
@@ -32,6 +32,7 @@ export default defineConfig({
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+          { src: "/icons/icon.png", sizes: "1600x1600", type: "image/png", purpose: "any" },
         ],
       },
     }),

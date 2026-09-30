@@ -31,9 +31,12 @@ export function StudentHome() {
     <>
       <main>
         <div className="header-row">
-          <div>
-            <h1>UniDrive</h1>
-            <p className="list-item-sub">Área do Aluno</p>
+          <div className="brand-header">
+            <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
+            <div>
+              <h1>UniDrive</h1>
+              <p className="list-item-sub">Área do Aluno</p>
+            </div>
           </div>
           <Button variant="ghost" onClick={handleLogout}>
             Sair
