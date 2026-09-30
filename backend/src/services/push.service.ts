@@ -14,37 +14,128 @@ export const pushService = {
     driverId?: string;
     adminId?: string;
   }) {
+    console.log(
+      `[Push] Salvando inscrição push para: ${input.studentId ? `aluno ${input.studentId}` : input.driverId ? `motorista ${input.driverId}` : "admin"} (endpoint: ${input.endpoint.slice(0, 45)}...)`,
+    );
     return pushSubscriptionRepository.save(input);
   },
 
   /** Envia uma notificação a um conjunto de alunos (usado pelo RF03 e pelo mural, RF05). */
   async notifyStudents(studentIds: string[], payload: { title: string; body: string }) {
+    console.log(`[Push] Disparando notificação para ${studentIds.length} aluno(s): "${payload.title}"`);
     const subscriptions = await pushSubscriptionRepository.listByStudentIds(studentIds);
-    await Promise.allSettled(
-      subscriptions.map((sub) =>
-        webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: sub.keys as unknown as { p256dh: string; auth: string },
-          },
-          JSON.stringify(payload),
-        ),
-      ),
+    console.log(`[Push] Encontradas ${subscriptions.length} inscrição(ões) no banco para os alunos.`);
+
+    if (subscriptions.length === 0) {
+      console.warn("[Push] Nenhum aluno possui inscrição push ativa no banco.");
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      subscriptions.map(async (sub) => {
+        try {
+          const res = await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: sub.keys as unknown as { p256dh: string; auth: string },
+            },
+            JSON.stringify(payload),
+          );
+          console.log(`[Push] ✅ Entregue (${res.statusCode}) para endpoint: ${sub.endpoint.slice(0, 45)}...`);
+          return res;
+        } catch (err: unknown) {
+          const statusCode = (err as { statusCode?: number })?.statusCode;
+          console.error(`[Push] ❌ Falha ao enviar para ${sub.endpoint.slice(0, 45)}... Código: ${statusCode || err}`);
+          if (statusCode === 410 || statusCode === 404) {
+            console.log(`[Push] 🗑️ Removendo inscrição expirada do banco: ${sub.id}`);
+            await pushSubscriptionRepository.deleteByEndpoint(sub.endpoint).catch(() => {});
+          }
+          throw err;
+        }
+      }),
     );
+
+    const successCount = results.filter((r) => r.status === "fulfilled").length;
+    console.log(`[Push] Envio finalizado: ${successCount}/${subscriptions.length} entregues com sucesso.`);
   },
 
   async notifyDriver(driverId: string, payload: { title: string; body: string }) {
+    console.log(`[Push] Disparando notificação para motorista ${driverId}: "${payload.title}"`);
     const subscriptions = await pushSubscriptionRepository.listByDriverId(driverId);
-    await Promise.allSettled(
-      subscriptions.map((sub) =>
-        webpush.sendNotification(
+    console.log(`[Push] Encontradas ${subscriptions.length} inscrição(ões) no banco para o motorista.`);
+
+    if (subscriptions.length === 0) {
+      console.warn("[Push] O motorista não possui inscrição push ativa no banco.");
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      subscriptions.map(async (sub) => {
+        try {
+          const res = await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: sub.keys as unknown as { p256dh: string; auth: string },
+            },
+            JSON.stringify(payload),
+          );
+          console.log(`[Push] ✅ Entregue (${res.statusCode}) para endpoint: ${sub.endpoint.slice(0, 45)}...`);
+          return res;
+        } catch (err: unknown) {
+          const statusCode = (err as { statusCode?: number })?.statusCode;
+          console.error(`[Push] ❌ Falha ao enviar para ${sub.endpoint.slice(0, 45)}... Código: ${statusCode || err}`);
+          if (statusCode === 410 || statusCode === 404) {
+            console.log(`[Push] 🗑️ Removendo inscrição expirada do banco: ${sub.id}`);
+            await pushSubscriptionRepository.deleteByEndpoint(sub.endpoint).catch(() => {});
+          }
+          throw err;
+        }
+      }),
+    );
+
+    const successCount = results.filter((r) => r.status === "fulfilled").length;
+    console.log(`[Push] Envio finalizado: ${successCount}/${subscriptions.length} entregues ao motorista.`);
+  },
+
+  /** Dispara uma notificação de teste diretamente para o dispositivo do usuário atual */
+  async sendTestNotification(userId: string, role: string) {
+    const subscriptions =
+      role === "driver"
+        ? await pushSubscriptionRepository.listByDriverId(userId)
+        : await pushSubscriptionRepository.listByStudentId(userId);
+
+    if (subscriptions.length === 0) {
+      throw new Error("Nenhuma inscrição push encontrada para este dispositivo no banco. Ative as notificações primeiro.");
+    }
+
+    const payload = {
+      title: "UniDrive - Teste de Notificação",
+      body: "Suas notificações estão configuradas e funcionando perfeitamente! 🚐🔔",
+    };
+
+    let delivered = 0;
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(
           {
             endpoint: sub.endpoint,
             keys: sub.keys as unknown as { p256dh: string; auth: string },
           },
           JSON.stringify(payload),
-        ),
-      ),
-    );
+        );
+        delivered++;
+      } catch (err: unknown) {
+        const statusCode = (err as { statusCode?: number })?.statusCode;
+        if (statusCode === 410 || statusCode === 404) {
+          await pushSubscriptionRepository.deleteByEndpoint(sub.endpoint).catch(() => {});
+        }
+      }
+    }
+
+    if (delivered === 0) {
+      throw new Error("Inscrição expirada ou inválida no navegador. Tente desativar e reativar a notificação.");
+    }
+
+    return { delivered, total: subscriptions.length };
   },
 };

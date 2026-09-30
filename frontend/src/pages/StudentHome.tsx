@@ -6,6 +6,8 @@ import { authStorage } from "../api/client";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 
+import { NotificationBanner } from "../components/NotificationBanner";
+
 type StudentTab = "home" | "payments";
 
 export function StudentHome() {
@@ -44,7 +46,9 @@ export function StudentHome() {
         </div>
 
         {activeTab === "home" && (
-          <DailyStatusCard
+          <>
+            <NotificationBanner />
+            <DailyStatusCard
             missingCount={missingCount}
             cancelled={cancelled}
             loading={loading}
@@ -55,6 +59,7 @@ export function StudentHome() {
             onCheckIn={checkIn}
             onCancelBoardedSelf={cancelBoardedSelf}
           />
+          </>
         )}
 
         {activeTab === "payments" && (

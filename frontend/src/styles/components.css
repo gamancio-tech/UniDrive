@@ -375,3 +375,9 @@ form {
   transform: none;
 }
 
+/* --- Notification Banner --- */
+.notification-banner {
+  margin-bottom: 1rem;
+  border-left: 4px solid hsl(var(--accent-primary));
+}
+

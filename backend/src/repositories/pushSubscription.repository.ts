@@ -26,4 +26,12 @@ export const pushSubscriptionRepository = {
   listByDriverId(driverId: string) {
     return prisma.pushSubscription.findMany({ where: { driverId } });
   },
+
+  listByStudentId(studentId: string) {
+    return prisma.pushSubscription.findMany({ where: { studentId } });
+  },
+
+  deleteByEndpoint(endpoint: string) {
+    return prisma.pushSubscription.deleteMany({ where: { endpoint } });
+  },
 };

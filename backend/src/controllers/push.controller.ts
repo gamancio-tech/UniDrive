@@ -24,4 +24,17 @@ export const pushController = {
       next(err);
     }
   },
+
+  /** POST /api/push/test — envia uma notificação de teste para o próprio usuário autenticado */
+  async sendTestNotification(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado." });
+      }
+      const result = await pushService.sendTestNotification(req.user.id, req.user.role);
+      res.status(StatusCodeHttp.OK).json({ ok: true, ...result });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

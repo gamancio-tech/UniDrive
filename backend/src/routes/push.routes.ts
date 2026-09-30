@@ -6,3 +6,4 @@ export const pushRoutes = Router();
 
 pushRoutes.get("/public-key", pushController.getPublicKey);
 pushRoutes.post("/subscribe", authMiddleware, pushController.subscribe);
+pushRoutes.post("/test", authMiddleware, pushController.sendTestNotification);

@@ -7,6 +7,7 @@ import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
 import { useToast } from "../components/Toast";
+import { NotificationBanner } from "../components/NotificationBanner";
 
 type DriverTab = "operations" | "students" | "announcements";
 
@@ -73,6 +74,7 @@ export function DriverHome() {
         {/* Aba: Hoje (Operação) */}
         {activeTab === "operations" && (
           <>
+            <NotificationBanner />
             {loading ? (
               <Card title="Status da Van">
                 <p style={{ color: "hsl(var(--text-secondary))", textAlign: "center" }}>
@@ -151,8 +153,10 @@ export function DriverHome() {
 
         {/* Aba: Avisos */}
         {activeTab === "announcements" && (
-          <Card
-            title="Mural de Avisos"
+          <>
+            <NotificationBanner />
+            <Card
+              title="Mural de Avisos"
             subtitle="Envie recados e alertas para todos os alunos"
           >
             <div className="announcement-form" style={{ marginTop: 0 }}>
@@ -171,6 +175,7 @@ export function DriverHome() {
               </Button>
             </div>
           </Card>
+          </>
         )}
       </main>
 

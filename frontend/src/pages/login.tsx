@@ -65,7 +65,9 @@ function LoginForm({
 
   useEffect(() => {
     if (role && role !== "admin") {
-      subscribeToPush().catch((err) => console.error("Falha ao inscrever push:", err));
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        subscribeToPush().catch((err) => console.error("Falha ao sincronizar push no login:", err));
+      }
     }
   }, [role]);
 
