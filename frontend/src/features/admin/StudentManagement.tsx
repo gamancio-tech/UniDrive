@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { useToast } from "../../components/Toast";
 import type { Driver } from "./DriverManagement";
 
 export interface Student {
@@ -16,6 +17,7 @@ export interface Student {
 }
 
 export const StudentManagement: React.FC = () => {
+  const { showToast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [statusFilter, setStatusFilter] = useState<"true" | "false">("true");
@@ -80,6 +82,7 @@ export const StudentManagement: React.FC = () => {
       setEmail("");
       setPassword("");
       await loadStudents();
+      showToast("Aluno cadastrado com sucesso!", "success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar aluno.");
     } finally {

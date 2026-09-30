@@ -5,15 +5,20 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { useToast } from "../../components/Toast";
 
 export interface StudentItem {
   id: string;
   name: string;
   email: string;
+  todayStatus?: "vai_normal" | "so_ida" | "so_volta" | "nao_vai" | string;
   isBoarded?: boolean;
 }
 
+const POLL_INTERVAL_MS = 15_000;
+
 export const DriverStudentList: React.FC = () => {
+  const { showToast } = useToast();
   const [students, setStudents] = useState<StudentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,21 +31,37 @@ export const DriverStudentList: React.FC = () => {
   const [email, setEmail] = useState("");
   const [temporaryPassword, setTemporaryPassword] = useState("");
 
-  const loadStudents = useCallback(async () => {
+  const loadStudents = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       const data = await apiRequest<StudentItem[]>("/students");
       setStudents(data);
     } catch (err: unknown) {
       console.error("Erro ao carregar alunos:", err);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadStudents();
+    loadStudents(true);
+    const interval = setInterval(() => loadStudents(false), POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
   }, [loadStudents]);
+
+  const getTodayStatusBadge = (status?: string) => {
+    switch (status) {
+      case "so_ida":
+        return <Badge variant="neutral">Só ida</Badge>;
+      case "so_volta":
+        return <Badge variant="info">Só volta</Badge>;
+      case "nao_vai":
+        return <Badge variant="danger">Não vai</Badge>;
+      case "vai_normal":
+      default:
+        return <Badge variant="info">Vai normal</Badge>;
+    }
+  };
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +77,7 @@ export const DriverStudentList: React.FC = () => {
       setEmail("");
       setTemporaryPassword("");
       await loadStudents();
+      showToast("Aluno cadastrado com sucesso!", "success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar aluno.");
     } finally {
@@ -73,8 +95,9 @@ export const DriverStudentList: React.FC = () => {
       setStudents((prev) =>
         prev.map((s) => (s.id === studentId ? { ...s, isBoarded: true } : s))
       );
+      showToast("Embarque confirmado!", "success");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Erro ao confirmar embarque.");
+      showToast(err instanceof Error ? err.message : "Erro ao confirmar embarque.", "error");
     } finally {
       setCheckingInId(null);
     }
@@ -89,8 +112,9 @@ export const DriverStudentList: React.FC = () => {
       setStudents((prev) =>
         prev.map((s) => (s.id === studentId ? { ...s, isBoarded: false } : s))
       );
+      showToast("Embarque desfeito.", "info");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Erro ao desfazer embarque.");
+      showToast(err instanceof Error ? err.message : "Erro ao desfazer embarque.", "error");
     } finally {
       setCheckingInId(null);
     }
@@ -123,7 +147,10 @@ export const DriverStudentList: React.FC = () => {
             {students.map((student) => (
               <div key={student.id} className="list-item">
                 <div className="list-item-info">
-                  <span className="list-item-title">{student.name}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.2rem" }}>
+                    <span className="list-item-title">{student.name}</span>
+                    {getTodayStatusBadge(student.todayStatus)}
+                  </div>
                   <span className="list-item-sub">{student.email}</span>
                 </div>
                 <div className="list-item-actions">

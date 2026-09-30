@@ -15,6 +15,8 @@ export function StudentHome() {
     cancelled,
     loading,
     isBoarded,
+    currentStatus,
+    lastUpdated,
     setStatus,
     checkIn,
     cancelBoardedSelf,
@@ -44,6 +46,8 @@ export function StudentHome() {
             cancelled={cancelled}
             loading={loading}
             isBoarded={isBoarded}
+            currentStatus={currentStatus}
+            lastUpdated={lastUpdated}
             onSetStatus={setStatus}
             onCheckIn={checkIn}
             onCancelBoardedSelf={cancelBoardedSelf}

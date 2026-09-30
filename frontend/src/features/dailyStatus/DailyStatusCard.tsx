@@ -8,6 +8,8 @@ interface DailyStatusCardProps {
   cancelled: boolean;
   loading: boolean;
   isBoarded: boolean;
+  currentStatus?: DailyStatusValue;
+  lastUpdated?: Date | null;
   onSetStatus: (status: DailyStatusValue) => void;
   onCheckIn: () => void;
   onCancelBoardedSelf: () => void;
@@ -25,6 +27,8 @@ export function DailyStatusCard({
   cancelled,
   loading,
   isBoarded,
+  currentStatus,
+  lastUpdated,
   onSetStatus,
   onCheckIn,
   onCancelBoardedSelf,
@@ -66,6 +70,34 @@ export function DailyStatusCard({
           {missingCount ?? 0}
         </div>
         <div className="stat-label">aluno(s) restante(s) para a van sair</div>
+        {lastUpdated && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.4rem",
+              fontSize: "0.8rem",
+              color: "hsl(var(--text-secondary))",
+              marginTop: "0.85rem",
+            }}
+          >
+            <span
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                backgroundColor: "hsl(var(--success))",
+                display: "inline-block",
+                boxShadow: "0 0 6px hsl(var(--success))",
+              }}
+            />
+            <span>
+              Atualizado às{" "}
+              {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Ao vivo
+            </span>
+          </div>
+        )}
       </div>
 
       <div style={{ margin: "1rem 0" }}>
@@ -73,17 +105,31 @@ export function DailyStatusCard({
           Seu status programado para hoje:
         </p>
         <div className="button-group" style={{ margin: "0.5rem 0" }}>
-          {STATUS_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              variant="secondary"
-              style={{ justifyContent: "flex-start", textAlign: "left" }}
-              onClick={() => onSetStatus(option.value)}
-            >
-              <span style={{ fontSize: "1.2rem", marginRight: "0.4rem" }}>{option.icon}</span>
-              {option.label}
-            </Button>
-          ))}
+          {STATUS_OPTIONS.map((option) => {
+            const isSelected = option.value === (currentStatus ?? "vai_normal");
+            return (
+              <Button
+                key={option.value}
+                variant={isSelected ? "primary" : "secondary"}
+                style={{
+                  justifyContent: "space-between",
+                  textAlign: "left",
+                  border: isSelected ? "1px solid hsl(var(--accent-primary-hover))" : undefined,
+                  boxShadow: isSelected ? "0 4px 14px rgba(116, 92, 237, 0.4)" : undefined,
+                  fontWeight: isSelected ? 600 : 400,
+                }}
+                onClick={() => onSetStatus(option.value)}
+              >
+                <div style={{ display: "inline-flex", alignItems: "center" }}>
+                  <span style={{ fontSize: "1.2rem", marginRight: "0.5rem" }}>{option.icon}</span>
+                  <span>{option.label}</span>
+                </div>
+                {isSelected && (
+                  <Badge variant="success">✓ Ativo</Badge>
+                )}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

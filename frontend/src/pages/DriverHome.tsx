@@ -6,11 +6,13 @@ import { BottomNavigation } from "../components/BottomNavigation";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
+import { useToast } from "../components/Toast";
 
 type DriverTab = "operations" | "students" | "announcements";
 
 export function DriverHome() {
-  const { missingCount, cancelled, loading, cancelTrip, uncancelTrip } = useDailyStatus();
+  const { missingCount, cancelled, loading, lastUpdated, cancelTrip, uncancelTrip } = useDailyStatus();
+  const { showToast } = useToast();
   const [message, setMessage] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [activeTab, setActiveTab] = useState<DriverTab>("operations");
@@ -21,11 +23,29 @@ export function DriverHome() {
     try {
       await apiRequest("/announcements", { method: "POST", body: { message } });
       setMessage("");
-      alert("Aviso publicado para todos os alunos!");
+      showToast("Aviso publicado para todos os alunos!", "success");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Erro ao publicar aviso.");
+      showToast(err instanceof Error ? err.message : "Erro ao publicar aviso.", "error");
     } finally {
       setPublishing(false);
+    }
+  }
+
+  async function handleCancelTrip() {
+    try {
+      await cancelTrip();
+      showToast("Viagem de hoje cancelada.", "info");
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao cancelar viagem.", "error");
+    }
+  }
+
+  async function handleUncancelTrip() {
+    try {
+      await uncancelTrip();
+      showToast("Cancelamento desfeito com sucesso!", "success");
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao reativar viagem.", "error");
     }
   }
 
@@ -66,7 +86,7 @@ export function DriverHome() {
                   Você cancelou a viagem de hoje. Se precisar reativar, clique abaixo.
                 </p>
                 <div style={{ marginTop: "1rem" }}>
-                  <Button variant="primary" onClick={() => uncancelTrip()}>
+                  <Button variant="primary" onClick={handleUncancelTrip}>
                     Desfazer Cancelamento
                   </Button>
                 </div>
@@ -86,8 +106,36 @@ export function DriverHome() {
                       ? "🎉 Todos os alunos já embarcaram!"
                       : "aluno(s) restante(s) para embarcar"}
                   </div>
+                  {lastUpdated && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.4rem",
+                        fontSize: "0.8rem",
+                        color: "hsl(var(--text-secondary))",
+                        marginTop: "0.85rem",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: "7px",
+                          height: "7px",
+                          borderRadius: "50%",
+                          backgroundColor: "hsl(var(--success))",
+                          display: "inline-block",
+                          boxShadow: "0 0 6px hsl(var(--success))",
+                        }}
+                      />
+                      <span>
+                        Atualizado às{" "}
+                        {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Ao vivo
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <Button variant="danger" onClick={() => cancelTrip()}>
+                <Button variant="danger" onClick={handleCancelTrip}>
                   Cancelar Viagem de Hoje
                 </Button>
               </Card>

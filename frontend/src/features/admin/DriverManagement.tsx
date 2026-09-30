@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { useToast } from "../../components/Toast";
 
 export interface Driver {
   id: string;
@@ -15,6 +16,7 @@ export interface Driver {
 }
 
 export const DriverManagement: React.FC = () => {
+  const { showToast } = useToast();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,9 +48,9 @@ export const DriverManagement: React.FC = () => {
         method: "DELETE",
       });
       await loadDrivers();
-      alert("Motorista deletado com sucesso!");
+      showToast("Motorista desativado com sucesso!", "success");
     } catch (err: unknown) {
-      console.error("Erro ao deletar motorista:", err);
+      showToast(err instanceof Error ? err.message : "Erro ao desativar motorista.", "error");
     } finally {
       setLoading(false);
     }
@@ -73,6 +75,7 @@ export const DriverManagement: React.FC = () => {
       setPassword("");
       setPixKey("");
       await loadDrivers();
+      showToast("Motorista cadastrado com sucesso!", "success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar motorista.");
     } finally {

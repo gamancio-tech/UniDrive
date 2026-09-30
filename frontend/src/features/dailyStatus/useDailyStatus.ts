@@ -9,6 +9,7 @@ interface MissingCountResponse {
   cancelled: boolean;
   missingCount: number;
   isBoarded?: boolean;
+  currentStatus?: DailyStatusValue;
 }
 
 export function useDailyStatus() {
@@ -16,6 +17,8 @@ export function useDailyStatus() {
   const [cancelled, setCancelled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isBoarded, setIsBoarded] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<DailyStatusValue>("vai_normal");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchMissingCount = useCallback(async () => {
     try {
@@ -25,6 +28,10 @@ export function useDailyStatus() {
       if (typeof data.isBoarded === "boolean") {
         setIsBoarded(data.isBoarded);
       }
+      if (data.currentStatus) {
+        setCurrentStatus(data.currentStatus);
+      }
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Falha ao buscar contagem de faltantes:", err);
     } finally {
@@ -40,6 +47,7 @@ export function useDailyStatus() {
 
   const setStatus = useCallback(
     async (status: DailyStatusValue) => {
+      setCurrentStatus(status);
       await apiRequest("/daily-status", { method: "POST", body: { status } });
       await fetchMissingCount();
     },
@@ -78,6 +86,8 @@ export function useDailyStatus() {
     cancelled,
     loading,
     isBoarded,
+    currentStatus,
+    lastUpdated,
     setStatus,
     checkIn,
     cancelBoardedSelf,

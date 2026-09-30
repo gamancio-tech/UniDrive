@@ -10,8 +10,8 @@ Este documento é o roteiro completo de correções técnicas, ajustes de regras
 - [x] **Fase 2 (Frontend):** Menu Inferior Fixo (`BottomNavigation.tsx` com navegação por abas)
 - [x] **Fase 3 (Frontend):** Limpeza de nomenclaturas técnicas (`[RF01]`, `[RF09]`, etc.)
 - [x] **Fase 4 (Frontend):** Ajustes de responsividade mobile e correções no `Modal` e tela de `Login`
-- [ ] **Fase 5 (Backend):** Correções de regras de negócio e erros críticos de API (8 tarefas)
-- [ ] **Fase 6 (Frontend & Integração):** Sincronização de contratos de API e refinamentos de UI/UX (5 tarefas)
+- [x] **Fase 5 (Backend):** Correções de regras de negócio e erros críticos de API (8 tarefas concluídas)
+- [x] **Fase 6 (Frontend & Integração):** Sincronização de contratos de API e refinamentos de UI/UX (5 tarefas concluídas)
 
 ---
 
@@ -26,13 +26,13 @@ Este documento é o roteiro completo de correções técnicas, ajustes de regras
 
 ---
 
-## 🔧 Fase 5 — Correções no Backend (Pendentes 🚀)
+## 🔧 Fase 5 — Correções no Backend (Concluídas ✅)
 
 As seguintes tarefas foram mapeadas diretamente na auditoria do código do backend para sanar falhas de sincronização, erros de compilação e bloqueios indevidos:
 
 ### 🔴 Tarefas Críticas
 
-#### `TASK-BE-01`: Correção do `driverId` na contagem de faltantes e cancelamento
+#### ✅ `TASK-BE-01`: Correção do `driverId` na contagem de faltantes e cancelamento
 * **Arquivo:** [`backend/src/controllers/dailyStatus.controller.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/controllers/dailyStatus.controller.ts) (método `getMissingCount`)
 * **Problema:** O endpoint `GET /api/daily-status/missing-count` assume `const driverId = req.user.id;`. Para alunos, `req.user.id` é o ID do aluno, fazendo com que a busca de cancelamentos e alunos faltantes procure por um motorista inexistente.
 * **Sintoma:** O aluno sempre recebe `missingCount: 0` e `cancelled: false`, mesmo se o motorista tiver cancelado a viagem do dia.
@@ -43,7 +43,7 @@ As seguintes tarefas foram mapeadas diretamente na auditoria do código do backe
 
 ---
 
-#### `TASK-BE-02`: Implementação da rota para o motorista desfazer embarque de aluno
+#### ✅ `TASK-BE-02`: Implementação da rota para o motorista desfazer embarque de aluno
 * **Arquivos:**
   * [`backend/src/routes/dailyStatus.routes.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/routes/dailyStatus.routes.ts)
   * [`backend/src/controllers/dailyStatus.controller.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/controllers/dailyStatus.controller.ts)
@@ -63,7 +63,7 @@ As seguintes tarefas foram mapeadas diretamente na auditoria do código do backe
 
 ---
 
-#### `TASK-BE-03`: Correção dos erros de compilação TypeScript no `student.controller.ts`
+#### ✅ `TASK-BE-03`: Correção dos erros de compilação TypeScript no `student.controller.ts`
 * **Arquivos:**
   * [`backend/src/services/student.service.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/services/student.service.ts)
   * [`backend/src/controllers/student.controller.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/controllers/student.controller.ts)
@@ -80,7 +80,7 @@ As seguintes tarefas foram mapeadas diretamente na auditoria do código do backe
 
 ---
 
-#### `TASK-BE-04`: Liberação de leitura do Mural de Avisos para Estudantes
+#### ✅ `TASK-BE-04`: Liberação de leitura do Mural de Avisos para Estudantes
 * **Arquivo:** [`backend/src/controllers/announcement.controller.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/controllers/announcement.controller.ts) (método `list`)
 * **Problema:** O método `list` contém a trava `if (!hasRole(req.user!, "driver"))`, bloqueando estudantes de lerem os avisos publicados pelo motorista.
 * **Sintoma:** Os alunos recebem **403 Forbidden** ao carregar o mural.
@@ -94,7 +94,7 @@ As seguintes tarefas foram mapeadas diretamente na auditoria do código do backe
 
 ### 🟡 Tarefas de Contrato e Integração
 
-#### `TASK-BE-05`: Retornar status diário e flag `isBoarded` na listagem de alunos
+#### ✅ `TASK-BE-05`: Retornar status diário e flag `isBoarded` na listagem de alunos
 * **Arquivo:** [`backend/src/controllers/student.controller.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/controllers/student.controller.ts) (ou novo endpoint dedicado em `dailyStatus`)
 * **Problema:** O endpoint `GET /api/students` traz apenas `{ id, name, email }`. Ele não inclui o status do dia nem a confirmação de embarque (`boardedAt`).
 * **Sintoma:** Ao carregar a tela "Meus Alunos", o motorista não sabe quem já embarcou ou quem vai faltar hoje até que clique individualmente em algo.
@@ -111,7 +111,7 @@ As seguintes tarefas foram mapeadas diretamente na auditoria do código do backe
 
 ---
 
-#### `TASK-BE-06`: Correção de parâmetro na listagem de estudantes do Admin
+#### ✅ `TASK-BE-06`: Correção de parâmetro na listagem de estudantes do Admin
 * **Arquivo:** [`backend/src/controllers/admin.controller.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/controllers/admin.controller.ts) (método `getStudentByStatus`)
 * **Problema:** O controller lê `const { status } = req.params;`, mas a rota em `admin.routes.ts` é `/list/students` (o parâmetro vem na query string: `?status=true`).
 * **Sintoma:** O painel de admin quebra com **400 Bad Request ("Status inválido")**.
@@ -122,43 +122,43 @@ As seguintes tarefas foram mapeadas diretamente na auditoria do código do backe
 
 ---
 
-#### `TASK-BE-07`: Padronização de prefixo de rota Admin (`/admin` vs `/admins`)
+#### ✅ `TASK-BE-07`: Padronização de prefixo de rota Admin no frontend (`/admin` vs `/admins`)
 * **Arquivo:** [`backend/src/routes/index.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/routes/index.ts) ou nos componentes de front
-* **Problema:** O backend registra `routes.use("/admins", adminRoutes)`, mas os componentes do frontend chamam `/admin/list/...`.
+* **Problema:** O backend registra `routes.use("/admin", adminRoutes)`, mas os componentes do frontend chamam `/admins/list/...`.
 * **Sintoma:** Requisições administrativas retornam **404 Not Found**.
-* **Solução:** Aceitar ambas as rotas no backend ou padronizar para `/admin`.
+* **Solução:** Padronizar para `/admin`.
 
 ---
 
-#### `TASK-BE-08`: Permissões de pagamento para motoristas (RF08)
+#### ✅ `TASK-BE-08`: Permissões de pagamento para motoristas (RF08)
 * **Arquivo:** [`backend/src/routes/payment.routes.ts`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/backend/src/routes/payment.routes.ts)
 * **Problema:** A rota possui `requireRole("student")` como middleware global, impedindo o motorista de acessar a API para marcar pagamentos manuais.
 * **Solução:** Reorganizar as rotas para que `/me/*` seja restrito a estudantes, e adicionar rotas para motorista listar pagamentos e marcar pagamento por aluno (`POST /payments/:studentId/pay`).
 
 ---
 
-## 🎨 Fase 6 — Ajustes no Frontend e UI/UX (Pendentes 🚀)
+## 🎨 Fase 6 — Ajustes no Frontend e UI/UX (Concluídas ✅)
 
 Após as correções no backend, as seguintes tarefas alinharão a interface do usuário:
 
-#### `TASK-FE-01`: Ajuste das URLs de administração
+#### ✅ `TASK-FE-01`: Ajuste das URLs de administração
 * **Arquivos:** [`DriverManagement.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/admin/DriverManagement.tsx) e [`StudentManagement.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/admin/StudentManagement.tsx)
 * **Ação:** Sincronizar as chamadas de API com a rota padronizada no backend.
 
-#### `TASK-FE-02`: Exibição em tempo real do status de embarque e presença na lista do motorista
+#### ✅ `TASK-FE-02`: Exibição em tempo real do status de embarque e presença na lista do motorista
 * **Arquivo:** [`DriverStudentList.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/driver/DriverStudentList.tsx)
 * **Ação:** Consumir os campos `isBoarded` e `todayStatus` retornados pela API atualizada, exibindo badges coloridos (ex.: Verde para "Embarcado", Azul para "Vai normal", Cinza para "Não vai hoje").
 
-#### `TASK-FE-03`: Destaque visual do status ativo do aluno (UX-03)
-* **Arquivo:** [`StudentDailyStatus.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/student/StudentDailyStatus.tsx)
+#### ✅ `TASK-FE-03`: Destaque visual do status ativo do aluno (UX-03)
+* **Arquivo:** [`DailyStatusCard.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/dailyStatus/DailyStatusCard.tsx)
 * **Ação:** O botão do status atualmente selecionado deve ter destaque visual evidente (estilo sólido / ativo) para que o aluno saiba com clareza seu status atual sem dúvidas.
 
-#### `TASK-FE-04`: Timestamp e indicador de polling ativo (UX-06)
-* **Arquivos:** [`DriverHome.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/pages/DriverHome.tsx) e [`StudentHome.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/pages/StudentHome.tsx)
+#### ✅ `TASK-FE-04`: Timestamp e indicador de polling ativo (UX-06)
+* **Arquivos:** [`DriverHome.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/pages/DriverHome.tsx) e [`DailyStatusCard.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/dailyStatus/DailyStatusCard.tsx)
 * **Ação:** Incluir legenda sutil: *"Atualizado às 17:42 • Ao vivo"*, transmitindo confiança e clareza sobre o tempo real.
 
-#### `TASK-FE-05`: Tratamento de erro resiliente e feedbacks com toast/notificação
-* **Arquivos:** Componentes de ação (`StudentHome`, `DriverStudentList`)
+#### ✅ `TASK-FE-05`: Tratamento de erro resiliente e feedbacks com toast/notificação
+* **Arquivos:** [`Toast.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/components/Toast.tsx), [`App.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/App.tsx), [`DriverHome.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/pages/DriverHome.tsx), [`DriverStudentList.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/driver/DriverStudentList.tsx), [`DriverManagement.tsx`](file:///c:/Users/HP%20LAPTOP/Desktop/UniDrive/frontend/src/features/admin/DriverManagement.tsx)
 * **Ação:** Substituir chamadas nativas de `alert()` por mensagens de feedback integradas ao design do app.
 
 ---
