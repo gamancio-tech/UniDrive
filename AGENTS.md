@@ -47,7 +47,7 @@ Cada pasta (`frontend/`, `backend/`) tem seu próprio `package.json` e é tratad
 - RF04: check-in de embarque (aluno ou motorista marca)
 - RF05: mural de avisos do motorista (via única)
 - RF06: cancelamento do dia inteiro pelo motorista
-- RF07/RF08: lembrete de pagamento configurável + marcação manual de "pago"
+- RF07/RF08: lembrete de pagamento configurável + aluno informa pagamento e motorista confirma a baixa manual
 - RF09: cadastro/gestão de alunos pelo motorista
 
 Lista completa e critérios em `docs/02-requisitos.md`.

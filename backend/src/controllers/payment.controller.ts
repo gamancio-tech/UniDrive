@@ -26,22 +26,35 @@ export const paymentController = {
     }
   },
 
-  /** RF08 — POST /api/payments/me/pay */
-  async markPaid(req: Request, res: Response, next: NextFunction) {
+  /** RF08 — POST /api/payments/me/pay (Aluno informa que realizou o pagamento) */
+  async requestPayment(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.user!.id;
-      const cycle = await paymentService.markCurrentCyclePaid(studentId, "student");
+      const cycle = await paymentService.requestCurrentCyclePayment(studentId);
       res.status(StatusCodeHttp.OK).json(cycle);
     } catch (err) {
       next(err);
     }
   },
 
-  /** RF08 — POST /api/payments/:studentId/pay */
-  async markPaidByDriver(req: Request, res: Response, next: NextFunction) {
+  /** RF08 — POST /api/payments/:studentId/pay (Motorista confirma o pagamento do aluno) */
+  async confirmPaidByDriver(req: Request, res: Response, next: NextFunction) {
     try {
       const { studentId } = req.params;
-      const cycle = await paymentService.markCurrentCyclePaid(studentId, "driver");
+      const driverId = req.user!.id;
+      const cycle = await paymentService.confirmPaymentByDriver(studentId, driverId);
+      res.status(StatusCodeHttp.OK).json(cycle);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** POST /api/payments/:studentId/reject (Motorista recusa confirmação se o pagamento não foi recebido) */
+  async rejectPaymentByDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { studentId } = req.params;
+      const driverId = req.user!.id;
+      const cycle = await paymentService.rejectPaymentByDriver(studentId, driverId);
       res.status(StatusCodeHttp.OK).json(cycle);
     } catch (err) {
       next(err);

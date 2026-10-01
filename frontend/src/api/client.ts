@@ -8,6 +8,40 @@ export const authStorage = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
+/**
+ * Desloga o usuário da aplicação, desinscreve as notificações push do aparelho
+ * para não receber avisos de contas deslogadas, e recarrega para a tela inicial.
+ */
+export async function logout(): Promise<void> {
+  try {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          const endpoint = sub.endpoint;
+          // Comunica o backend para remover a inscrição do banco
+          await fetch(`${API_URL}/api/push/unsubscribe`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(authStorage.getToken() ? { Authorization: `Bearer ${authStorage.getToken()}` } : {}),
+            },
+            body: JSON.stringify({ endpoint }),
+          }).catch(() => {});
+          // Cancela no PushManager do navegador
+          await sub.unsubscribe().catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Aviso ao desinscrever notificações durante logout:", err);
+  } finally {
+    authStorage.clear();
+    window.location.reload();
+  }
+}
+
 export interface DecodedTokenPayload {
   id?: string;
   role?: "driver" | "student" | "admin";

@@ -10,6 +10,20 @@ export const paymentRepository = {
     });
   },
 
+  requestPayment(studentId: string, referenceMonth: Date) {
+    return prisma.paymentCycle.update({
+      where: { studentId_referenceMonth: { studentId, referenceMonth } },
+      data: { paymentRequestedAt: new Date() },
+    });
+  },
+
+  rejectPayment(studentId: string, referenceMonth: Date) {
+    return prisma.paymentCycle.update({
+      where: { studentId_referenceMonth: { studentId, referenceMonth } },
+      data: { paymentRequestedAt: null },
+    });
+  },
+
   markPaid(studentId: string, referenceMonth: Date, markedBy: MarkedBy) {
     return prisma.paymentCycle.update({
       where: { studentId_referenceMonth: { studentId, referenceMonth } },

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { BottomNavigation } from "../components/BottomNavigation";
-import { authStorage } from "../api/client";
+import { logout } from "../api/client";
 import { NotificationBanner } from "../components/NotificationBanner";
 import { StudentPaymentsCard } from "../features/payments/StudentPaymentsCard";
 import { AnnouncementList } from "../features/announcements/AnnouncementList";
@@ -25,8 +25,7 @@ export function StudentHome() {
   } = useDailyStatus();
 
   const handleLogout = () => {
-    authStorage.clear();
-    window.location.reload();
+    logout();
   };
 
   return (

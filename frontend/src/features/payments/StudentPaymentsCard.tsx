@@ -42,7 +42,7 @@ export const StudentPaymentsCard: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  const handleMarkPaid = async () => {
+  const handleNotifyPayment = async () => {
     try {
       setMarkingPaid(true);
       const updated = await payMyCycle();
@@ -50,9 +50,9 @@ export const StudentPaymentsCard: React.FC = () => {
       setHistory((prev) =>
         prev.map((item) => (item.id === updated.id ? updated : item))
       );
-      showToast("Mensalidade marcada como paga!", "success");
+      showToast("Pagamento informado! O motorista irá conferir e confirmar a baixa.", "success");
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao registrar pagamento.", "error");
+      showToast(err instanceof Error ? err.message : "Erro ao registrar aviso de pagamento.", "error");
     } finally {
       setMarkingPaid(false);
     }
@@ -110,6 +110,7 @@ export const StudentPaymentsCard: React.FC = () => {
   }
 
   const isCurrentPaid = Boolean(currentCycle?.paidAt);
+  const isAwaitingConfirmation = !isCurrentPaid && Boolean(currentCycle?.paymentRequestedAt);
   const previousHistory = history.filter((h) => h.id !== currentCycle?.id);
 
   return (
@@ -121,6 +122,8 @@ export const StudentPaymentsCard: React.FC = () => {
         action={
           isCurrentPaid ? (
             <Badge variant="success">Pago</Badge>
+          ) : isAwaitingConfirmation ? (
+            <Badge variant="warning">Aguardando Confirmação</Badge>
           ) : (
             <Badge variant="danger">Pendente</Badge>
           )
@@ -144,15 +147,81 @@ export const StudentPaymentsCard: React.FC = () => {
               </div>
               <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 Pagamento registrado em {currentCycle?.paidAt ? formatDate(currentCycle.paidAt) : "data recente"}
-                {currentCycle?.markedBy === "driver"
-                  ? " (baixa confirmada pelo motorista)"
-                  : " (confirmado por você)"}
+                {" (baixa confirmada pelo motorista)"}
+              </div>
+            </div>
+          ) : isAwaitingConfirmation ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+              <div
+                style={{
+                  background: "var(--accent-gold-light, rgba(245, 158, 11, 0.1))",
+                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "1rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.4rem",
+                }}
+              >
+                <div style={{ fontWeight: 700, color: "var(--accent-gold-dark, #b45309)", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span>⏳</span> Aguardando Confirmação do Motorista
+                </div>
+                <div style={{ fontSize: "0.86rem", color: "var(--text-main)", lineHeight: 1.5 }}>
+                  Você informou que realizou o pagamento
+                  {currentCycle?.paymentRequestedAt ? ` em ${formatDate(currentCycle.paymentRequestedAt)}` : ""}.
+                  O motorista irá conferir o recebimento para confirmar a baixa no sistema.
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+                  Assim que for confirmado pelo motorista, o status mudará automaticamente para <strong>Pago</strong>.
+                </div>
+              </div>
+
+              {/* Box de Chave Pix para conferência se necessário */}
+              <div
+                style={{
+                  background: "var(--bg-page)",
+                  border: "1.5px dashed var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "0.75rem 1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.5rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                    Chave Pix da Van
+                  </div>
+                  <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--primary)", marginTop: "0.1rem" }}>
+                    motorista@unidrive.com
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopyPix("motorista@unidrive.com")}
+                  style={{
+                    background: copiedPix ? "var(--success-light)" : "var(--bg-card)",
+                    border: "1px solid var(--border-subtle)",
+                    color: copiedPix ? "var(--success-dark)" : "var(--primary-text)",
+                    padding: "0.35rem 0.75rem",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    width: "auto",
+                    minHeight: "32px",
+                  }}
+                >
+                  {copiedPix ? "✓ Copiado!" : "Copiar Chave"}
+                </button>
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
               <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.5, margin: 0 }}>
-                Sua mensalidade deste mês consta como pendente. Realize o pagamento diretamente ao motorista e confirme abaixo:
+                Sua mensalidade deste mês consta como pendente. Realize o pagamento diretamente ao motorista e informe abaixo:
               </p>
 
               {/* Box de Instrução e Cópia Pix */}
@@ -199,11 +268,11 @@ export const StudentPaymentsCard: React.FC = () => {
 
               <Button
                 variant="primary"
-                onClick={handleMarkPaid}
+                onClick={handleNotifyPayment}
                 isLoading={markingPaid}
                 style={{ minHeight: "50px", fontSize: "1rem" }}
               >
-                ✓ Marcar Mensalidade como Paga
+                ✓ Já Paguei (Avisar Motorista)
               </Button>
             </div>
           )}
@@ -262,13 +331,17 @@ export const StudentPaymentsCard: React.FC = () => {
                   </span>
                   <span className="list-item-sub">
                     {item.paidAt
-                      ? `Pago em ${formatDate(item.paidAt)} (${item.markedBy === "driver" ? "Confirmado pelo motorista" : "Confirmado por você"})`
+                      ? `Pago em ${formatDate(item.paidAt)} (Confirmado pelo motorista)`
+                      : item.paymentRequestedAt
+                      ? "Aguardando confirmação do motorista"
                       : "Pendente"}
                   </span>
                 </div>
                 <div>
                   {item.paidAt ? (
                     <Badge variant="success">Pago</Badge>
+                  ) : item.paymentRequestedAt ? (
+                    <Badge variant="warning">Aguardando</Badge>
                   ) : (
                     <Badge variant="danger">Pendente</Badge>
                   )}

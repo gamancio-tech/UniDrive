@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { apiRequest, authStorage } from "../api/client";
+import { apiRequest, logout } from "../api/client";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 import { DriverStudentList } from "../features/driver/DriverStudentList";
 import { BottomNavigation } from "../components/BottomNavigation";
@@ -80,8 +80,7 @@ export function DriverHome() {
   }
 
   const handleLogout = () => {
-    authStorage.clear();
-    window.location.reload();
+    logout();
   };
 
   const effectiveTotal = Math.max(totalStudents, missingCount ?? 0, 1);

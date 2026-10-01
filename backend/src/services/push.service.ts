@@ -20,6 +20,17 @@ export const pushService = {
     return pushSubscriptionRepository.save(input);
   },
 
+  async unsubscribe(endpoint?: string, userId?: string) {
+    if (endpoint) {
+      console.log(`[Push] Removendo inscrição por endpoint: ${endpoint.slice(0, 45)}...`);
+      return pushSubscriptionRepository.deleteByEndpoint(endpoint);
+    }
+    if (userId) {
+      console.log(`[Push] Removendo inscrições do usuário: ${userId}`);
+      return pushSubscriptionRepository.deleteByUserId(userId);
+    }
+  },
+
   /** Envia uma notificação a um conjunto de alunos (usado pelo RF03 e pelo mural, RF05). */
   async notifyStudents(studentIds: string[], payload: { title: string; body: string }) {
     console.log(`[Push] Disparando notificação para ${studentIds.length} aluno(s): "${payload.title}"`);

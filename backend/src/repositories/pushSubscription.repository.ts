@@ -6,13 +6,19 @@ interface SaveSubscriptionInput {
   keys: Prisma.InputJsonValue;
   studentId?: string;
   driverId?: string;
+  adminId?: string;
 }
 
 export const pushSubscriptionRepository = {
   save(data: SaveSubscriptionInput) {
     return prisma.pushSubscription.upsert({
       where: { endpoint: data.endpoint },
-      update: { keys: data.keys },
+      update: {
+        keys: data.keys,
+        studentId: data.studentId ?? null,
+        driverId: data.driverId ?? null,
+        adminId: data.adminId ?? null,
+      },
       create: data,
     });
   },
@@ -33,5 +39,17 @@ export const pushSubscriptionRepository = {
 
   deleteByEndpoint(endpoint: string) {
     return prisma.pushSubscription.deleteMany({ where: { endpoint } });
+  },
+
+  deleteByUserId(userId: string) {
+    return prisma.pushSubscription.deleteMany({
+      where: {
+        OR: [
+          { studentId: userId },
+          { driverId: userId },
+          { adminId: userId },
+        ],
+      },
+    });
   },
 };

@@ -61,8 +61,9 @@ Modelagem relacional (PostgreSQL via Prisma). Todas as entidades vinculadas a um
 | studentId | uuid | FK → Student |
 | referenceMonth | date | ex.: 2026-09-01, representando o mês de referência |
 | reminderDaysBefore | int | configurável pelo aluno, padrão 3 |
-| paidAt | datetime? | nulo = pendente |
+| paidAt | datetime? | nulo = pendente ou aguardando confirmação |
 | markedBy | enum? | `student` \| `driver` |
+| paymentRequestedAt | datetime? | data/hora em que o aluno informou o pagamento (aguardando confirmação do motorista) |
 
 ### PushSubscription (Inscrição de notificação push)
 | Campo | Tipo | Observação |

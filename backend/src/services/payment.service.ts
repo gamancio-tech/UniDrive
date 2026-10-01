@@ -17,9 +17,78 @@ export const paymentService = {
     return paymentRepository.findOrCreateCycle(studentId, firstDayOfCurrentMonth(), DEFAULT_REMINDER_DAYS_BEFORE);
   },
 
-  /** RF08: marca o ciclo do mês atual como pago, interrompendo os lembretes. */
+  /** 
+   * Nova Regra de Negócio: O aluno não marca diretamente como pago.
+   * Ele apenas informa que realizou o pagamento (solicita confirmação).
+   * O motorista recebe notificação e precisará confirmar para que conste como pago.
+   */
+  async requestCurrentCyclePayment(studentId: string) {
+    const current = await this.getOrCreateCurrentCycle(studentId);
+    if (current.paidAt) {
+      return current;
+    }
+
+    const updated = await paymentRepository.requestPayment(studentId, firstDayOfCurrentMonth());
+
+    // Notifica o motorista da van
+    const student = await studentRepository.findById(studentId);
+    if (student?.driverId) {
+      pushService.notifyDriver(student.driverId, {
+        title: "Pagamento informado",
+        body: `${student.name} informou que realizou o pagamento da van. Confirme no app.`,
+      }).catch((err) => console.error("Erro ao notificar motorista sobre pagamento:", err));
+    }
+
+    return updated;
+  },
+
+  /** 
+   * Confirmação manual de pagamento realizada pelo motorista.
+   * Somente aqui o ciclo recebe paidAt e o aluno é notificado da confirmação.
+   */
+  async confirmPaymentByDriver(studentId: string, driverId: string) {
+    const student = await studentRepository.findById(studentId);
+    if (!student || student.driverId !== driverId) {
+      throw new Error("Aluno não encontrado ou não pertence a esta van.");
+    }
+
+    await this.getOrCreateCurrentCycle(studentId);
+    const updated = await paymentRepository.markPaid(studentId, firstDayOfCurrentMonth(), "driver");
+
+    // Notifica o aluno que o motorista confirmou o pagamento
+    pushService.notifyStudents([studentId], {
+      title: "Pagamento confirmado! 🚐✅",
+      body: "O motorista confirmou o recebimento da sua mensalidade.",
+    }).catch((err) => console.error("Erro ao notificar aluno sobre confirmação de pagamento:", err));
+
+    return updated;
+  },
+
+  /** 
+   * Rejeição pelo motorista caso o pagamento não tenha sido identificado.
+   * Reseta o status de solicitação e avisa o aluno.
+   */
+  async rejectPaymentByDriver(studentId: string, driverId: string) {
+    const student = await studentRepository.findById(studentId);
+    if (!student || student.driverId !== driverId) {
+      throw new Error("Aluno não encontrado ou não pertence a esta van.");
+    }
+
+    await this.getOrCreateCurrentCycle(studentId);
+    const updated = await paymentRepository.rejectPayment(studentId, firstDayOfCurrentMonth());
+
+    // Notifica o aluno sobre a não identificação
+    pushService.notifyStudents([studentId], {
+      title: "Pagamento não confirmado",
+      body: "O motorista não identificou o seu pagamento da van. Entre em contato se necessário.",
+    }).catch((err) => console.error("Erro ao notificar aluno sobre pagamento rejeitado:", err));
+
+    return updated;
+  },
+
+  /** RF08: marca o ciclo do mês atual como pago, interrompendo os lembretes (retrocompatibilidade). */
   async markCurrentCyclePaid(studentId: string, markedBy: MarkedBy) {
-    await this.getOrCreateCurrentCycle(studentId); // garante que o ciclo existe antes de marcar
+    await this.getOrCreateCurrentCycle(studentId);
     return paymentRepository.markPaid(studentId, firstDayOfCurrentMonth(), markedBy);
   },
 
@@ -33,8 +102,7 @@ export const paymentService = {
   },
 
   /**
-   * RF07: verifica pendências e envia lembretes. Pensado para ser chamado uma vez por dia
-   * por um agendador (ex.: node-cron ou um cron job externo) — ainda não incluído neste scaffold.
+   * RF07: verifica pendências e envia lembretes.
    */
   async sendDueRemindersForDriver(driverId: string) {
     const students = await studentRepository.listActiveByDriver(driverId);
@@ -42,10 +110,11 @@ export const paymentService = {
 
     for (const student of students) {
       const cycle = await this.getOrCreateCurrentCycle(student.id);
-      if (cycle.paidAt) continue;
+      // Se já está pago ou se o aluno já avisou que pagou (aguardando confirmação), não cobra
+      if (cycle.paidAt || cycle.paymentRequestedAt) continue;
 
       const dueDate = new Date(cycle.referenceMonth);
-      dueDate.setUTCDate(dueDate.getUTCDate() + 1); // simplificação: vencimento no dia 1 do mês seguinte fica para refinar
+      dueDate.setUTCDate(dueDate.getUTCDate() + 1);
       const reminderDate = new Date(dueDate);
       reminderDate.setUTCDate(reminderDate.getUTCDate() - cycle.reminderDaysBefore);
 

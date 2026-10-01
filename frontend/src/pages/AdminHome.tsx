@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { apiRequest, authStorage, isSuperAdminUser } from "../api/client";
+import { apiRequest, logout, isSuperAdminUser } from "../api/client";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -51,8 +51,7 @@ export function AdminHome() {
   }, []);
 
   const handleLogout = () => {
-    authStorage.clear();
-    window.location.reload();
+    logout();
   };
 
   const handleCreateAdmin = async (e: React.FormEvent) => {

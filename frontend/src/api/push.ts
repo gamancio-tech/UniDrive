@@ -130,6 +130,47 @@ export async function subscribeToPush(): Promise<{ success: boolean; message: st
   return { success: true, message: "Notificações ativadas com sucesso!" };
 }
 
+/**
+ * Cancela a inscrição de notificações Web Push do navegador e remove do backend.
+ */
+export async function unsubscribeFromPush(): Promise<{ success: boolean; message: string }> {
+  if (!("serviceWorker" in navigator)) {
+    return { success: false, message: "Service worker não suportado." };
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) {
+      return { success: true, message: "Nenhuma inscrição ativa." };
+    }
+
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      return { success: true, message: "Nenhuma inscrição ativa." };
+    }
+
+    const endpoint = sub.endpoint;
+
+    // 1. Notifica o backend para deletar a inscrição do banco de dados
+    try {
+      await apiRequest("/push/unsubscribe", {
+        method: "POST",
+        body: { endpoint },
+      });
+    } catch (e) {
+      console.warn("Falha ao comunicar cancelamento de push ao backend:", e);
+    }
+
+    // 2. Cancela a inscrição no navegador / PushManager
+    await sub.unsubscribe();
+
+    return { success: true, message: "Notificações desativadas com sucesso neste aparelho." };
+  } catch (err) {
+    console.error("Erro ao cancelar inscrição push:", err);
+    throw new Error(err instanceof Error ? err.message : "Erro ao desativar notificações.");
+  }
+}
+
 /** Dispara uma notificação de teste para o próprio dispositivo atual */
 export async function sendTestPush(): Promise<{ delivered: number; total: number }> {
   return apiRequest<{ delivered: number; total: number }>("/push/test", {

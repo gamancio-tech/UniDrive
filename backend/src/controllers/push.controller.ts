@@ -13,13 +13,30 @@ export const pushController = {
     try {
       const { endpoint, keys } = req.body;
       const isDriver = req.user!.role === "driver";
+      const isAdmin = req.user!.role === "admin";
       await pushService.saveSubscription({
         endpoint,
         keys,
-        studentId: isDriver ? undefined : req.user!.id,
+        studentId: !isDriver && !isAdmin ? req.user!.id : undefined,
         driverId: isDriver ? req.user!.id : undefined,
+        adminId: isAdmin ? req.user!.id : undefined,
       });
       res.status(StatusCodeHttp.CREATED).json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** POST /api/push/unsubscribe */
+  async unsubscribe(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { endpoint } = req.body;
+      const userId = req.user?.id;
+      if (!endpoint && !userId) {
+        return res.status(StatusCodeHttp.BAD_REQUEST).json({ error: "Endpoint ou usuário obrigatório para desinscrever." });
+      }
+      await pushService.unsubscribe(endpoint, userId);
+      res.status(StatusCodeHttp.OK).json({ ok: true, message: "Inscrição removida com sucesso." });
     } catch (err) {
       next(err);
     }

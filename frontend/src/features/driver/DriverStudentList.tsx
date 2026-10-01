@@ -7,7 +7,12 @@ import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
 import { Avatar } from "../../components/Avatar";
 import { useToast } from "../../components/Toast";
-import { PaymentCycle, getStudentPaymentStatus, markStudentPaidByDriver } from "../../api/payments";
+import {
+  PaymentCycle,
+  getStudentPaymentStatus,
+  markStudentPaidByDriver,
+  rejectStudentPaymentByDriver,
+} from "../../api/payments";
 import { deactivateDriverStudent } from "../../api/students";
 
 export interface StudentItem {
@@ -29,6 +34,7 @@ export const DriverStudentList: React.FC = () => {
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
   const [paymentStatuses, setPaymentStatuses] = useState<Record<string, PaymentCycle>>({});
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
+  const [rejectingPaymentId, setRejectingPaymentId] = useState<string | null>(null);
   const [studentToDeactivate, setStudentToDeactivate] = useState<StudentItem | null>(null);
   const [deactivating, setDeactivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,16 +146,29 @@ export const DriverStudentList: React.FC = () => {
     }
   };
 
-  const handleMarkPayment = async (studentId: string) => {
+  const handleConfirmPayment = async (studentId: string) => {
     try {
       setMarkingPaidId(studentId);
       const updated = await markStudentPaidByDriver(studentId);
       setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
-      showToast("Baixa de pagamento registrada com sucesso!", "success");
+      showToast("Pagamento confirmado com sucesso!", "success");
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao registrar pagamento.", "error");
+      showToast(err instanceof Error ? err.message : "Erro ao confirmar pagamento.", "error");
     } finally {
       setMarkingPaidId(null);
+    }
+  };
+
+  const handleRejectPayment = async (studentId: string) => {
+    try {
+      setRejectingPaymentId(studentId);
+      const updated = await rejectStudentPaymentByDriver(studentId);
+      setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
+      showToast("Solicitação de pagamento recusada.", "info");
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao recusar pagamento.", "error");
+    } finally {
+      setRejectingPaymentId(null);
     }
   };
 
@@ -199,6 +218,7 @@ export const DriverStudentList: React.FC = () => {
             {students.map((student) => {
               const payment = paymentStatuses[student.id];
               const isPaid = payment ? Boolean(payment.paidAt) : null;
+              const isAwaitingConfirmation = payment ? (!isPaid && Boolean(payment.paymentRequestedAt)) : false;
               const isCheckingThis = checkingInId === student.id;
 
               return (
@@ -222,6 +242,51 @@ export const DriverStudentList: React.FC = () => {
                           <Badge variant="success" style={{ fontSize: "0.68rem" }}>
                             Pago
                           </Badge>
+                        ) : isAwaitingConfirmation ? (
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" }}>
+                            <Badge variant="warning" style={{ fontSize: "0.68rem" }}>
+                              ⏳ Confirmar Pgto
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmPayment(student.id)}
+                              disabled={markingPaidId === student.id || rejectingPaymentId === student.id}
+                              style={{
+                                background: "var(--success, #22c55e)",
+                                border: "none",
+                                color: "#fff",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                padding: "0.18rem 0.45rem",
+                                borderRadius: "4px",
+                                minHeight: "auto",
+                                width: "auto",
+                              }}
+                            >
+                              {markingPaidId === student.id ? "..." : "✓ Confirmar"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectPayment(student.id)}
+                              disabled={markingPaidId === student.id || rejectingPaymentId === student.id}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "var(--danger, #ef4444)",
+                                fontSize: "0.72rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                padding: 0,
+                                minHeight: "auto",
+                                width: "auto",
+                                textDecoration: "underline",
+                              }}
+                              title="Recusar confirmação"
+                            >
+                              {rejectingPaymentId === student.id ? "..." : "Recusar"}
+                            </button>
+                          </div>
                         ) : (
                           <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
                             <Badge variant="danger" style={{ fontSize: "0.68rem" }}>
@@ -229,7 +294,7 @@ export const DriverStudentList: React.FC = () => {
                             </Badge>
                             <button
                               type="button"
-                              onClick={() => handleMarkPayment(student.id)}
+                              onClick={() => handleConfirmPayment(student.id)}
                               disabled={markingPaidId === student.id}
                               style={{
                                 background: "transparent",

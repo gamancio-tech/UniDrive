@@ -107,6 +107,7 @@ model PaymentCycle {
   reminderDaysBefore  Int       @default(3)
   paidAt              DateTime?
   markedBy            MarkedBy?
+  paymentRequestedAt  DateTime?
 
   @@unique([studentId, referenceMonth])
 }

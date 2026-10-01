@@ -11,7 +11,7 @@
 | RF05 | O motorista pode publicar um aviso (mural), visível a todos os alunos, com notificação | Via única (motorista → alunos), sem resposta dentro do app. |
 | RF06 | O motorista pode cancelar o dia inteiro (feriado, van quebrada etc.), zerando a necessidade de presença/contagem daquele dia | Evita notificações e contadores incorretos em dias sem van. |
 | RF07 | O sistema envia lembrete de pagamento ao aluno com antecedência configurável (padrão 3 dias antes e no dia) | Antecedência ajustável pelo aluno. |
-| RF08 | O aluno (ou o motorista) pode marcar o pagamento do mês como "pago", interrompendo os lembretes daquele ciclo | Pagamento em si ocorre fora do app (Pix direto ao motorista); o app só registra o status. |
+| RF08 | O aluno informa o pagamento da van (solicita confirmação); o motorista confere e confirma a baixa manual para que conste como "pago", interrompendo os lembretes daquele ciclo | Pagamento em si ocorre fora do app (Pix direto ao motorista); aluno avisa pelo app e o motorista confirma. |
 | RF09 | O motorista pode cadastrar, convidar e remover alunos | Convite via link ou código simples. |
 
 ## Requisitos não funcionais

@@ -5,8 +5,8 @@ import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
-import { getPushStatus, subscribeToPush, sendTestPush, PushStatus } from "../../api/push";
-import { authStorage } from "../../api/client";
+import { getPushStatus, subscribeToPush, unsubscribeFromPush, sendTestPush, PushStatus } from "../../api/push";
+import { logout } from "../../api/client";
 
 interface AppSettingsProps {
   role: "driver" | "student" | "admin";
@@ -53,6 +53,20 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
     }
   };
 
+  const handleDeactivatePush = async () => {
+    setActivatingPush(true);
+    try {
+      const res = await unsubscribeFromPush();
+      showToast(res.message, "info");
+      await checkPush();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao desativar notificações.";
+      showToast(msg, "error");
+    } finally {
+      setActivatingPush(false);
+    }
+  };
+
   const handleTestPush = async () => {
     setTestingPush(true);
     try {
@@ -67,8 +81,7 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
   };
 
   const handleLogout = () => {
-    authStorage.clear();
-    window.location.reload();
+    logout();
   };
 
   const isDarkMode = theme === "dark";
@@ -240,6 +253,18 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
                 disabled={pushStatus.permission === "denied"}
               >
                 🔔 Ativar Notificações no Dispositivo
+              </Button>
+            )}
+
+            {/* Se já ativado, botão para desativar */}
+            {pushStatus.isSubscribed && pushStatus.permission === "granted" && pushStatus.supported && (
+              <Button
+                variant="secondary"
+                onClick={handleDeactivatePush}
+                isLoading={activatingPush}
+                style={{ minHeight: "44px" }}
+              >
+                🔕 Desativar Notificações Neste Aparelho
               </Button>
             )}
 
