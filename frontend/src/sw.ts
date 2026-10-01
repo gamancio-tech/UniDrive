@@ -11,13 +11,26 @@ precacheAndRoute(self.__WB_MANIFEST);
 self.addEventListener("push", (event) => {
   if (!event.data) return;
 
-  const payload = event.data.json() as { title: string; body: string };
+  const payload = event.data.json() as {
+    title: string;
+    body: string;
+    icon?: string;
+    badge?: string;
+    tag?: string;
+    url?: string;
+  };
 
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-48.png",
+      // Ícone colorido grande exibido à direita/corpo da notificação
+      icon: payload.icon || "/icons/icon-192.png",
+      // Badge monocromático com fundo transparente para a barra de status do Android (evita quadrado branco)
+      badge: payload.badge || "/icons/badge-72.png",
+      tag: payload.tag || "unidrive-notification",
+      data: {
+        url: payload.url || "/",
+      },
     }),
   );
 });
