@@ -14,6 +14,7 @@ export interface StudentUser {
 export interface AdminUser {
   id: string;
   role: "admin";
+  isSuperAdmin?: boolean;
 }
 
 export type AuthenticatedUser = DriveUser | StudentUser | AdminUser;

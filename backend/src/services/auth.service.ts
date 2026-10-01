@@ -21,7 +21,7 @@ export const authService = {
       throw new AppError("E-mail ou senha inválidos.", StatusCodeHttp.UNAUTHORIZED);
     }
 
-    const token = signToken({ id: admin.id, role: "admin" });
+    const token = signToken({ id: admin.id, role: "admin", isSuperAdmin: admin.isSuperAdmin });
     return { admin, token };
   },
 

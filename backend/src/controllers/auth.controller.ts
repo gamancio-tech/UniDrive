@@ -8,7 +8,15 @@ export const authController = {
     try {
       const { email, password } = req.body;
       const { admin, token } = await authService.loginAdmin(email, password);
-      res.status(StatusCodeHttp.OK).json({ admin: { id: admin.id, name: admin.name, email: admin.email }, token });
+      res.status(StatusCodeHttp.OK).json({
+        admin: {
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          isSuperAdmin: admin.isSuperAdmin,
+        },
+        token,
+      });
     } catch (err) {
       next(err);
     }

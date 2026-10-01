@@ -4,9 +4,9 @@ import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { authStorage } from "../api/client";
 import { Button } from "../components/Button";
-import { Card } from "../components/Card";
-
 import { NotificationBanner } from "../components/NotificationBanner";
+import { StudentPaymentsCard } from "../features/payments/StudentPaymentsCard";
+import { AnnouncementList } from "../features/announcements/AnnouncementList";
 
 type StudentTab = "home" | "payments";
 
@@ -46,35 +46,24 @@ export function StudentHome() {
         </div>
 
         {activeTab === "home" && (
-          <>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <NotificationBanner />
             <DailyStatusCard
-            missingCount={missingCount}
-            cancelled={cancelled}
-            loading={loading}
-            isBoarded={isBoarded}
-            currentStatus={currentStatus}
-            lastUpdated={lastUpdated}
-            onSetStatus={setStatus}
-            onCheckIn={checkIn}
-            onCancelBoardedSelf={cancelBoardedSelf}
-          />
-          </>
+              missingCount={missingCount}
+              cancelled={cancelled}
+              loading={loading}
+              isBoarded={isBoarded}
+              currentStatus={currentStatus}
+              lastUpdated={lastUpdated}
+              onSetStatus={setStatus}
+              onCheckIn={checkIn}
+              onCancelBoardedSelf={cancelBoardedSelf}
+            />
+            <AnnouncementList />
+          </div>
         )}
 
-        {activeTab === "payments" && (
-          <Card
-            title="Pagamentos"
-            subtitle="Histórico e controle de mensalidades"
-          >
-            <div style={{ textAlign: "center", padding: "2rem 0", color: "hsl(var(--text-secondary))" }}>
-              <span style={{ fontSize: "2rem" }}>💰</span>
-              <p style={{ marginTop: "0.75rem" }}>
-                Funcionalidade de pagamentos em breve!
-              </p>
-            </div>
-          </Card>
-        )}
+        {activeTab === "payments" && <StudentPaymentsCard />}
       </main>
 
       <BottomNavigation

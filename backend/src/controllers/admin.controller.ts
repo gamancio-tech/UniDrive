@@ -11,8 +11,8 @@ export const adminController = {
     try {
       if (!req.user) {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
-      } else if (!hasRole(req.user, "admin")) {
-        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin") || !req.user.isSuperAdmin) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas o Super Administrador pode cadastrar novos administradores." });
       }
 
       const { name, email, password } = req.body;
@@ -156,6 +156,38 @@ export const adminController = {
       const { id } = req.params;
       const driver = await driverService.findById(id);
       res.status(StatusCodeHttp.OK).json(driver);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getAdmins(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin") || !req.user.isSuperAdmin) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas o Super Administrador pode visualizar os perfis de administradores." });
+      }
+
+      const admins = await adminService.listAdmins();
+      res.status(StatusCodeHttp.OK).json(admins);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deleteAdmin(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      } else if (!hasRole(req.user, "admin") || !req.user.isSuperAdmin) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas o Super Administrador pode remover administradores." });
+      }
+
+      const { id } = req.params;
+      const currentAdminId = req.user.id;
+      const deleted = await adminService.deleteAdmin(id, currentAdminId);
+      res.status(StatusCodeHttp.OK).json({ message: "Administrador removido com sucesso.", admin: deleted });
     } catch (err) {
       next(err);
     }

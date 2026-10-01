@@ -8,6 +8,31 @@ export const authStorage = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
+export interface DecodedTokenPayload {
+  id?: string;
+  role?: "driver" | "student" | "admin";
+  driverId?: string;
+  isSuperAdmin?: boolean;
+  [key: string]: unknown;
+}
+
+export function getDecodedToken(): DecodedTokenPayload | null {
+  const token = authStorage.getToken();
+  if (!token) return null;
+
+  try {
+    const payloadBase64 = token.split(".")[1];
+    return JSON.parse(atob(payloadBase64)) as DecodedTokenPayload;
+  } catch {
+    return null;
+  }
+}
+
+export function isSuperAdminUser(): boolean {
+  const payload = getDecodedToken();
+  return payload?.role === "admin" && Boolean(payload?.isSuperAdmin);
+}
+
 interface RequestOptions {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;

@@ -1,11 +1,13 @@
 import { Router } from "express";
-import { authMiddleware, requireRole } from "../middlewares/auth.middleware";
+import { authMiddleware, requireRole, requireSuperAdmin } from "../middlewares/auth.middleware";
 import { adminController } from "../controllers/admin.controller";
 
 export const adminRoutes = Router();
 adminRoutes.use(authMiddleware, requireRole("admin"));
 
-adminRoutes.post("/admin", adminController.createAdmin);
+adminRoutes.post("/admin", requireSuperAdmin, adminController.createAdmin);
+adminRoutes.get("/list/admins", requireSuperAdmin, adminController.getAdmins);
+adminRoutes.delete("/admin/:id", requireSuperAdmin, adminController.deleteAdmin);
 adminRoutes.post("/driver", adminController.createDriver);
 adminRoutes.post("/student", adminController.createStudent);
 adminRoutes.get("/list/drivers", adminController.getDrivers);

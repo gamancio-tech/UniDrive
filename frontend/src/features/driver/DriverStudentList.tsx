@@ -6,6 +6,8 @@ import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
 import { useToast } from "../../components/Toast";
+import { PaymentCycle, getStudentPaymentStatus, markStudentPaidByDriver } from "../../api/payments";
+import { deactivateDriverStudent } from "../../api/students";
 
 export interface StudentItem {
   id: string;
@@ -24,6 +26,10 @@ export const DriverStudentList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
+  const [paymentStatuses, setPaymentStatuses] = useState<Record<string, PaymentCycle>>({});
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
+  const [studentToDeactivate, setStudentToDeactivate] = useState<StudentItem | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form states
@@ -36,6 +42,20 @@ export const DriverStudentList: React.FC = () => {
       if (isInitial) setLoading(true);
       const data = await apiRequest<StudentItem[]>("/students");
       setStudents(data);
+
+      const paymentEntries = await Promise.allSettled(
+        data.map(async (s) => {
+          const status = await getStudentPaymentStatus(s.id);
+          return { id: s.id, status };
+        })
+      );
+      const paymentMap: Record<string, PaymentCycle> = {};
+      paymentEntries.forEach((entry) => {
+        if (entry.status === "fulfilled") {
+          paymentMap[entry.value.id] = entry.value.status;
+        }
+      });
+      setPaymentStatuses(paymentMap);
     } catch (err: unknown) {
       console.error("Erro ao carregar alunos:", err);
     } finally {
@@ -120,6 +140,34 @@ export const DriverStudentList: React.FC = () => {
     }
   };
 
+  const handleMarkPayment = async (studentId: string) => {
+    try {
+      setMarkingPaidId(studentId);
+      const updated = await markStudentPaidByDriver(studentId);
+      setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
+      showToast("Baixa de pagamento registrada com sucesso!", "success");
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao registrar pagamento.", "error");
+    } finally {
+      setMarkingPaidId(null);
+    }
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!studentToDeactivate) return;
+    try {
+      setDeactivating(true);
+      await deactivateDriverStudent(studentToDeactivate.id);
+      setStudents((prev) => prev.filter((s) => s.id !== studentToDeactivate.id));
+      setStudentToDeactivate(null);
+      showToast("Aluno desativado da van com sucesso!", "success");
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao desativar aluno.", "error");
+    } finally {
+      setDeactivating(false);
+    }
+  };
+
   return (
     <>
       <Card
@@ -152,6 +200,30 @@ export const DriverStudentList: React.FC = () => {
                     {getTodayStatusBadge(student.todayStatus)}
                   </div>
                   <span className="list-item-sub">{student.email}</span>
+                  {(() => {
+                    const payment = paymentStatuses[student.id];
+                    if (!payment) return null;
+                    const isPaid = Boolean(payment.paidAt);
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
+                        {isPaid ? (
+                          <Badge variant="success">Mensalidade Paga</Badge>
+                        ) : (
+                          <>
+                            <Badge variant="danger">Mensalidade Pendente</Badge>
+                            <Button
+                              variant="ghost"
+                              style={{ fontSize: "0.72rem", padding: "0.2rem 0.5rem", width: "auto" }}
+                              onClick={() => handleMarkPayment(student.id)}
+                              disabled={markingPaidId === student.id}
+                            >
+                              {markingPaidId === student.id ? "..." : "Dar Baixa"}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="list-item-actions">
                   {student.isBoarded ? (
@@ -179,6 +251,14 @@ export const DriverStudentList: React.FC = () => {
                       </Button>
                     </>
                   )}
+                  <Button
+                    variant="danger"
+                    style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
+                    onClick={() => setStudentToDeactivate(student)}
+                    title="Desativar aluno da van"
+                  >
+                    Desativar
+                  </Button>
                 </div>
               </div>
             ))}
@@ -231,6 +311,38 @@ export const DriverStudentList: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal de Confirmação de Desativação */}
+      <Modal
+        isOpen={Boolean(studentToDeactivate)}
+        onClose={() => setStudentToDeactivate(null)}
+        title="Desativar Aluno da Van"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>
+            Deseja realmente desativar <strong>{studentToDeactivate?.name}</strong> da sua van?
+          </p>
+          <p style={{ margin: 0, color: "hsl(var(--text-secondary))", fontSize: "0.85rem" }}>
+            O aluno não constará mais nas listas de presença diária e contagem de faltantes.
+          </p>
+          <div className="button-group" style={{ margin: "0.5rem 0 0" }}>
+            <Button
+              variant="danger"
+              onClick={handleConfirmDeactivate}
+              isLoading={deactivating}
+            >
+              Confirmar Desativação
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setStudentToDeactivate(null)}
+              disabled={deactivating}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
       </Modal>
     </>
   );

@@ -6,6 +6,7 @@ import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
 import { useToast } from "../../components/Toast";
+import { deactivateAdminStudent, reactivateAdminStudent, getStudentById, StudentAdmin } from "../../api/admin";
 import type { Driver } from "./DriverManagement";
 
 export interface Student {
@@ -24,6 +25,10 @@ export const StudentManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [studentDetails, setStudentDetails] = useState<StudentAdmin | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form states
@@ -63,6 +68,46 @@ export const StudentManagement: React.FC = () => {
   useEffect(() => {
     loadDrivers();
   }, []);
+
+  const handleDeactivateStudent = async (id: string) => {
+    try {
+      setActionInProgressId(id);
+      await deactivateAdminStudent(id);
+      showToast("Aluno desativado com sucesso!", "success");
+      await loadStudents();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao desativar aluno.", "error");
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
+  const handleReactivateStudent = async (id: string) => {
+    try {
+      setActionInProgressId(id);
+      await reactivateAdminStudent(id);
+      showToast("Aluno reativado com sucesso!", "success");
+      await loadStudents();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao reativar aluno.", "error");
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
+  const handleOpenDetails = async (id: string) => {
+    setSelectedStudentId(id);
+    setLoadingDetails(true);
+    try {
+      const details = await getStudentById(id);
+      setStudentDetails(details);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao carregar detalhes do estudante.", "error");
+      setSelectedStudentId(null);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,10 +188,36 @@ export const StudentManagement: React.FC = () => {
                     🚐 {getDriverName(student.driverId)}
                   </span>
                 </div>
-                <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Button
+                    variant="ghost"
+                    style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
+                    onClick={() => handleOpenDetails(student.id)}
+                  >
+                    Detalhes
+                  </Button>
                   <Badge variant={statusFilter === "true" ? "success" : "neutral"}>
                     {statusFilter === "true" ? "Ativo" : "Inativo"}
                   </Badge>
+                  {statusFilter === "true" ? (
+                    <Button
+                      variant="danger"
+                      style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
+                      onClick={() => handleDeactivateStudent(student.id)}
+                      disabled={actionInProgressId === student.id}
+                    >
+                      {actionInProgressId === student.id ? "..." : "Desativar"}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
+                      onClick={() => handleReactivateStudent(student.id)}
+                      disabled={actionInProgressId === student.id}
+                    >
+                      {actionInProgressId === student.id ? "..." : "Reativar"}
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -218,6 +289,64 @@ export const StudentManagement: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal de Detalhes do Estudante */}
+      <Modal
+        isOpen={Boolean(selectedStudentId)}
+        onClose={() => {
+          setSelectedStudentId(null);
+          setStudentDetails(null);
+        }}
+        title="Detalhes do Estudante"
+      >
+        {loadingDetails ? (
+          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))", padding: "1.5rem 0" }}>
+            Carregando detalhes do estudante...
+          </p>
+        ) : studentDetails ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+            <div className="input-wrapper" style={{ margin: 0 }}>
+              <span className="input-label">Nome Completo</span>
+              <div style={{ fontSize: "1rem", fontWeight: 600 }}>{studentDetails.name}</div>
+            </div>
+            <div className="input-wrapper" style={{ margin: 0 }}>
+              <span className="input-label">E-mail</span>
+              <div style={{ fontSize: "0.95rem" }}>{studentDetails.email}</div>
+            </div>
+            <div className="input-wrapper" style={{ margin: 0 }}>
+              <span className="input-label">Status</span>
+              <div>
+                <Badge variant={studentDetails.active ? "success" : "neutral"}>
+                  {studentDetails.active ? "Ativo no Sistema" : "Inativo / Desativado"}
+                </Badge>
+              </div>
+            </div>
+            <div className="input-wrapper" style={{ margin: 0 }}>
+              <span className="input-label">Motorista Responsável</span>
+              <div style={{ fontSize: "0.95rem" }}>🚐 {getDriverName(studentDetails.driverId)}</div>
+            </div>
+            {studentDetails.createdAt && (
+              <div className="input-wrapper" style={{ margin: 0 }}>
+                <span className="input-label">Data de Cadastro</span>
+                <div style={{ fontSize: "0.85rem", color: "hsl(var(--text-secondary))" }}>
+                  {new Date(studentDetails.createdAt).toLocaleString("pt-BR")}
+                </div>
+              </div>
+            )}
+            <div className="button-group" style={{ margin: "1rem 0 0" }}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSelectedStudentId(null);
+                  setStudentDetails(null);
+                }}
+              >
+                Fechar
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </>
   );

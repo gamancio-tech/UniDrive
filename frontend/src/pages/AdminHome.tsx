@@ -1,16 +1,54 @@
 import { useState } from "react";
-import { authStorage } from "../api/client";
+import { authStorage, isSuperAdminUser } from "../api/client";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
+import { Input } from "../components/Input";
+import { Modal } from "../components/Modal";
+import { useToast } from "../components/Toast";
+import { createAdmin } from "../api/admin";
 import { DriverManagement } from "../features/admin/DriverManagement";
 import { StudentManagement } from "../features/admin/StudentManagement";
+import { AdminManagement } from "../features/admin/AdminManagement";
 
 export function AdminHome() {
-  const [activeTab, setActiveTab] = useState<"drivers" | "students" | "overview">("overview");
+  const { showToast } = useToast();
+  const isSuperAdmin = isSuperAdminUser();
+  const [activeTab, setActiveTab] = useState<"drivers" | "students" | "overview" | "admins">("overview");
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminName, setAdminName] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [adminListKey, setAdminListKey] = useState(0);
 
   const handleLogout = () => {
     authStorage.clear();
     window.location.reload();
+  };
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSuperAdmin) {
+      setAdminError("Apenas o Super Administrador pode cadastrar novos administradores.");
+      return;
+    }
+
+    setAdminError(null);
+    setCreatingAdmin(true);
+    try {
+      await createAdmin({ name: adminName, email: adminEmail, password: adminPassword });
+      setIsAdminModalOpen(false);
+      setAdminName("");
+      setAdminEmail("");
+      setAdminPassword("");
+      setAdminListKey((k) => k + 1);
+      showToast("Novo administrador cadastrado com sucesso!", "success");
+    } catch (err: unknown) {
+      setAdminError(err instanceof Error ? err.message : "Erro ao cadastrar administrador.");
+    } finally {
+      setCreatingAdmin(false);
+    }
   };
 
   return (
@@ -23,9 +61,16 @@ export function AdminHome() {
             <p className="list-item-sub">Painel Geral de Gestão do Sistema</p>
           </div>
         </div>
-        <Button variant="ghost" onClick={handleLogout}>
-          Sair
-        </Button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          {isSuperAdmin && (
+            <Button variant="secondary" style={{ width: "auto" }} onClick={() => setIsAdminModalOpen(true)}>
+              + Admin
+            </Button>
+          )}
+          <Button variant="ghost" style={{ width: "auto" }} onClick={handleLogout}>
+            Sair
+          </Button>
+        </div>
       </div>
 
       <div className="tabs-container">
@@ -50,6 +95,15 @@ export function AdminHome() {
         >
           Alunos
         </button>
+        {isSuperAdmin && (
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === "admins" ? "active" : ""}`}
+            onClick={() => setActiveTab("admins")}
+          >
+            Administradores
+          </button>
+        )}
       </div>
 
       {activeTab === "overview" && (
@@ -85,6 +139,11 @@ export function AdminHome() {
               <Button variant="secondary" onClick={() => setActiveTab("students")}>
                 Gerenciar Alunos
               </Button>
+              {isSuperAdmin && (
+                <Button variant="ghost" onClick={() => setActiveTab("admins")}>
+                  Gerenciar Admins
+                </Button>
+              )}
             </div>
           </Card>
         </>
@@ -92,6 +151,56 @@ export function AdminHome() {
 
       {activeTab === "drivers" && <DriverManagement />}
       {activeTab === "students" && <StudentManagement />}
+      {activeTab === "admins" && isSuperAdmin && <AdminManagement key={adminListKey} />}
+
+      {isSuperAdmin && (
+        <Modal
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          title="Cadastrar Novo Administrador"
+        >
+          <form onSubmit={handleCreateAdmin}>
+            <Input
+              label="Nome Completo"
+              placeholder="Ex: Ana Souza"
+              value={adminName}
+              onChange={(e) => setAdminName(e.target.value)}
+              required
+            />
+            <Input
+              label="E-mail de Acesso"
+              type="email"
+              placeholder="ana.admin@unidrive.com"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="Senha"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              required
+            />
+
+            {adminError && (
+              <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+                {adminError}
+              </div>
+            )}
+
+            <div className="button-group" style={{ margin: "1rem 0 0" }}>
+              <Button type="submit" variant="primary" isLoading={creatingAdmin}>
+                Cadastrar Administrador
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setIsAdminModalOpen(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </main>
   );
 }

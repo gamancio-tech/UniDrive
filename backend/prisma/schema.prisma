@@ -25,6 +25,7 @@ model Admin {
   name          String
   email         String   @unique
   passwordHash  String
+  isSuperAdmin  Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   pushSubscriptions PushSubscription[]

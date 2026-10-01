@@ -38,3 +38,16 @@ export function requireRole(role: AuthenticatedUser["role"]) {
     next();
   };
 }
+
+/**
+ * Restringe o acesso exclusivamente ao Super Administrador.
+ * Deve ser usado depois do authMiddleware.
+ */
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role !== "admin" || !req.user.isSuperAdmin) {
+    return res.status(StatusCodeHttp.FORBIDDEN).json({
+      error: "Apenas o Super Administrador tem permissão para esta ação.",
+    });
+  }
+  next();
+}

@@ -8,6 +8,8 @@ import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
 import { useToast } from "../components/Toast";
 import { NotificationBanner } from "../components/NotificationBanner";
+import { AnnouncementList } from "../features/announcements/AnnouncementList";
+import { publishAnnouncement as apiPublishAnnouncement } from "../api/announcements";
 
 type DriverTab = "operations" | "students" | "announcements";
 
@@ -17,13 +19,15 @@ export function DriverHome() {
   const [message, setMessage] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [activeTab, setActiveTab] = useState<DriverTab>("operations");
+  const [announcementRefreshKey, setAnnouncementRefreshKey] = useState(0);
 
   async function publishAnnouncement() {
     if (!message.trim()) return;
     setPublishing(true);
     try {
-      await apiRequest("/announcements", { method: "POST", body: { message } });
+      await apiPublishAnnouncement(message);
       setMessage("");
+      setAnnouncementRefreshKey((prev) => prev + 1);
       showToast("Aviso publicado para todos os alunos!", "success");
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Erro ao publicar aviso.", "error");
@@ -153,29 +157,35 @@ export function DriverHome() {
 
         {/* Aba: Avisos */}
         {activeTab === "announcements" && (
-          <>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <NotificationBanner />
             <Card
               title="Mural de Avisos"
-            subtitle="Envie recados e alertas para todos os alunos"
-          >
-            <div className="announcement-form" style={{ marginTop: 0 }}>
-              <textarea
-                placeholder="Ex: 'Estou saindo em 5 minutos', 'A van está no bloco B'..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              <Button
-                variant="primary"
-                onClick={publishAnnouncement}
-                isLoading={publishing}
-                disabled={!message.trim()}
-              >
-                Publicar Aviso
-              </Button>
-            </div>
-          </Card>
-          </>
+              subtitle="Envie recados e alertas para todos os alunos"
+            >
+              <div className="announcement-form" style={{ marginTop: 0 }}>
+                <textarea
+                  placeholder="Ex: 'Estou saindo em 5 minutos', 'A van está no bloco B'..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+                <Button
+                  variant="primary"
+                  onClick={publishAnnouncement}
+                  isLoading={publishing}
+                  disabled={!message.trim()}
+                >
+                  Publicar Aviso
+                </Button>
+              </div>
+            </Card>
+
+            <AnnouncementList
+              refreshTrigger={announcementRefreshKey}
+              title="Histórico de Avisos Enviados"
+              subtitle="Todos os comunicados disparados para os passageiros"
+            />
+          </div>
         )}
       </main>
 

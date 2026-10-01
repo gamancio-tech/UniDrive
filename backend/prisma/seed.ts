@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/prisma";
 import bcrypt from "bcrypt";
-
-const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 12;
 
@@ -20,11 +18,14 @@ async function main() {
   // upsert: se já existir um admin com esse email, não duplica nem quebra
   const admin = await prisma.admin.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: {
+      isSuperAdmin: true,
+    },
     create: {
       name: "Super Admin",
       email: adminEmail,
       passwordHash,
+      isSuperAdmin: true,
     },
   });
 

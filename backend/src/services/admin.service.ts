@@ -19,5 +19,26 @@ export const adminService = {
     const admin = await adminRepository.createAdmin(name, email, passwordHash);
 
     return admin;
-  }
+  },
+
+  async listAdmins() {
+    return adminRepository.listAdmins();
+  },
+
+  async deleteAdmin(id: string, currentAdminId: string) {
+    const admin = await adminRepository.findById(id);
+    if (!admin) {
+      throw new AppError("Administrador não encontrado.", StatusCodeHttp.NOT_FOUND);
+    }
+
+    if (admin.id === currentAdminId) {
+      throw new AppError("Você não pode remover seu próprio perfil de administrador.", StatusCodeHttp.BAD_REQUEST);
+    }
+
+    if (admin.isSuperAdmin) {
+      throw new AppError("Não é permitido remover o perfil do Super Administrador.", StatusCodeHttp.FORBIDDEN);
+    }
+
+    return adminRepository.deleteAdmin(id);
+  },
 };

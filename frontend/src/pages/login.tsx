@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiRequest, authStorage } from "../api/client";
+import { apiRequest, authStorage, getDecodedToken } from "../api/client";
 import { subscribeToPush } from "../api/push";
 import { DriverHome } from "./DriverHome";
 import { StudentHome } from "./StudentHome";
@@ -117,14 +117,6 @@ function LoginForm({
 
 /** Lê o "role" de dentro do payload do JWT salvo, sem precisar de biblioteca extra. */
 function getRoleFromToken(): Role {
-  const token = authStorage.getToken();
-  if (!token) return null;
-
-  try {
-    const payloadBase64 = token.split(".")[1];
-    const payload = JSON.parse(atob(payloadBase64));
-    return payload.role ?? null;
-  } catch {
-    return null;
-  }
+  const payload = getDecodedToken();
+  return (payload?.role as Role) ?? null;
 }

@@ -22,12 +22,12 @@
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/` | `student` | Criar ou atualizar status diário de um estudante |
-| `POST` | `/checkin` | `student` | Registrar que um estudante embarcou ⚠️ *verificar* |
-| `POST` | `/cancel-boarded` | `student` | Cancelar o embarque de um estudante já registrado |
-| `POST` | `/checkin/:studentId` | `driver` | Motorista registrar embarque do estudante ⚠️ *verificar erros* |
-| `POST` | `/cancel-boarded/:studentId` | `driver` | Cancelar o embarque de um estudante |
-| `GET` | `/missing-count` | — | Obter contagem de estudantes que não fizeram check-in |
+| `POST` | `/` | `student` | Criar ou atualizar status diário de um estudante (`vai_normal`, `so_ida`, `so_volta`, `nao_vai`) |
+| `POST` | `/checkin` | `student` | Aluno registrar o próprio embarque |
+| `POST` | `/cancel-boarded` | `student` | Aluno cancelar o próprio embarque registrado |
+| `POST` | `/checkin/:studentId` | `driver` | Motorista registrar embarque de um estudante |
+| `POST` | `/cancel-boarded/:studentId` | `driver` | Motorista cancelar o embarque de um estudante |
+| `GET` | `/missing-count` | `student` / `driver` | Obter contagem de faltantes e status contextual do aluno |
 
 ---
 
@@ -37,8 +37,8 @@
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/` | `driver` | Cancelar viagem de hoje |
-| `DELETE` | `/` | `driver` | Desfazer cancelamento de hoje |
+| `POST` | `/` | `driver` | Cancelar viagem do dia |
+| `DELETE` | `/` | `driver` | Desfazer cancelamento do dia |
 
 ---
 
@@ -48,8 +48,8 @@
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `GET` | `/` | — | Listar anúncios |
-| `POST` | `/` | `driver` | Publicar anúncio ⚠️ *verificar se admin também pode* |
+| `GET` | `/` | `student` / `driver` | Listar anúncios do mural da van vinculada |
+| `POST` | `/` | `driver` | Publicar anúncio no mural (somente motorista) |
 
 ---
 
@@ -59,13 +59,15 @@
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/admin` | `admin` | Criar administrador |
+| `POST` | `/admin` | `super_admin` | Criar administrador (exclusivo Super Admin) |
+| `GET` | `/list/admins` | `super_admin` | Listar administradores (exclusivo Super Admin) |
+| `DELETE` | `/admin/:id` | `super_admin` | Remover administrador (exclusivo Super Admin) |
 | `POST` | `/driver` | `admin` | Criar motorista |
 | `POST` | `/student` | `admin` | Criar estudante |
 | `GET` | `/list/drivers` | `admin` | Listar motoristas |
-| `GET` | `/list/drivers/:id` | `admin` | Listar motorista por ID |
+| `GET` | `/list/drivers/:id` | `admin` | Obter motorista por ID |
 | `GET` | `/list/students` | `admin` | Listar estudantes |
-| `GET` | `/list/students/:id` | `admin` | Listar estudante por ID |
+| `GET` | `/list/students/:id` | `admin` | Obter estudante por ID |
 | `DELETE` | `/student/:id` | `admin` | Desativar estudante |
 | `DELETE` | `/driver/:id` | `admin` | Desativar motorista |
 | `PATCH` | `/student/reactivate/:id` | `admin` | Reativar estudante |
@@ -75,13 +77,13 @@
 
 ## 🎓 Students
 
-`/api/students`
+`/api/students` (Gestão de Passageiros pelo Motorista — RF09)
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/` | `admin` | Criar estudante |
-| `GET` | `/` | `admin` | Listar estudantes |
-| `DELETE` | `/:id` | `admin` | Desativar estudante |
+| `POST` | `/` | `driver` | Cadastrar estudante vinculado à van do motorista |
+| `GET` | `/` | `driver` | Listar estudantes vinculados à van do motorista |
+| `DELETE` | `/:id` | `driver` | Desativar estudante da van |
 
 ---
 
@@ -91,12 +93,12 @@
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `GET` | `/me` | `student` | Ciclo atual |
+| `GET` | `/me` | `student` | Obter ciclo de pagamento atual |
 | `GET` | `/me/history` | `student` | Histórico de pagamentos |
-| `POST` | `/me/pay` | `student` | Pagar |
-| `PATCH` | `/me/reminder` | `student` | Atualizar lembretes |
-| `POST` | `/:studentId/pay` | `driver` | Registrar pagamento de um estudante |
-| `GET` | `/student/:studentId` | `driver` | Status de pagamento do estudante |
+| `POST` | `/me/pay` | `student` | Aluno marcar ciclo como pago |
+| `PATCH` | `/me/reminder` | `student` | Atualizar dias de antecedência dos lembretes |
+| `POST` | `/:studentId/pay` | `driver` | Motorista registrar/confirmar pagamento de um estudante |
+| `GET` | `/student/:studentId` | `driver` | Status de pagamento de um estudante específico |
 
 ---
 
@@ -106,13 +108,14 @@
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `GET` | `/public-key` | — | Obter chave pública |
-| `POST` | `/subscribe` | autenticado | Inscrever-se para receber notificações |
+| `GET` | `/public-key` | — | Obter chave pública VAPID |
+| `POST` | `/subscribe` | `student` / `driver` / `admin` | Inscrever-se para receber notificações push |
+| `POST` | `/test` | `student` / `driver` / `admin` | Enviar notificação push de teste para o usuário autenticado |
 
 ---
 
 ### Legendas
 
 - `student` / `driver` / `admin` → tipo de usuário exigido para autenticação
-- ⚠️ → ponto sinalizado para revisão/verificação
-- `—` → rota pública, sem autenticação
+- `student` / `driver` → acessível tanto para estudantes quanto motoristas autenticados
+- `—` → rota pública, sem necessidade de autenticação
