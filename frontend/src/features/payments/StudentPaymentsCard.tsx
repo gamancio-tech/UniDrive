@@ -19,6 +19,7 @@ export const StudentPaymentsCard: React.FC = () => {
   const [markingPaid, setMarkingPaid] = useState(false);
   const [reminderDays, setReminderDays] = useState<number>(3);
   const [savingReminder, setSavingReminder] = useState(false);
+  const [copiedPix, setCopiedPix] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -46,7 +47,6 @@ export const StudentPaymentsCard: React.FC = () => {
       setMarkingPaid(true);
       const updated = await payMyCycle();
       setCurrentCycle(updated);
-      // Atualiza também o histórico local
       setHistory((prev) =>
         prev.map((item) => (item.id === updated.id ? updated : item))
       );
@@ -72,6 +72,15 @@ export const StudentPaymentsCard: React.FC = () => {
     }
   };
 
+  const handleCopyPix = (pixText: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(pixText);
+      setCopiedPix(true);
+      showToast("Chave Pix copiada para a área de transferência!", "success");
+      setTimeout(() => setCopiedPix(false), 3000);
+    }
+  };
+
   const formatMonth = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -93,7 +102,7 @@ export const StudentPaymentsCard: React.FC = () => {
   if (loading) {
     return (
       <Card title="Pagamentos" subtitle="Carregando ciclo financeiro...">
-        <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))", padding: "1.5rem 0" }}>
+        <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1.5rem 0" }}>
           Buscando mensalidades...
         </p>
       </Card>
@@ -121,46 +130,88 @@ export const StudentPaymentsCard: React.FC = () => {
           {isCurrentPaid ? (
             <div
               style={{
-                background: "hsla(var(--success), 0.08)",
-                border: "1px solid hsla(var(--success), 0.2)",
-                borderRadius: "var(--radius-sm)",
-                padding: "0.85rem 1rem",
+                background: "var(--success-light)",
+                border: "1px solid rgba(34, 197, 94, 0.3)",
+                borderRadius: "var(--radius-md)",
+                padding: "1rem",
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.3rem",
               }}
             >
-              <div style={{ fontWeight: 600, color: "hsl(var(--success))" }}>
+              <div style={{ fontWeight: 700, color: "var(--success-dark)", fontSize: "0.95rem" }}>
                 ✓ Mensalidade quitada
               </div>
-              <div style={{ fontSize: "0.85rem", color: "hsl(var(--text-secondary))" }}>
-                Pagamento confirmado em {currentCycle?.paidAt ? formatDate(currentCycle.paidAt) : "data recente"}
+              <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                Pagamento registrado em {currentCycle?.paidAt ? formatDate(currentCycle.paidAt) : "data recente"}
                 {currentCycle?.markedBy === "driver"
                   ? " (baixa confirmada pelo motorista)"
-                  : " (marcado por você)"}
+                  : " (confirmado por você)"}
               </div>
             </div>
           ) : (
-            <div>
-              <p style={{ color: "hsl(var(--text-secondary))", fontSize: "0.9rem", lineHeight: 1.5, margin: 0 }}>
-                Sua mensalidade deste mês ainda não foi marcada como paga. Quando realizar a transferência ou Pix para o motorista, marque abaixo:
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", lineHeight: 1.5, margin: 0 }}>
+                Sua mensalidade deste mês consta como pendente. Realize o pagamento diretamente ao motorista e confirme abaixo:
               </p>
-              <div style={{ marginTop: "1rem" }}>
-                <Button
-                  variant="primary"
-                  onClick={handleMarkPaid}
-                  isLoading={markingPaid}
+
+              {/* Box de Instrução e Cópia Pix */}
+              <div
+                style={{
+                  background: "var(--bg-page)",
+                  border: "1.5px dashed var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "0.9rem 1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.5rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                    Chave Pix da Van
+                  </div>
+                  <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--primary)", marginTop: "0.15rem" }}>
+                    motorista@unidrive.com
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopyPix("motorista@unidrive.com")}
+                  style={{
+                    background: copiedPix ? "var(--success-light)" : "var(--bg-card)",
+                    border: "1px solid var(--border-subtle)",
+                    color: copiedPix ? "var(--success-dark)" : "var(--primary-text)",
+                    padding: "0.4rem 0.85rem",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    width: "auto",
+                    minHeight: "36px",
+                  }}
                 >
-                  Marcar como Pago
-                </Button>
+                  {copiedPix ? "✓ Copiado!" : "Copiar Chave"}
+                </button>
               </div>
+
+              <Button
+                variant="primary"
+                onClick={handleMarkPaid}
+                isLoading={markingPaid}
+                style={{ minHeight: "50px", fontSize: "1rem" }}
+              >
+                ✓ Marcar Mensalidade como Paga
+              </Button>
             </div>
           )}
 
           {/* Configuração de Lembrete de Vencimento */}
           <div
             style={{
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+              borderTop: "1px solid var(--border-subtle)",
               paddingTop: "1rem",
               display: "flex",
               flexDirection: "column",
@@ -185,8 +236,8 @@ export const StudentPaymentsCard: React.FC = () => {
                 <option value={7}>7 dias antes do vencimento</option>
               </select>
             </div>
-            <span style={{ fontSize: "0.78rem", color: "hsl(var(--text-secondary))" }}>
-              Notificação push enviada caso a mensalidade permaneça pendente.
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+              Notificação push disparada caso a mensalidade permaneça pendente.
             </span>
           </div>
         </div>
@@ -198,7 +249,7 @@ export const StudentPaymentsCard: React.FC = () => {
         subtitle="Registro dos meses anteriores"
       >
         {previousHistory.length === 0 ? (
-          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))", padding: "1rem 0", margin: 0 }}>
+          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1rem 0", margin: 0 }}>
             Nenhum histórico anterior registrado.
           </p>
         ) : (
@@ -211,7 +262,7 @@ export const StudentPaymentsCard: React.FC = () => {
                   </span>
                   <span className="list-item-sub">
                     {item.paidAt
-                      ? `Pago em ${formatDate(item.paidAt)} (${item.markedBy === "driver" ? "Motorista" : "Você"})`
+                      ? `Pago em ${formatDate(item.paidAt)} (${item.markedBy === "driver" ? "Confirmado pelo motorista" : "Confirmado por você"})`
                       : "Pendente"}
                   </span>
                 </div>

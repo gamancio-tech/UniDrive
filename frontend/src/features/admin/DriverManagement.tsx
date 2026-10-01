@@ -5,6 +5,8 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { Avatar } from "../../components/Avatar";
+import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
 import { deactivateAdminDriver, reactivateAdminDriver, getDriverById, DriverAdmin } from "../../api/admin";
 
@@ -48,27 +50,19 @@ export const DriverManagement: React.FC = () => {
     }
   };
 
-  const handleDeactivateDriver = async (driverId: string) => {
+  const handleToggleDriverStatus = async (driver: Driver) => {
     try {
-      setActionInProgressId(driverId);
-      await deactivateAdminDriver(driverId);
+      setActionInProgressId(driver.id);
+      if (driver.active) {
+        await deactivateAdminDriver(driver.id);
+        showToast(`Motorista "${driver.name}" desativado.`, "info");
+      } else {
+        await reactivateAdminDriver(driver.id);
+        showToast(`Motorista "${driver.name}" reativado com sucesso!`, "success");
+      }
       await loadDrivers();
-      showToast("Motorista desativado com sucesso!", "success");
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao desativar motorista.", "error");
-    } finally {
-      setActionInProgressId(null);
-    }
-  };
-
-  const handleReactivateDriver = async (driverId: string) => {
-    try {
-      setActionInProgressId(driverId);
-      await reactivateAdminDriver(driverId);
-      await loadDrivers();
-      showToast("Motorista reativado com sucesso!", "success");
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao reativar motorista.", "error");
+      showToast(err instanceof Error ? err.message : "Erro ao alterar status do motorista.", "error");
     } finally {
       setActionInProgressId(null);
     }
@@ -115,109 +109,154 @@ export const DriverManagement: React.FC = () => {
     }
   };
 
+  const activeCount = drivers.filter((d) => d.active).length;
+  const inactiveCount = drivers.filter((d) => !d.active).length;
+  const filteredDrivers = drivers.filter((d) =>
+    statusFilter === "active" ? d.active : !d.active
+  );
+
   return (
     <>
       <Card
-        title="Motoristas Cadastrados"
-        subtitle="Gerencie todos os motoristas de van ativos no sistema"
+        title="Gestão de Motoristas"
+        subtitle="Controle de condutores credenciados e rotas"
         action={
-          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+          <Button
+            variant="primary"
+            onClick={() => setIsModalOpen(true)}
+            style={{ width: "auto", minHeight: "38px", padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+          >
             + Novo Motorista
           </Button>
         }
       >
+        {/* Pílulas de Filtro Modernas conforme mockup telas_admin.jfif */}
+        <div className="filter-pills">
+          <button
+            type="button"
+            className={`filter-pill ${statusFilter === "active" ? "active-success" : ""}`}
+            onClick={() => setStatusFilter("active")}
+          >
+            <span>🟢 Ativos</span>
+            <span style={{ fontSize: "0.75rem", opacity: 0.85 }}>({activeCount})</span>
+          </button>
+          <button
+            type="button"
+            className={`filter-pill ${statusFilter === "inactive" ? "active-danger" : ""}`}
+            onClick={() => setStatusFilter("inactive")}
+          >
+            <span>🔴 Desativados</span>
+            <span style={{ fontSize: "0.75rem", opacity: 0.85 }}>({inactiveCount})</span>
+          </button>
+        </div>
+
         {loading ? (
-          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))" }}>Carregando motoristas...</p>
+          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>
+            Carregando motoristas...
+          </p>
+        ) : filteredDrivers.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+            <p style={{ marginBottom: "1rem" }}>
+              Nenhum motorista {statusFilter === "active" ? "ativo" : "desativado"} encontrado.
+            </p>
+            {statusFilter === "active" && (
+              <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
+                Cadastrar Primeiro Motorista
+              </Button>
+            )}
+          </div>
         ) : (
-          <>
-            <div className="tabs-container" style={{ marginBottom: "1rem" }}>
-              <button
-                type="button"
-                className={`tab-btn ${statusFilter === "active" ? "active" : ""}`}
-                onClick={() => setStatusFilter("active")}
-              >
-                Ativos
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${statusFilter === "inactive" ? "active" : ""}`}
-                onClick={() => setStatusFilter("inactive")}
-              >
-                Desativados
-              </button>
+          <div className="table-card">
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Motorista</th>
+                    <th>Contato & Pix</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: "center" }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDrivers.map((driver) => {
+                    const isProcessing = actionInProgressId === driver.id;
+
+                    return (
+                      <tr key={driver.id}>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <Avatar name={driver.name} size="sm" />
+                            <div>
+                              <div style={{ fontWeight: 700, color: "var(--text-main)" }}>
+                                {driver.name}
+                              </div>
+                              <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                                ID: {driver.id.slice(0, 8)}...
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: "0.85rem", color: "var(--text-main)" }}>
+                            {driver.email}
+                          </div>
+                          {driver.pixKey ? (
+                            <div style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600, marginTop: "0.15rem" }}>
+                              Pix: {driver.pixKey}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-light)" }}>
+                              Sem Pix cadastrado
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <Badge variant={driver.active ? "success" : "neutral"}>
+                            {driver.active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
+                            {/* Botão Ver Detalhes 👁️ */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenDetails(driver.id)}
+                              title="Visualizar detalhes completos"
+                              style={{
+                                background: "var(--bg-input)",
+                                border: "1px solid var(--border-subtle)",
+                                color: "var(--text-main)",
+                                padding: "0.3rem 0.55rem",
+                                borderRadius: "8px",
+                                fontSize: "0.88rem",
+                                cursor: "pointer",
+                                minHeight: "auto",
+                                width: "auto",
+                              }}
+                            >
+                              👁️
+                            </button>
+
+                            {/* ToggleSwitch para Ativar/Desativar */}
+                            <ToggleSwitch
+                              checked={driver.active}
+                              disabled={isProcessing}
+                              onChange={() => handleToggleDriverStatus(driver)}
+                              ariaLabel={`Alternar status de ${driver.name}`}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-
-            {(() => {
-              const filteredDrivers = drivers.filter((d) =>
-                statusFilter === "active" ? d.active : !d.active
-              );
-
-              if (filteredDrivers.length === 0) {
-                return (
-                  <div style={{ textAlign: "center", padding: "2rem 0", color: "hsl(var(--text-secondary))" }}>
-                    <p>Nenhum motorista {statusFilter === "active" ? "ativo" : "desativado"} encontrado.</p>
-                    {statusFilter === "active" && (
-                      <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
-                        Cadastrar o primeiro
-                      </Button>
-                    )}
-                  </div>
-                );
-              }
-
-              return (
-                <div className="item-list">
-                  {filteredDrivers.map((driver) => (
-                    <div key={driver.id} className="list-item">
-                      <div className="list-item-info">
-                        <span className="list-item-title">{driver.name}</span>
-                        <span className="list-item-sub">{driver.email}</span>
-                        {driver.pixKey && (
-                          <span className="list-item-sub" style={{ color: "hsl(var(--accent-primary))" }}>
-                            Chave Pix: {driver.pixKey}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <Button
-                          variant="ghost"
-                          style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                          onClick={() => handleOpenDetails(driver.id)}
-                        >
-                          Detalhes
-                        </Button>
-                        <Badge variant={driver.active ? "success" : "neutral"}>
-                          {driver.active ? "Ativo" : "Inativo"}
-                        </Badge>
-                        {driver.active ? (
-                          <Button
-                            variant="danger"
-                            style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                            onClick={() => handleDeactivateDriver(driver.id)}
-                            disabled={actionInProgressId === driver.id}
-                          >
-                            {actionInProgressId === driver.id ? "..." : "Desativar"}
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="primary"
-                            style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                            onClick={() => handleReactivateDriver(driver.id)}
-                            disabled={actionInProgressId === driver.id}
-                          >
-                            {actionInProgressId === driver.id ? "..." : "Reativar"}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-          </>
+          </div>
         )}
       </Card>
 
+      {/* Modal de Cadastro de Motorista */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -255,7 +294,7 @@ export const DriverManagement: React.FC = () => {
           />
 
           {error && (
-            <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+            <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
               {error}
             </div>
           )}
@@ -281,44 +320,47 @@ export const DriverManagement: React.FC = () => {
         title="Detalhes do Motorista"
       >
         {loadingDetails ? (
-          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))", padding: "1.5rem 0" }}>
+          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1.5rem 0" }}>
             Carregando detalhes do motorista...
           </p>
         ) : driverDetails ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-            <div className="input-wrapper" style={{ margin: 0 }}>
-              <span className="input-label">Nome Completo</span>
-              <div style={{ fontSize: "1rem", fontWeight: 600 }}>{driverDetails.name}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
+              <Avatar name={driverDetails.name} size="lg" />
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700 }}>{driverDetails.name}</h3>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{driverDetails.email}</span>
+              </div>
             </div>
+
             <div className="input-wrapper" style={{ margin: 0 }}>
-              <span className="input-label">E-mail</span>
-              <div style={{ fontSize: "0.95rem" }}>{driverDetails.email}</div>
-            </div>
-            <div className="input-wrapper" style={{ margin: 0 }}>
-              <span className="input-label">Status</span>
+              <span className="input-label">Status no Sistema</span>
               <div>
                 <Badge variant={driverDetails.active ? "success" : "neutral"}>
-                  {driverDetails.active ? "Ativo no Sistema" : "Inativo / Desativado"}
+                  {driverDetails.active ? "Ativo" : "Inativo / Desativado"}
                 </Badge>
               </div>
             </div>
+
             <div className="input-wrapper" style={{ margin: 0 }}>
               <span className="input-label">Chave Pix</span>
-              <div style={{ fontSize: "0.95rem", color: driverDetails.pixKey ? "hsl(var(--accent-primary))" : "hsl(var(--text-secondary))" }}>
+              <div style={{ fontSize: "0.95rem", color: driverDetails.pixKey ? "var(--primary)" : "var(--text-muted)", fontWeight: 600 }}>
                 {driverDetails.pixKey || "Não informada"}
               </div>
             </div>
+
             {driverDetails.createdAt && (
               <div className="input-wrapper" style={{ margin: 0 }}>
                 <span className="input-label">Data de Cadastro</span>
-                <div style={{ fontSize: "0.85rem", color: "hsl(var(--text-secondary))" }}>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                   {new Date(driverDetails.createdAt).toLocaleString("pt-BR")}
                 </div>
               </div>
             )}
+
             <div className="button-group" style={{ margin: "1rem 0 0" }}>
               <Button
-                variant="ghost"
+                variant="secondary"
                 onClick={() => {
                   setSelectedDriverId(null);
                   setDriverDetails(null);

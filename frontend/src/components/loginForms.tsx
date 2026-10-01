@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { Role } from "../pages/login";
 import { Button } from "./Button";
 import { Input } from "./Input";
-import { Card } from "./Card";
 
 interface LoginFormComponentProps {
   perfil: Role;
@@ -39,11 +38,19 @@ export default function LoginFormComponent({
     }
   };
 
+  const label = perfil ? ROLE_LABELS[perfil] ?? perfil : "";
+
   return (
-    <Card
-      title={`Login como ${perfil ? ROLE_LABELS[perfil] ?? perfil : ""}`}
-      subtitle="Entre com suas credenciais para acessar o painel"
-    >
+    <div>
+      <div style={{ marginBottom: "1.25rem" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: "0 0 0.35rem", color: "var(--text-main)" }}>
+          Login como {label}
+        </h2>
+        <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", margin: 0 }}>
+          Entre com suas credenciais para acessar o painel
+        </p>
+      </div>
+
       <form onSubmit={onSubmit}>
         <Input
           label="E-mail"
@@ -63,24 +70,41 @@ export default function LoginFormComponent({
         />
 
         {error && (
-          <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+          <div
+            style={{
+              color: "var(--danger-dark)",
+              backgroundColor: "var(--danger-light)",
+              padding: "0.6rem 0.85rem",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              marginBottom: "0.75rem",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+            }}
+          >
             {error}
           </div>
         )}
 
-        <div className="button-group" style={{ margin: "1rem 0 0" }}>
-          <Button type="submit" variant="primary" isLoading={isLoading}>
+        <div className="button-group" style={{ margin: "1.25rem 0 0", gap: "0.65rem" }}>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={isLoading}
+            style={{ minHeight: "50px", fontSize: "1rem" }}
+          >
             Entrar
           </Button>
           <Button
             type="button"
             variant="ghost"
             onClick={() => setPerfil(null)}
+            style={{ color: "var(--text-muted)" }}
           >
             ← Voltar para seleção de perfil
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }

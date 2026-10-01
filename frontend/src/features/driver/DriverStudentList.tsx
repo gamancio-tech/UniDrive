@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { Avatar } from "../../components/Avatar";
 import { useToast } from "../../components/Toast";
 import { PaymentCycle, getStudentPaymentStatus, markStudentPaidByDriver } from "../../api/payments";
 import { deactivateDriverStudent } from "../../api/students";
@@ -111,11 +112,10 @@ export const DriverStudentList: React.FC = () => {
       await apiRequest(`/daily-status/checkin/${studentId}`, {
         method: "POST",
       });
-      // Atualiza localmente sem nova chamada à API
       setStudents((prev) =>
         prev.map((s) => (s.id === studentId ? { ...s, isBoarded: true } : s))
       );
-      showToast("Embarque confirmado!", "success");
+      showToast("Embarque registrado!", "success");
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Erro ao confirmar embarque.", "error");
     } finally {
@@ -172,100 +172,141 @@ export const DriverStudentList: React.FC = () => {
     <>
       <Card
         title="Meus Alunos"
-        subtitle={`${students.length} aluno(s) cadastrado(s) na sua van`}
+        subtitle={`${students.length} aluno(s) cadastrado(s) na van`}
         action={
-          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-            + Novo
+          <Button
+            variant="primary"
+            onClick={() => setIsModalOpen(true)}
+            style={{ width: "auto", minHeight: "38px", padding: "0.4rem 0.95rem", fontSize: "0.85rem" }}
+          >
+            + Novo Aluno
           </Button>
         }
       >
         {loading ? (
-          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))" }}>
+          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1.5rem 0" }}>
             Carregando passageiros...
           </p>
         ) : students.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "1.5rem 0", color: "hsl(var(--text-secondary))" }}>
-            <p>Nenhum aluno cadastrado na sua van.</p>
+          <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--text-muted)" }}>
+            <p style={{ marginBottom: "1rem" }}>Nenhum aluno cadastrado na sua van ainda.</p>
             <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
               Cadastrar Primeiro Aluno
             </Button>
           </div>
         ) : (
           <div className="item-list">
-            {students.map((student) => (
-              <div key={student.id} className="list-item">
-                <div className="list-item-info">
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.2rem" }}>
-                    <span className="list-item-title">{student.name}</span>
-                    {getTodayStatusBadge(student.todayStatus)}
-                  </div>
-                  <span className="list-item-sub">{student.email}</span>
-                  {(() => {
-                    const payment = paymentStatuses[student.id];
-                    if (!payment) return null;
-                    const isPaid = Boolean(payment.paidAt);
-                    return (
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
-                        {isPaid ? (
-                          <Badge variant="success">Mensalidade Paga</Badge>
+            {students.map((student) => {
+              const payment = paymentStatuses[student.id];
+              const isPaid = payment ? Boolean(payment.paidAt) : null;
+              const isCheckingThis = checkingInId === student.id;
+
+              return (
+                <div key={student.id} className="list-item">
+                  {/* Avatar do Aluno */}
+                  <Avatar name={student.name} />
+
+                  {/* Informações Centrais do Aluno */}
+                  <div className="list-item-info">
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
+                      <span className="list-item-title">{student.name}</span>
+                      {getTodayStatusBadge(student.todayStatus)}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
+                      <span className="list-item-sub">{student.email}</span>
+
+                      {/* Status de Mensalidade */}
+                      {payment && (
+                        isPaid ? (
+                          <Badge variant="success" style={{ fontSize: "0.68rem" }}>
+                            Pago
+                          </Badge>
                         ) : (
-                          <>
-                            <Badge variant="danger">Mensalidade Pendente</Badge>
-                            <Button
-                              variant="ghost"
-                              style={{ fontSize: "0.72rem", padding: "0.2rem 0.5rem", width: "auto" }}
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                            <Badge variant="danger" style={{ fontSize: "0.68rem" }}>
+                              Pendente
+                            </Badge>
+                            <button
+                              type="button"
                               onClick={() => handleMarkPayment(student.id)}
                               disabled={markingPaidId === student.id}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "var(--primary)",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                padding: 0,
+                                minHeight: "auto",
+                                width: "auto",
+                                textDecoration: "underline",
+                              }}
                             >
                               {markingPaidId === student.id ? "..." : "Dar Baixa"}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-                <div className="list-item-actions">
-                  {student.isBoarded ? (
-                    <>
-                      <Badge variant="success">Embarcado ✅</Badge>
-                      <Button
-                        variant="ghost"
-                        style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ações Rápidas de Embarque e Gestão */}
+                  <div className="list-item-actions">
+                    {/* Botão de Check-in Circular Gigante */}
+                    {student.isBoarded ? (
+                      <button
+                        type="button"
+                        className="btn-check-circle checked"
                         onClick={() => handleUndoCheckIn(student.id)}
-                        disabled={checkingInId === student.id}
+                        disabled={isCheckingThis}
+                        title="Embarcado! Clique para desfazer"
                       >
-                        Desfazer
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Badge variant="neutral">Pendente</Badge>
-                      <Button
-                        variant="secondary"
-                        style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
+                        {isCheckingThis ? "..." : "✓"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-check-circle"
                         onClick={() => handleManualCheckIn(student.id)}
-                        disabled={checkingInId === student.id}
+                        disabled={isCheckingThis}
+                        title="Clique para confirmar embarque"
                       >
-                        {checkingInId === student.id ? "..." : "Embarcar"}
-                      </Button>
-                    </>
-                  )}
-                  <Button
-                    variant="danger"
-                    style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                    onClick={() => setStudentToDeactivate(student)}
-                    title="Desativar aluno da van"
-                  >
-                    Desativar
-                  </Button>
+                        {isCheckingThis ? "..." : "○"}
+                      </button>
+                    )}
+
+                    {/* Botão sutil para desativar aluno */}
+                    <button
+                      type="button"
+                      onClick={() => setStudentToDeactivate(student)}
+                      title="Desativar aluno da van"
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "var(--text-light)",
+                        cursor: "pointer",
+                        fontSize: "1rem",
+                        padding: "0.3rem",
+                        minHeight: "auto",
+                        width: "auto",
+                        borderRadius: "6px",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-light)")}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
 
+      {/* Modal de Cadastro de Aluno */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -273,8 +314,8 @@ export const DriverStudentList: React.FC = () => {
       >
         <form onSubmit={handleCreateStudent}>
           <Input
-            label="Nome do Aluno"
-            placeholder="Ex: João Silva"
+            label="Nome Completo"
+            placeholder="Ex: João da Silva"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -297,7 +338,7 @@ export const DriverStudentList: React.FC = () => {
           />
 
           {error && (
-            <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+            <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
               {error}
             </div>
           )}
@@ -320,10 +361,10 @@ export const DriverStudentList: React.FC = () => {
         title="Desativar Aluno da Van"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <p style={{ margin: 0, lineHeight: 1.5 }}>
+          <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
             Deseja realmente desativar <strong>{studentToDeactivate?.name}</strong> da sua van?
           </p>
-          <p style={{ margin: 0, color: "hsl(var(--text-secondary))", fontSize: "0.85rem" }}>
+          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.85rem" }}>
             O aluno não constará mais nas listas de presença diária e contagem de faltantes.
           </p>
           <div className="button-group" style={{ margin: "0.5rem 0 0" }}>

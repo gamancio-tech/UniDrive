@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { authStorage, isSuperAdminUser } from "../api/client";
+import { useState, useEffect } from "react";
+import { apiRequest, authStorage, isSuperAdminUser } from "../api/client";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { createAdmin } from "../api/admin";
-import { DriverManagement } from "../features/admin/DriverManagement";
-import { StudentManagement } from "../features/admin/StudentManagement";
+import { DriverManagement, Driver } from "../features/admin/DriverManagement";
+import { StudentManagement, Student } from "../features/admin/StudentManagement";
 import { AdminManagement } from "../features/admin/AdminManagement";
+import { AppSettings } from "../features/settings/AppSettings";
 
 export function AdminHome() {
   const { showToast } = useToast();
   const isSuperAdmin = isSuperAdminUser();
-  const [activeTab, setActiveTab] = useState<"drivers" | "students" | "overview" | "admins">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "drivers" | "students" | "admins" | "settings">("overview");
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -21,6 +22,33 @@ export function AdminHome() {
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
   const [adminListKey, setAdminListKey] = useState(0);
+
+  // Métricas dinâmicas para a Visão Geral
+  const [metrics, setMetrics] = useState({
+    activeDrivers: 0,
+    totalStudents: 0,
+    loading: true,
+  });
+
+  useEffect(() => {
+    async function loadMetrics() {
+      try {
+        const [drivers, students] = await Promise.all([
+          apiRequest<Driver[]>("/admin/list/drivers").catch(() => []),
+          apiRequest<Student[]>("/admin/list/students?status=true").catch(() => []),
+        ]);
+        const activeDrivers = drivers.filter((d) => d.active).length;
+        setMetrics({
+          activeDrivers,
+          totalStudents: students.length,
+          loading: false,
+        });
+      } catch {
+        setMetrics((prev) => ({ ...prev, loading: false }));
+      }
+    }
+    loadMetrics();
+  }, []);
 
   const handleLogout = () => {
     authStorage.clear();
@@ -53,6 +81,7 @@ export function AdminHome() {
 
   return (
     <main>
+      {/* Header Padronizado */}
       <div className="header-row">
         <div className="brand-header">
           <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
@@ -61,18 +90,28 @@ export function AdminHome() {
             <p className="list-item-sub">Painel Geral de Gestão do Sistema</p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
           {isSuperAdmin && (
-            <Button variant="secondary" style={{ width: "auto" }} onClick={() => setIsAdminModalOpen(true)}>
+            <Button
+              variant="secondary"
+              style={{ width: "auto", minHeight: "36px", padding: "0.35rem 0.8rem", fontSize: "0.85rem" }}
+              onClick={() => setIsAdminModalOpen(true)}
+            >
               + Admin
             </Button>
           )}
-          <Button variant="ghost" style={{ width: "auto" }} onClick={handleLogout}>
-            Sair
-          </Button>
+          <button
+            type="button"
+            className="btn-logout-pill"
+            onClick={handleLogout}
+            title="Sair do painel administrativo"
+          >
+            Sair ⎋
+          </button>
         </div>
       </div>
 
+      {/* Tabs Superiores Padronizadas */}
       <div className="tabs-container">
         <button
           type="button"
@@ -104,55 +143,124 @@ export function AdminHome() {
             Administradores
           </button>
         )}
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
+          onClick={() => setActiveTab("settings")}
+        >
+          Configurações
+        </button>
       </div>
 
+      {/* Aba 1: Visão Geral — Mockup telas_admin.jfif */}
       {activeTab === "overview" && (
         <>
           <div className="stats-grid">
+            {/* Card 1: Motoristas Ativos com Sparkline SVG */}
             <div className="stat-card">
-              <div className="stat-number">🚐</div>
-              <div className="stat-label">Gestão de Frotas</div>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: "0.25rem" }}>
+                <span style={{ fontSize: "1.2rem" }}>🚐</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--success-dark)", fontWeight: 700, background: "var(--success-light)", padding: "0.15rem 0.45rem", borderRadius: "999px" }}>
+                  +100%
+                </span>
+              </div>
+              <div className="stat-number">
+                {metrics.loading ? "..." : metrics.activeDrivers}
+              </div>
+              <div className="stat-label">Motoristas Ativos</div>
+              {/* Mini gráfico em linha SVG ilustrativo */}
+              <svg width="100%" height="24" viewBox="0 0 100 24" style={{ marginTop: "0.5rem", overflow: "visible" }}>
+                <path
+                  d="M0,18 Q25,16 50,10 T100,4"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
+
+            {/* Card 2: Alunos Cadastrados com Mini Barras SVG */}
             <div className="stat-card">
-              <div className="stat-number">👥</div>
-              <div className="stat-label">Comunidade Ativa</div>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: "0.25rem" }}>
+                <span style={{ fontSize: "1.2rem" }}>👥</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--primary)", fontWeight: 700, background: "var(--primary-light)", padding: "0.15rem 0.45rem", borderRadius: "999px" }}>
+                  Ativos
+                </span>
+              </div>
+              <div className="stat-number">
+                {metrics.loading ? "..." : metrics.totalStudents}
+              </div>
+              <div className="stat-label">Alunos Cadastrados</div>
+              {/* Mini gráfico em barras SVG */}
+              <svg width="100%" height="24" viewBox="0 0 80 24" style={{ marginTop: "0.5rem" }}>
+                <rect x="5" y="14" width="8" height="10" rx="2" fill="#bfdbfe" />
+                <rect x="20" y="9" width="8" height="15" rx="2" fill="#93c5fd" />
+                <rect x="35" y="12" width="8" height="12" rx="2" fill="#60a5fa" />
+                <rect x="50" y="6" width="8" height="18" rx="2" fill="#3b82f6" />
+                <rect x="65" y="2" width="8" height="22" rx="2" fill="#0b63ce" />
+              </svg>
             </div>
+
+            {/* Card 3: Operação da Rede com Onda SVG */}
             <div className="stat-card">
-              <div className="stat-number">⚡</div>
-              <div className="stat-label">Embarques Diários</div>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: "0.25rem" }}>
+                <span style={{ fontSize: "1.2rem" }}>⚡</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--accent-gold-dark)", fontWeight: 700, background: "var(--accent-gold-light)", padding: "0.15rem 0.45rem", borderRadius: "999px" }}>
+                  Ao Vivo
+                </span>
+              </div>
+              <div className="stat-number">
+                {metrics.loading ? "..." : Math.max(1, metrics.activeDrivers)}
+              </div>
+              <div className="stat-label">Rotas Monitoradas</div>
+              {/* Mini gráfico onda suave SVG */}
+              <svg width="100%" height="24" viewBox="0 0 100 24" style={{ marginTop: "0.5rem" }}>
+                <path
+                  d="M0,12 C20,4 30,20 50,12 C70,4 80,18 100,8"
+                  fill="none"
+                  stroke="#f59e0b"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </div>
 
           <Card
-            title="Bem-vindo ao Painel do Administrador"
-            subtitle="Aqui você pode gerenciar toda a infraestrutura de vans universitárias."
+            title="Infraestrutura UniDrive"
+            subtitle="Controle centralizado de credenciamento e rotas"
           >
-            <p style={{ color: "hsl(var(--text-secondary))", lineHeight: 1.6 }}>
-              Utilize as abas acima para cadastrar motoristas credenciados e seus respectivos alunos passageiros.
-              As alterações refletem imediatamente nos painéis operacionais e no cálculo de rotas e presenças.
+            <p style={{ color: "var(--text-muted)", lineHeight: 1.6, margin: "0.25rem 0 1.25rem" }}>
+              Utilize as abas acima para gerenciar os motoristas credenciados, os alunos passageiros associados a cada van e as permissões de acesso.
+              Qualquer alteração de status reflete instantaneamente nos aplicativos operacionais.
             </p>
 
-            <div className="button-group" style={{ flexDirection: "row", marginTop: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
               <Button variant="primary" onClick={() => setActiveTab("drivers")}>
-                Gerenciar Motoristas
+                🚐 Ver Motoristas
               </Button>
               <Button variant="secondary" onClick={() => setActiveTab("students")}>
-                Gerenciar Alunos
+                🎓 Ver Alunos
               </Button>
-              {isSuperAdmin && (
-                <Button variant="ghost" onClick={() => setActiveTab("admins")}>
-                  Gerenciar Admins
-                </Button>
-              )}
             </div>
           </Card>
         </>
       )}
 
+      {/* Aba 2: Motoristas */}
       {activeTab === "drivers" && <DriverManagement />}
+
+      {/* Aba 3: Alunos */}
       {activeTab === "students" && <StudentManagement />}
+
+      {/* Aba 4: Administradores */}
       {activeTab === "admins" && isSuperAdmin && <AdminManagement key={adminListKey} />}
 
+      {/* Aba 5: Configurações */}
+      {activeTab === "settings" && <AppSettings role="admin" />}
+
+      {/* Modal para Super Admin Cadastrar Novo Administrador */}
       {isSuperAdmin && (
         <Modal
           isOpen={isAdminModalOpen}
@@ -185,7 +293,7 @@ export function AdminHome() {
             />
 
             {adminError && (
-              <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+              <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
                 {adminError}
               </div>
             )}

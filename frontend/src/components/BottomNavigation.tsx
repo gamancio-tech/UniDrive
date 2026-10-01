@@ -8,11 +8,13 @@ const DRIVER_TABS: NavItem[] = [
   { tab: "operations", icon: "🚐", label: "Hoje" },
   { tab: "students", icon: "👥", label: "Alunos" },
   { tab: "announcements", icon: "📢", label: "Avisos" },
+  { tab: "settings", icon: "⚙️", label: "Ajustes" },
 ];
 
 const STUDENT_TABS: NavItem[] = [
   { tab: "home", icon: "🏠", label: "Início" },
   { tab: "payments", icon: "💰", label: "Pagamentos" },
+  { tab: "settings", icon: "⚙️", label: "Ajustes" },
 ];
 
 interface BottomNavigationProps {

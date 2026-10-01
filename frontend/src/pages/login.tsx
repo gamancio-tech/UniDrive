@@ -5,41 +5,97 @@ import { DriverHome } from "./DriverHome";
 import { StudentHome } from "./StudentHome";
 import { AdminHome } from "./AdminHome";
 import LoginFormComponent from "../components/loginForms";
-import { Card } from "../components/Card";
 import { Button } from "../components/Button";
+import { useTheme } from "../utils/theme";
 
 export type Role = "driver" | "student" | "admin" | null;
 
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme();
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+      style={{
+        position: "absolute",
+        top: "1rem",
+        right: "1rem",
+        width: "42px",
+        height: "42px",
+        minHeight: "auto",
+        borderRadius: "50%",
+        padding: 0,
+        background: "rgba(255, 255, 255, 0.25)",
+        border: "1px solid rgba(255, 255, 255, 0.35)",
+        backdropFilter: "blur(8px)",
+        fontSize: "1.25rem",
+        cursor: "pointer",
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+      }}
+    >
+      {theme === "dark" ? "☀️" : "🌙"}
+    </button>
+  );
+}
+
 function InitialMenu({ setPerfil }: { setPerfil: (perfil: Role) => void }) {
   return (
-    <main style={{ padding: "1.25rem 1rem", paddingBottom: "2rem" }}>
-      <div className="brand-hero-container">
+    <div className="login-page-wrapper" style={{ position: "relative" }}>
+      <ThemeToggleButton />
+
+      <div className="login-hero-section">
         <img
           src="/icons/icon.png"
           alt="Logo UniDrive"
-          className="brand-logo-hero"
+          className="login-hero-logo"
         />
-        <h1>UniDrive</h1>
-        <p className="list-item-sub">Controle inteligente e em tempo real para vans universitárias</p>
+        <h1 className="login-hero-title">UniDrive</h1>
+        <p className="login-hero-subtitle">
+          Controle inteligente e em tempo real para vans universitárias
+        </p>
       </div>
 
-      <Card
-        title="Escolha seu perfil de acesso"
-        subtitle="Selecione abaixo como deseja entrar no UniDrive"
-      >
-        <div className="button-group">
-          <Button variant="primary" onClick={() => setPerfil("student")}>
+      <div className="login-bottom-sheet">
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: "0 0 0.35rem", color: "var(--text-main)" }}>
+            Escolha seu perfil de acesso
+          </h2>
+          <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", margin: 0 }}>
+            Selecione abaixo como deseja entrar no UniDrive
+          </p>
+        </div>
+
+        <div className="button-group" style={{ gap: "0.85rem" }}>
+          <Button
+            variant="primary"
+            onClick={() => setPerfil("student")}
+            style={{ minHeight: "52px", fontSize: "1rem" }}
+          >
             🎓 Entrar como Aluno
           </Button>
-          <Button variant="secondary" onClick={() => setPerfil("driver")}>
+          <Button
+            variant="secondary"
+            onClick={() => setPerfil("driver")}
+            style={{ minHeight: "52px", fontSize: "1rem" }}
+          >
             🚐 Entrar como Motorista
           </Button>
-          <Button variant="ghost" onClick={() => setPerfil("admin")}>
+          <Button
+            variant="ghost"
+            onClick={() => setPerfil("admin")}
+            style={{ color: "var(--text-muted)", fontWeight: 500, minHeight: "44px" }}
+          >
             ⚙️ Acesso Administrativo
           </Button>
         </div>
-      </Card>
-    </main>
+      </div>
+    </div>
   );
 }
 
@@ -73,22 +129,28 @@ function LoginForm({
 
   if (role === null) {
     return (
-      <main style={{ padding: "1.25rem 1rem", paddingBottom: "2rem" }}>
-        <div className="brand-hero-container">
+      <div className="login-page-wrapper" style={{ position: "relative" }}>
+        <ThemeToggleButton />
+
+        <div className="login-hero-section">
           <img
             src="/icons/icon.png"
             alt="Logo UniDrive"
-            className="brand-logo-hero"
+            className="login-hero-logo"
           />
-          <h1>UniDrive</h1>
-          <p className="list-item-sub">Controle inteligente e em tempo real para vans universitárias</p>
+          <h1 className="login-hero-title">UniDrive</h1>
+          <p className="login-hero-subtitle">
+            Controle inteligente e em tempo real para vans universitárias
+          </p>
         </div>
-        <LoginFormComponent
-          perfil={perfil}
-          setPerfil={setPerfil}
-          handleSubmit={handleSubmit}
-        />
-      </main>
+        <div className="login-bottom-sheet">
+          <LoginFormComponent
+            perfil={perfil}
+            setPerfil={setPerfil}
+            handleSubmit={handleSubmit}
+          />
+        </div>
+      </div>
     );
   }
 

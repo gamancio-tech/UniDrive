@@ -1,28 +1,117 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* ============================================
-   DESIGN SYSTEM — Tokens Globais
+   DESIGN SYSTEM — Tokens Globais UniDrive
+   Light Mode de Alto Contraste para Van / Celular
    ============================================ */
 :root {
-  --bg-primary: 240 10% 4%;
-  --bg-secondary: 240 10% 8%;
-  --bg-glass: rgba(255, 255, 255, 0.03);
+  /* Superfícies & Fundos */
+  --bg-page: #f4f7fb;            /* Fundo geral gelo/off-white anti-reflexo */
+  --bg-card: #ffffff;            /* Fundo de cards brancos */
+  --bg-input: #f8fafc;           /* Fundo sutil de inputs */
+  --border-subtle: #e2e8f0;      /* Linhas divisórias suaves */
+  --border-card: rgba(226, 232, 240, 0.8);
 
-  --text-primary: 0 0% 98%;
-  --text-secondary: 240 5% 65%;
+  /* Cores Principais da Marca */
+  --primary: #0b63ce;            /* Azul UniDrive vibrante */
+  --primary-hover: #0952af;      /* Azul escuro no hover/ativo */
+  --primary-light: #e8f2fe;      /* Azul claro para tags e chips */
+  --primary-text: #0b63ce;       /* Cor de texto azul de alto contraste */
+  --primary-gradient: linear-gradient(180deg, #d3eaff 0%, #8dc5f8 50%, #5ba7f3 100%);
 
-  --accent-primary: 250 89% 65%;
-  --accent-primary-hover: 250 89% 75%;
+  /* Cores Semânticas de Ação */
+  --success: #22c55e;            /* Verde check de embarque / ativo */
+  --success-dark: #16a34a;
+  --success-light: #dcfce7;
+  --danger: #ef4444;             /* Vermelho para cancelamentos e erros */
+  --danger-dark: #dc2626;
+  --danger-light: #fee2e2;
+  --accent-gold: #f59e0b;        /* Dourado para avisos / pagamentos */
+  --accent-gold-dark: #b45309;   /* Dourado escuro para texto no modo claro */
+  --accent-gold-light: #fef3c7;
 
-  --danger: 350 89% 60%;
-  --success: 142 71% 45%;
+  /* Tipografia & Contraste */
+  --text-main: #0f172a;          /* Azul ardósia profundo para leitura instantânea */
+  --text-muted: #64748b;         /* Cinza médio para legendas e horários */
+  --text-light: #94a3b8;         /* Cinza suave para bordas e ícones discretos */
 
+  /* Formas & Sombras */
   --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --shadow-elevated: 0 10px 30px rgba(11, 99, 206, 0.08);
 
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Transições */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Aliases para compatibilidade reversa */
+  --bg-primary: #f4f7fb;
+  --bg-secondary: #ffffff;
+  --bg-glass: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent-primary: #0b63ce;
+  --accent-primary-hover: #0952af;
+}
+
+/* ============================================
+   TEMA ESCURO (Dark Mode com cores clássicas UniDrive)
+   ============================================ */
+[data-theme="dark"] {
+  /* Superfícies & Fundos Dark Mode */
+  --bg-page: #090a10;
+  --bg-card: #13141d;
+  --bg-input: #1a1c29;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-card: rgba(255, 255, 255, 0.12);
+
+  /* Cores Principais */
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-light: rgba(59, 130, 246, 0.18);
+  --primary-text: #60a5fa;       /* Azul celeste vibrante e de alta legibilidade no escuro */
+  --primary-gradient: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+
+  /* Semânticas */
+  --success: #22c55e;
+  --success-dark: #4ade80;
+  --success-light: rgba(34, 197, 94, 0.18);
+  --danger: #ef4444;
+  --danger-dark: #f87171;
+  --danger-light: rgba(239, 68, 68, 0.18);
+  --accent-gold: #f59e0b;
+  --accent-gold-dark: #fbbf24;   /* Amarelo dourado vivo para texto no modo escuro */
+  --accent-gold-light: rgba(245, 158, 11, 0.18);
+
+  /* Tipografia */
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+
+  /* Sombras */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.7);
+
+  /* Aliases para compatibilidade */
+  --bg-primary: #090a10;
+  --bg-secondary: #13141d;
+  --bg-glass: rgba(255, 255, 255, 0.04);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-primary: #3b82f6;
+  --accent-primary-hover: #60a5fa;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.07) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.07) 0%, transparent 50%);
+  background-attachment: fixed;
 }
 
 /* ============================================
@@ -36,54 +125,69 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: hsl(var(--bg-primary));
-  color: hsl(var(--text-primary));
-  background-image:
-    radial-gradient(circle at 15% 50%, rgba(116, 92, 237, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
-  background-attachment: fixed;
+  background-color: var(--bg-page);
+  color: var(--text-main);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
   letter-spacing: -0.02em;
   margin-top: 0;
+  color: var(--text-main);
 }
 
 h1 {
   font-weight: 700;
-  background: linear-gradient(to right, #fff, hsl(var(--text-secondary)));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+h3 {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+p {
+  color: var(--text-muted);
 }
 
 main {
   max-width: 600px;
   margin: 0 auto;
-  padding: 1.25rem 1rem;
+  padding: 1rem;
   /* Espaço para o Bottom Navigation não sobrepor o conteúdo */
-  padding-bottom: 5.5rem;
+  padding-bottom: 6rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 /* ============================================
    ANIMAÇÕES GLOBAIS
    ============================================ */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
 }

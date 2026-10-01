@@ -3,12 +3,12 @@ import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { authStorage } from "../api/client";
-import { Button } from "../components/Button";
 import { NotificationBanner } from "../components/NotificationBanner";
 import { StudentPaymentsCard } from "../features/payments/StudentPaymentsCard";
 import { AnnouncementList } from "../features/announcements/AnnouncementList";
+import { AppSettings } from "../features/settings/AppSettings";
 
-type StudentTab = "home" | "payments";
+type StudentTab = "home" | "payments" | "settings";
 
 export function StudentHome() {
   const [activeTab, setActiveTab] = useState<StudentTab>("home");
@@ -32,6 +32,7 @@ export function StudentHome() {
   return (
     <>
       <main>
+        {/* Cabeçalho Minimalista com Botão Sair em pílula */}
         <div className="header-row">
           <div className="brand-header">
             <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
@@ -40,9 +41,14 @@ export function StudentHome() {
               <p className="list-item-sub">Área do Aluno</p>
             </div>
           </div>
-          <Button variant="ghost" onClick={handleLogout}>
-            Sair
-          </Button>
+          <button
+            type="button"
+            className="btn-logout-pill"
+            onClick={handleLogout}
+            title="Sair do aplicativo"
+          >
+            Sair ⎋
+          </button>
         </div>
 
         {activeTab === "home" && (
@@ -64,6 +70,8 @@ export function StudentHome() {
         )}
 
         {activeTab === "payments" && <StudentPaymentsCard />}
+
+        {activeTab === "settings" && <AppSettings role="student" />}
       </main>
 
       <BottomNavigation

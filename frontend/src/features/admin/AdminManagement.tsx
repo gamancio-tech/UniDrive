@@ -4,6 +4,7 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { Avatar } from "../../components/Avatar";
 import { useToast } from "../../components/Toast";
 import { AdminUser, createAdmin, deleteAdmin, getAdmins } from "../../api/admin";
 import { getDecodedToken } from "../../api/client";
@@ -96,19 +97,22 @@ export const AdminManagement: React.FC = () => {
     <Card
       title="Administradores do Sistema"
       subtitle="Visualização e controle de contas de administradores (Exclusivo Super Admin)"
-    >
-      <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "flex-end" }}>
-        <Button variant="primary" style={{ width: "auto" }} onClick={() => setIsCreateModalOpen(true)}>
+      action={
+        <Button
+          variant="primary"
+          style={{ width: "auto", minHeight: "38px", padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+          onClick={() => setIsCreateModalOpen(true)}
+        >
           + Novo Administrador
         </Button>
-      </div>
-
+      }
+    >
       {loading ? (
-        <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))" }}>
+        <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>
           Carregando administradores...
         </p>
       ) : admins.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "2rem 0", color: "hsl(var(--text-secondary))" }}>
+        <div style={{ textAlign: "center", padding: "2rem 0", color: "var(--text-muted)" }}>
           <p>Nenhum administrador encontrado.</p>
         </div>
       ) : (
@@ -119,40 +123,24 @@ export const AdminManagement: React.FC = () => {
 
             return (
               <div key={admin.id} className="list-item">
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: "1.5rem",
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "50%",
-                      backgroundColor: isSuper ? "hsl(var(--accent-primary) / 0.15)" : "hsl(var(--surface-raised))",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isSuper ? "🛡️" : "👤"}
-                  </div>
+                <Avatar name={admin.name} />
 
-                  <div className="list-item-info">
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span className="list-item-title">{admin.name}</span>
-                      {isCurrent && (
-                        <span style={{ fontSize: "0.75rem", color: "hsl(var(--accent-primary))", fontWeight: "600" }}>
-                          (Você)
-                        </span>
-                      )}
-                    </div>
-                    <span className="list-item-sub">{admin.email}</span>
-                    <span className="list-item-sub" style={{ fontSize: "0.75rem", marginTop: "2px" }}>
-                      Cadastrado em: {formatDate(admin.createdAt)}
-                    </span>
+                <div className="list-item-info">
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span className="list-item-title">{admin.name}</span>
+                    {isCurrent && (
+                      <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 700 }}>
+                        (Você)
+                      </span>
+                    )}
                   </div>
+                  <span className="list-item-sub">{admin.email}</span>
+                  <span className="list-item-sub" style={{ fontSize: "0.75rem", marginTop: "2px" }}>
+                    Cadastrado em: {formatDate(admin.createdAt)}
+                  </span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                   <Badge variant={isSuper ? "info" : "neutral"}>
                     {isSuper ? "Super Admin" : "Administrador"}
                   </Badge>
@@ -161,7 +149,7 @@ export const AdminManagement: React.FC = () => {
                     <span
                       style={{
                         fontSize: "0.75rem",
-                        color: "hsl(var(--text-secondary))",
+                        color: "var(--text-muted)",
                         fontStyle: "italic",
                         padding: "0.3rem 0.6rem",
                       }}
@@ -172,7 +160,7 @@ export const AdminManagement: React.FC = () => {
                     <span
                       style={{
                         fontSize: "0.75rem",
-                        color: "hsl(var(--text-secondary))",
+                        color: "var(--text-muted)",
                         padding: "0.3rem 0.6rem",
                       }}
                     >
@@ -226,7 +214,7 @@ export const AdminManagement: React.FC = () => {
           />
 
           {createError && (
-            <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+            <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
               {createError}
             </div>
           )}
@@ -249,7 +237,7 @@ export const AdminManagement: React.FC = () => {
         title="Confirmar Remoção de Administrador"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <p style={{ color: "hsl(var(--text-primary))", lineHeight: 1.5 }}>
+          <p style={{ color: "var(--text-main)", lineHeight: 1.5, margin: 0 }}>
             Tem certeza de que deseja remover o acesso do administrador{" "}
             <strong>{adminToDelete?.name}</strong> (<code>{adminToDelete?.email}</code>)?
           </p>
@@ -258,9 +246,9 @@ export const AdminManagement: React.FC = () => {
             style={{
               padding: "0.75rem 1rem",
               borderRadius: "8px",
-              backgroundColor: "hsl(var(--danger) / 0.12)",
-              border: "1px solid hsl(var(--danger) / 0.3)",
-              color: "hsl(var(--danger))",
+              backgroundColor: "var(--danger-light)",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              color: "var(--danger-dark)",
               fontSize: "0.85rem",
               lineHeight: 1.4,
             }}

@@ -9,6 +9,14 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <link rel="shortcut icon" href="/icons/icon.png" />
     <title>UniDrive</title>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('unidrive_theme') || 'light';
+          document.documentElement.setAttribute('data-theme', saved);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

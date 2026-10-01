@@ -5,6 +5,8 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
+import { Avatar } from "../../components/Avatar";
+import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
 import { deactivateAdminStudent, reactivateAdminStudent, getStudentById, StudentAdmin } from "../../api/admin";
 import type { Driver } from "./DriverManagement";
@@ -69,27 +71,19 @@ export const StudentManagement: React.FC = () => {
     loadDrivers();
   }, []);
 
-  const handleDeactivateStudent = async (id: string) => {
+  const handleToggleStudentStatus = async (student: Student, currentActive: boolean) => {
     try {
-      setActionInProgressId(id);
-      await deactivateAdminStudent(id);
-      showToast("Aluno desativado com sucesso!", "success");
+      setActionInProgressId(student.id);
+      if (currentActive) {
+        await deactivateAdminStudent(student.id);
+        showToast(`Aluno "${student.name}" desativado.`, "info");
+      } else {
+        await reactivateAdminStudent(student.id);
+        showToast(`Aluno "${student.name}" reativado com sucesso!`, "success");
+      }
       await loadStudents();
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao desativar aluno.", "error");
-    } finally {
-      setActionInProgressId(null);
-    }
-  };
-
-  const handleReactivateStudent = async (id: string) => {
-    try {
-      setActionInProgressId(id);
-      await reactivateAdminStudent(id);
-      showToast("Aluno reativado com sucesso!", "success");
-      await loadStudents();
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao reativar aluno.", "error");
+      showToast(err instanceof Error ? err.message : "Erro ao alterar status do aluno.", "error");
     } finally {
       setActionInProgressId(null);
     }
@@ -140,91 +134,145 @@ export const StudentManagement: React.FC = () => {
     return d ? d.name : "Motorista associado";
   };
 
+  const isActiveList = statusFilter === "true";
+
   return (
     <>
       <Card
-        title="Estudantes"
-        subtitle="Gerenciamento de passageiros e alocação de vans"
+        title="Gestão de Alunos"
+        subtitle="Controle de passageiros e vinculação de rotas"
         action={
-          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+          <Button
+            variant="primary"
+            onClick={() => setIsModalOpen(true)}
+            style={{ width: "auto", minHeight: "38px", padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+          >
             + Novo Aluno
           </Button>
         }
       >
-        <div className="tabs-container" style={{ marginBottom: "1rem" }}>
+        {/* Pílulas de Filtro Modernas */}
+        <div className="filter-pills">
           <button
             type="button"
-            className={`tab-btn ${statusFilter === "true" ? "active" : ""}`}
+            className={`filter-pill ${isActiveList ? "active-success" : ""}`}
             onClick={() => setStatusFilter("true")}
           >
-            Ativos
+            <span>🟢 Ativos</span>
           </button>
           <button
             type="button"
-            className={`tab-btn ${statusFilter === "false" ? "active" : ""}`}
+            className={`filter-pill ${!isActiveList ? "active-danger" : ""}`}
             onClick={() => setStatusFilter("false")}
           >
-            Desativados
+            <span>🔴 Desativados</span>
           </button>
         </div>
 
         {loading ? (
-          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))" }}>Carregando alunos...</p>
+          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>
+            Carregando alunos...
+          </p>
         ) : students.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "2rem 0", color: "hsl(var(--text-secondary))" }}>
-            <p>Nenhum aluno encontrado para este status.</p>
-            <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
-              Cadastrar aluno
-            </Button>
+          <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
+            <p style={{ marginBottom: "1rem" }}>
+              Nenhum aluno {isActiveList ? "ativo" : "desativado"} encontrado.
+            </p>
+            {isActiveList && (
+              <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
+                Cadastrar Primeiro Aluno
+              </Button>
+            )}
           </div>
         ) : (
-          <div className="item-list">
-            {students.map((student) => (
-              <div key={student.id} className="list-item">
-                <div className="list-item-info">
-                  <span className="list-item-title">{student.name}</span>
-                  <span className="list-item-sub">{student.email}</span>
-                  <span className="list-item-sub" style={{ opacity: 0.8 }}>
-                    🚐 {getDriverName(student.driverId)}
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <Button
-                    variant="ghost"
-                    style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                    onClick={() => handleOpenDetails(student.id)}
-                  >
-                    Detalhes
-                  </Button>
-                  <Badge variant={statusFilter === "true" ? "success" : "neutral"}>
-                    {statusFilter === "true" ? "Ativo" : "Inativo"}
-                  </Badge>
-                  {statusFilter === "true" ? (
-                    <Button
-                      variant="danger"
-                      style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                      onClick={() => handleDeactivateStudent(student.id)}
-                      disabled={actionInProgressId === student.id}
-                    >
-                      {actionInProgressId === student.id ? "..." : "Desativar"}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", width: "auto" }}
-                      onClick={() => handleReactivateStudent(student.id)}
-                      disabled={actionInProgressId === student.id}
-                    >
-                      {actionInProgressId === student.id ? "..." : "Reativar"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="table-card">
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Contato</th>
+                    <th>Van / Motorista</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: "center" }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student) => {
+                    const isProcessing = actionInProgressId === student.id;
+
+                    return (
+                      <tr key={student.id}>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <Avatar name={student.name} size="sm" />
+                            <div>
+                              <div style={{ fontWeight: 700, color: "var(--text-main)" }}>
+                                {student.name}
+                              </div>
+                              <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                                ID: {student.id.slice(0, 8)}...
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: "0.85rem", color: "var(--text-main)" }}>
+                            {student.email}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--primary)" }}>
+                            🚐 {getDriverName(student.driverId)}
+                          </div>
+                        </td>
+                        <td>
+                          <Badge variant={isActiveList ? "success" : "neutral"}>
+                            {isActiveList ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
+                            {/* Botão Ver Detalhes 👁️ */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenDetails(student.id)}
+                              title="Visualizar detalhes completos"
+                              style={{
+                                background: "var(--bg-input)",
+                                border: "1px solid var(--border-subtle)",
+                                color: "var(--text-main)",
+                                padding: "0.3rem 0.55rem",
+                                borderRadius: "8px",
+                                fontSize: "0.88rem",
+                                cursor: "pointer",
+                                minHeight: "auto",
+                                width: "auto",
+                              }}
+                            >
+                              👁️
+                            </button>
+
+                            {/* ToggleSwitch para Ativar/Desativar */}
+                            <ToggleSwitch
+                              checked={isActiveList}
+                              disabled={isProcessing}
+                              onChange={() => handleToggleStudentStatus(student, isActiveList)}
+                              ariaLabel={`Alternar status de ${student.name}`}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>
 
+      {/* Modal de Cadastro de Aluno */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -267,7 +315,7 @@ export const StudentManagement: React.FC = () => {
               ) : (
                 drivers.map((drv) => (
                   <option key={drv.id} value={drv.id}>
-                    {drv.name} ({drv.email})
+                    🚐 {drv.name} ({drv.email})
                   </option>
                 ))
               )}
@@ -275,7 +323,7 @@ export const StudentManagement: React.FC = () => {
           </div>
 
           {error && (
-            <div style={{ color: "hsl(var(--danger))", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+            <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
               {error}
             </div>
           )}
@@ -291,7 +339,7 @@ export const StudentManagement: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Modal de Detalhes do Estudante */}
+      {/* Modal de Detalhes do Aluno */}
       <Modal
         isOpen={Boolean(selectedStudentId)}
         onClose={() => {
@@ -301,42 +349,47 @@ export const StudentManagement: React.FC = () => {
         title="Detalhes do Estudante"
       >
         {loadingDetails ? (
-          <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))", padding: "1.5rem 0" }}>
+          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1.5rem 0" }}>
             Carregando detalhes do estudante...
           </p>
         ) : studentDetails ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-            <div className="input-wrapper" style={{ margin: 0 }}>
-              <span className="input-label">Nome Completo</span>
-              <div style={{ fontSize: "1rem", fontWeight: 600 }}>{studentDetails.name}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
+              <Avatar name={studentDetails.name} size="lg" />
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700 }}>{studentDetails.name}</h3>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{studentDetails.email}</span>
+              </div>
             </div>
+
             <div className="input-wrapper" style={{ margin: 0 }}>
-              <span className="input-label">E-mail</span>
-              <div style={{ fontSize: "0.95rem" }}>{studentDetails.email}</div>
-            </div>
-            <div className="input-wrapper" style={{ margin: 0 }}>
-              <span className="input-label">Status</span>
+              <span className="input-label">Status no Sistema</span>
               <div>
                 <Badge variant={studentDetails.active ? "success" : "neutral"}>
-                  {studentDetails.active ? "Ativo no Sistema" : "Inativo / Desativado"}
+                  {studentDetails.active ? "Ativo" : "Inativo / Desativado"}
                 </Badge>
               </div>
             </div>
+
             <div className="input-wrapper" style={{ margin: 0 }}>
               <span className="input-label">Motorista Responsável</span>
-              <div style={{ fontSize: "0.95rem" }}>🚐 {getDriverName(studentDetails.driverId)}</div>
+              <div style={{ fontSize: "0.95rem", color: "var(--primary)", fontWeight: 600 }}>
+                🚐 {getDriverName(studentDetails.driverId)}
+              </div>
             </div>
+
             {studentDetails.createdAt && (
               <div className="input-wrapper" style={{ margin: 0 }}>
                 <span className="input-label">Data de Cadastro</span>
-                <div style={{ fontSize: "0.85rem", color: "hsl(var(--text-secondary))" }}>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                   {new Date(studentDetails.createdAt).toLocaleString("pt-BR")}
                 </div>
               </div>
             )}
+
             <div className="button-group" style={{ margin: "1rem 0 0" }}>
               <Button
-                variant="ghost"
+                variant="secondary"
                 onClick={() => {
                   setSelectedStudentId(null);
                   setStudentDetails(null);

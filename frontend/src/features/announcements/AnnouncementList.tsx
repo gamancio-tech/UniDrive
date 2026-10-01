@@ -74,11 +74,11 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
       }
     >
       {loading ? (
-        <p style={{ textAlign: "center", color: "hsl(var(--text-secondary))", padding: "1rem 0" }}>
+        <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1rem 0" }}>
           Carregando avisos...
         </p>
       ) : announcements.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "1.5rem 0", color: "hsl(var(--text-secondary))" }}>
+        <div style={{ textAlign: "center", padding: "1.5rem 0", color: "var(--text-muted)" }}>
           <span style={{ fontSize: "1.8rem" }}>📢</span>
           <p style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
             Nenhum aviso publicado até o momento.
@@ -90,17 +90,17 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
             <div
               key={item.id}
               style={{
-                background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderLeft: "3px solid hsl(var(--accent-primary))",
-                borderRadius: "var(--radius-sm)",
+                background: "var(--bg-input)",
+                border: "1px solid var(--border-subtle)",
+                borderLeft: "4px solid var(--primary-text)",
+                borderRadius: "var(--radius-md)",
                 padding: "0.85rem 1rem",
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.4rem",
               }}
             >
-              <div style={{ fontSize: "0.78rem", color: "hsl(var(--text-secondary))", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <span>🕒</span>
                 <span>{formatAnnouncementTime(item.createdAt)}</span>
               </div>
@@ -108,7 +108,7 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
                 style={{
                   margin: 0,
                   fontSize: "0.95rem",
-                  color: "hsl(var(--text-primary))",
+                  color: "var(--text-main)",
                   whiteSpace: "pre-wrap",
                   lineHeight: 1.5,
                 }}
