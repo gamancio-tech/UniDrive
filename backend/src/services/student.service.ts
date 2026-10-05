@@ -61,6 +61,7 @@ export const studentService = {
         id: student.id,
         name: student.name,
         email: student.email,
+        photoUrl: student.photoUrl,
         todayStatus: student.dailyStatuses[0]?.status ?? weeklyDefault,
         isBoarded: Boolean(student.dailyStatuses[0]?.boardedAt),
       };
@@ -87,5 +88,35 @@ export const studentService = {
       throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
     }
     return student;
+  },
+
+  async getProfile(id: string) {
+    const student = await studentRepository.findById(id);
+    if (!student) {
+      throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
+    }
+    return {
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      photoUrl: student.photoUrl,
+      driverId: student.driverId,
+    };
+  },
+
+  async updatePhoto(id: string, photoUrl: string | null) {
+    const student = await studentRepository.findById(id);
+    if (!student) {
+      throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
+    }
+    if (photoUrl && photoUrl.length > 500_000) {
+      throw new AppError("A imagem selecionada é muito grande. Escolha uma foto menor.", StatusCodeHttp.BAD_REQUEST);
+    }
+    const updated = await studentRepository.updatePhoto(id, photoUrl);
+    return {
+      id: updated.id,
+      name: updated.name,
+      photoUrl: updated.photoUrl,
+    };
   },
 };

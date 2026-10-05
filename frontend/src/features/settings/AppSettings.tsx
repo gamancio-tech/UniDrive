@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import { getPushStatus, subscribeToPush, unsubscribeFromPush, sendTestPush, PushStatus } from "../../api/push";
 import { logout } from "../../api/client";
 import { StudentWeeklyScheduleCard } from "./StudentWeeklyScheduleCard";
+import { StudentProfilePhotoCard } from "./StudentProfilePhotoCard";
 
 interface AppSettingsProps {
   role: "driver" | "student" | "admin";
@@ -194,6 +195,9 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
           </div>
         </div>
       </Card>
+
+      {/* Perfil e Foto (Exclusivo para Alunos) */}
+      {role === "student" && <StudentProfilePhotoCard />}
 
       {/* Rotina Semanal Padrão (Exclusivo para Alunos) */}
       {role === "student" && <StudentWeeklyScheduleCard />}

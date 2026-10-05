@@ -7,6 +7,7 @@ export interface DriverStudent {
   active?: boolean;
   todayStatus?: "vai_normal" | "so_ida" | "so_volta" | "nao_vai" | string;
   isBoarded?: boolean;
+  photoUrl?: string | null;
 }
 
 export interface CreateStudentPayload {
@@ -26,6 +27,15 @@ export interface RegisteredStudent {
   name: string;
   email: string;
   active: boolean;
+  photoUrl?: string | null;
+}
+
+export interface StudentProfile {
+  id: string;
+  name: string;
+  email: string;
+  photoUrl?: string | null;
+  driverId: string;
 }
 
 /**
@@ -78,5 +88,27 @@ export async function resetAllDailyBoarded(): Promise<{ message: string }> {
   return apiRequest<{ message: string }>("/daily-status/reset-all", {
     method: "POST",
   });
+}
+
+/**
+ * Busca os dados do perfil do aluno autenticado.
+ */
+export async function getStudentProfile(): Promise<StudentProfile> {
+  return apiRequest<StudentProfile>("/students/me/profile");
+}
+
+/**
+ * Atualiza ou remove a foto de perfil do aluno autenticado.
+ */
+export async function updateStudentProfilePhoto(
+  photoUrl: string | null
+): Promise<{ message: string; student: { id: string; name: string; photoUrl: string | null } }> {
+  return apiRequest<{ message: string; student: { id: string; name: string; photoUrl: string | null } }>(
+    "/students/me/photo",
+    {
+      method: "PATCH",
+      body: { photoUrl },
+    }
+  );
 }
 

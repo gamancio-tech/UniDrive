@@ -40,5 +40,9 @@ export const studentRepository = {
 
   reactivate(id: string) {
     return prisma.student.update({ where: { id }, data: { active: true } });
-  }
+  },
+
+  updatePhoto(id: string, photoUrl: string | null) {
+    return prisma.student.update({ where: { id }, data: { photoUrl } });
+  },
 };

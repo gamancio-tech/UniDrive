@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { BottomNavigation } from "../components/BottomNavigation";
@@ -7,11 +7,14 @@ import { NotificationBanner } from "../components/NotificationBanner";
 import { StudentPaymentsCard } from "../features/payments/StudentPaymentsCard";
 import { AnnouncementList } from "../features/announcements/AnnouncementList";
 import { AppSettings } from "../features/settings/AppSettings";
+import { getStudentProfile, StudentProfile } from "../api/students";
 
 type StudentTab = "home" | "payments" | "settings";
 
 export function StudentHome() {
   const [activeTab, setActiveTab] = useState<StudentTab>("home");
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+
   const {
     missingCount,
     cancelled,
@@ -26,6 +29,12 @@ export function StudentHome() {
     cancelBoardedSelf,
   } = useDailyStatus();
 
+  useEffect(() => {
+    getStudentProfile()
+      .then(setProfile)
+      .catch(() => {});
+  }, [activeTab]);
+
   const handleLogout = () => {
     logout();
   };
@@ -35,10 +44,29 @@ export function StudentHome() {
       <main>
         {/* Cabeçalho Minimalista com Botão Sair em pílula */}
         <div className="header-row">
-          <div className="brand-header">
-            <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
+          <div
+            className="brand-header"
+            style={{ cursor: "pointer" }}
+            onClick={() => setActiveTab("settings")}
+            title="Ir para configurações do perfil"
+          >
+            {profile?.photoUrl ? (
+              <img
+                src={profile.photoUrl}
+                alt={profile.name}
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid var(--primary)",
+                }}
+              />
+            ) : (
+              <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
+            )}
             <div>
-              <h1>UniDrive</h1>
+              <h1>{profile?.name ? profile.name.split(" ")[0] : "UniDrive"}</h1>
               <p className="list-item-sub">Área do Aluno</p>
             </div>
           </div>

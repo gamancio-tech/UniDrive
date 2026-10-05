@@ -8,7 +8,9 @@ export const studentRoutes = Router();
 // Todas as rotas abaixo requerem autenticação
 studentRoutes.use(authMiddleware);
 
-// Rotas do próprio aluno (Configuração da rotina semanal padrão)
+// Rotas do próprio aluno (Configuração da rotina semanal e perfil/foto)
+studentRoutes.get("/me/profile", requireRole("student"), studentController.getProfile);
+studentRoutes.patch("/me/photo", requireRole("student"), studentController.updatePhoto);
 studentRoutes.get("/me/weekly-schedule", requireRole("student"), studentWeeklyScheduleController.getMySchedule);
 studentRoutes.put("/me/weekly-schedule", requireRole("student"), studentWeeklyScheduleController.updateMySchedule);
 

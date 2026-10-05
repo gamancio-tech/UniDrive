@@ -450,7 +450,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                       const isCheckingThis = checkingInId === student.id;
                       return (
                         <div key={student.id} className="list-item">
-                          <Avatar name={student.name} />
+                          <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
 
                           <div className="list-item-info">
                             <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
@@ -507,7 +507,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                       const isCheckingThis = checkingInId === student.id;
                       return (
                         <div key={student.id} className="list-item">
-                          <Avatar name={student.name} />
+                          <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
 
                           <div className="list-item-info">
                             <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
@@ -580,7 +580,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
 
                           return (
                             <div key={student.id} className="list-item">
-                              <Avatar name={student.name} />
+                              <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
 
                               <div className="list-item-info">
                                 <span className="list-item-title">{student.name}</span>
@@ -725,7 +725,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                                 opacity: 0.92,
                               }}
                             >
-                              <Avatar name={student.name} />
+                              <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
 
                               <div className="list-item-info">
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>

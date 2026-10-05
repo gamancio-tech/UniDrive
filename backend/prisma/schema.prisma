@@ -37,6 +37,7 @@ model Driver {
   email         String   @unique
   passwordHash  String
   pixKey        String?
+  photoUrl      String?  @db.Text
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
@@ -53,6 +54,7 @@ model Student {
   name          String
   email         String   @unique
   passwordHash  String
+  photoUrl      String?  @db.Text
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
