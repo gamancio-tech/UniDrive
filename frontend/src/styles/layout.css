@@ -8,13 +8,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 0.85rem;
 }
 
 .brand-header {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.brand-header div {
+  min-width: 0;
 }
 
 .brand-logo {
@@ -33,20 +40,26 @@
 }
 
 .header-row h1 {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   margin-bottom: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-row p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Botão Sair estilo pílula discreta conforme mockups */
 .btn-logout-pill {
   width: auto !important;
   min-height: 36px !important;
-  padding: 0.35rem 0.95rem !important;
+  padding: 0.35rem 0.85rem !important;
   border-radius: var(--radius-full) !important;
   background: var(--bg-input) !important;
   border: 1px solid var(--border-subtle) !important;
@@ -54,8 +67,12 @@
   font-size: 0.85rem !important;
   font-weight: 500 !important;
   display: inline-flex !important;
+  flex-direction: row !important;
   align-items: center !important;
-  gap: 0.35rem !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
   cursor: pointer;
   transition: all var(--transition-fast) !important;
 }
@@ -99,23 +116,39 @@
   border: 1px solid var(--border-subtle);
   padding: 4px;
   border-radius: var(--radius-md);
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.tabs-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .tab-btn {
-  flex: 1;
+  flex: 1 0 auto;
+  min-width: max-content;
+  white-space: nowrap;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0.55rem 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
   border-radius: calc(var(--radius-md) - 3px);
   cursor: pointer;
   transition: all var(--transition-fast);
-  width: auto;
   min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  user-select: none;
+  width: auto;
 }
 
 .tab-btn:hover {
@@ -130,6 +163,28 @@
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transform: none;
+}
+
+.tab-btn svg {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .tabs-container {
+    padding: 3px;
+    gap: 4px;
+    margin-bottom: 1rem;
+  }
+  .tab-btn {
+    font-size: 0.82rem;
+    padding: 0.45rem 0.75rem;
+    min-height: 38px;
+    gap: 0.35rem;
+  }
+  .tab-btn svg {
+    font-size: 0.88rem;
+  }
 }
 
 /* Pílulas de filtro (ex.: Ativos / Desativados) */

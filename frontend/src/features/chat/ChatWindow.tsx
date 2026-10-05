@@ -3,6 +3,27 @@ import { useChat } from "./useChat";
 import { getDecodedToken } from "../../api/client";
 import { updateStudentPhone } from "../../api/students";
 import { Modal } from "../../components/Modal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faVanShuttle,
+  faGraduationCap,
+  faCircleCheck,
+  faCircleXmark,
+  faSun,
+  faMoon,
+  faComments,
+  faPhone,
+  faLocationDot,
+  faClock,
+  faTriangleExclamation,
+  faCheck,
+  faCheckDouble,
+  faPersonRunning,
+  faHand,
+  faThumbsUp,
+  faFlagCheckered,
+  IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface ChatWindowProps {
   partnerId: string;
@@ -123,24 +144,24 @@ export function ChatWindow({
     }
   };
 
-  // ápidas idênticas à ergonomia do mockup de referência
-  const quickReplies =
+  // Respostas rápidas pré-definidas
+  const quickReplies: { icon: IconDefinition; text: string }[] =
     currentRole === "student"
       ? [
-        "📍 Estou no Ponto",
-        "⏰ Atraso (5 min)",
-        "🏃 Estou descendo!",
-        "🚐 Já estou na van",
-        "👋 Pode ir sem mim",
-        "👍 Tudo certo!",
+        { icon: faLocationDot, text: "Estou no Ponto" },
+        { icon: faClock, text: "Atraso (5 min)" },
+        { icon: faPersonRunning, text: "Estou descendo!" },
+        { icon: faVanShuttle, text: "Já estou na van" },
+        { icon: faHand, text: "Pode ir sem mim" },
+        { icon: faThumbsUp, text: "Tudo certo!" },
       ]
       : [
-        "🚐 Já estou saindo!",
-        "📍 Cheguei no ponto",
-        "⏱️ Aguardando no portão",
-        "👍 Pode vir com calma!",
-        "🏁 Viagem encerrada",
-        "👋 Até mais!",
+        { icon: faVanShuttle, text: "Já estou saindo!" },
+        { icon: faLocationDot, text: "Cheguei no ponto" },
+        { icon: faClock, text: "Aguardando no portão" },
+        { icon: faThumbsUp, text: "Pode vir com calma!" },
+        { icon: faFlagCheckered, text: "Viagem encerrada" },
+        { icon: faHand, text: "Até mais!" },
       ];
 
   const formatMessageTime = (dateIso: string) => {
@@ -238,23 +259,45 @@ export function ChatWindow({
             <h2 className="chat-contact-name">{partnerName}</h2>
             <div className="chat-contact-badges">
               <span className="chat-verified-pill">
-                {partnerRole === "driver" ? "🚐 Motorista Verificado" : "🎓 Aluno UniDrive"}
+                {partnerRole === "driver" ? (
+                  <>
+                    <FontAwesomeIcon icon={faVanShuttle} style={{ marginRight: "0.35rem" }} />
+                    Motorista Verificado
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faGraduationCap} style={{ marginRight: "0.35rem" }} />
+                    Aluno UniDrive
+                  </>
+                )}
               </span>
 
               {partnerRole === "student" && partnerIsBoarded && (
-                <span className="chat-trip-badge boarded">✅ Embarcado</span>
+                <span className="chat-trip-badge boarded">
+                  <FontAwesomeIcon icon={faCircleCheck} style={{ marginRight: "0.3rem" }} />
+                  Embarcado
+                </span>
               )}
 
               {partnerRole === "student" && !partnerIsBoarded && partnerTodayStatus === "nao_vai" && (
-                <span className="chat-trip-badge nao-vai">❌ Não vai hoje</span>
+                <span className="chat-trip-badge nao-vai">
+                  <FontAwesomeIcon icon={faCircleXmark} style={{ marginRight: "0.3rem" }} />
+                  Não vai hoje
+                </span>
               )}
 
               {partnerRole === "student" && !partnerIsBoarded && partnerTodayStatus === "so_ida" && (
-                <span className="chat-trip-badge so-ida">🌅 Só ida</span>
+                <span className="chat-trip-badge so-ida">
+                  <FontAwesomeIcon icon={faSun} style={{ marginRight: "0.3rem" }} />
+                  Só ida
+                </span>
               )}
 
               {partnerRole === "student" && !partnerIsBoarded && partnerTodayStatus === "so_volta" && (
-                <span className="chat-trip-badge so-volta">🌙 Só volta</span>
+                <span className="chat-trip-badge so-volta">
+                  <FontAwesomeIcon icon={faMoon} style={{ marginRight: "0.3rem" }} />
+                  Só volta
+                </span>
               )}
             </div>
 
@@ -290,7 +333,7 @@ export function ChatWindow({
           <button
             type="button"
             className="chat-action-icon-btn"
-            onClick={() => handleQuickReply(currentRole === "student" ? "Já estou no ponto! 📍" : "Cheguei no ponto 📍")}
+            onClick={() => handleQuickReply(currentRole === "student" ? "Já estou no ponto!" : "Cheguei no ponto")}
             title="Avisar que está no ponto"
           >
             <svg
@@ -338,7 +381,10 @@ export function ChatWindow({
           </p>
         ) : messages.length === 0 ? (
           <div style={{ textAlign: "center", color: "var(--text-muted)", margin: "auto", padding: "1.5rem" }}>
-            <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.5rem" }}>💬</span>
+            <FontAwesomeIcon
+              icon={faComments}
+              style={{ fontSize: "2.5rem", display: "block", margin: "0 auto 0.5rem", color: "var(--primary)" }}
+            />
             <p style={{ margin: 0, fontWeight: 700, fontSize: "1.05rem", color: "var(--text-main)" }}>
               Nenhuma mensagem ainda
             </p>
@@ -370,13 +416,13 @@ export function ChatWindow({
                     {isMine && (
                       <span title={msg.readAt ? "Lida" : "Enviada"}>
                         {msg.status === "sending" ? (
-                          "⏱"
+                          <FontAwesomeIcon icon={faClock} style={{ fontSize: "0.72rem" }} />
                         ) : msg.status === "error" ? (
-                          "⚠️"
+                          <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: "0.72rem", color: "var(--danger)" }} />
                         ) : msg.readAt ? (
-                          "✓✓"
+                          <FontAwesomeIcon icon={faCheckDouble} style={{ fontSize: "0.72rem", color: "var(--primary)" }} />
                         ) : (
-                          "✓"
+                          <FontAwesomeIcon icon={faCheck} style={{ fontSize: "0.72rem" }} />
                         )}
                       </span>
                     )}
@@ -400,11 +446,12 @@ export function ChatWindow({
                   type="button"
                   className="chat-quick-chip"
                   onClick={() => {
-                    handleQuickReply(chip);
+                    handleQuickReply(chip.text);
                     setShowQuickReplies(false);
                   }}
                 >
-                  {chip}
+                  <FontAwesomeIcon icon={chip.icon} style={{ marginRight: "0.35rem" }} />
+                  {chip.text}
                 </button>
               ))}
             </div>
@@ -518,7 +565,7 @@ export function ChatWindow({
               disabled={savingPhone || !inputPhone.trim()}
               style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
             >
-              <span>📞</span>
+              <FontAwesomeIcon icon={faPhone} />
               <span>{savingPhone ? "Salvando..." : "Salvar e Ligar"}</span>
             </button>
           </div>

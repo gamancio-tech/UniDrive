@@ -10,6 +10,8 @@ import { AppSettings } from "../features/settings/AppSettings";
 import { getStudentProfile, StudentProfile } from "../api/students";
 import { StudentChatPage } from "../features/chat/StudentChatPage";
 import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRightFromBracket, faComments } from "@fortawesome/free-solid-svg-icons";
 
 type StudentTab = "home" | "chat" | "payments" | "settings";
 
@@ -85,8 +87,10 @@ export function StudentHome() {
               className="btn-logout-pill"
               onClick={handleLogout}
               title="Sair do aplicativo"
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
             >
-              Sair ⎋
+              <span>Sair</span>
+              <FontAwesomeIcon icon={faRightFromBracket} />
             </button>
           </div>
         )}
@@ -118,7 +122,9 @@ export function StudentHome() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontSize: "1.4rem" }}>💬</span>
+                <span style={{ fontSize: "1.3rem", color: "var(--primary)" }}>
+                  <FontAwesomeIcon icon={faComments} />
+                </span>
                 <div>
                   <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-main)" }}>
                     Falar com o Motorista

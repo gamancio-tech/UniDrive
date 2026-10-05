@@ -10,6 +10,17 @@ import { DriverManagement, Driver } from "../features/admin/DriverManagement";
 import { StudentManagement, Student } from "../features/admin/StudentManagement";
 import { AdminManagement } from "../features/admin/AdminManagement";
 import { AppSettings } from "../features/settings/AppSettings";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faVanShuttle,
+  faUsers,
+  faBolt,
+  faGraduationCap,
+  faRightFromBracket,
+  faChartPie,
+  faUserShield,
+  faGear,
+} from "@fortawesome/free-solid-svg-icons";
 
 export function AdminHome() {
   const { showToast } = useToast();
@@ -89,11 +100,11 @@ export function AdminHome() {
             <p className="list-item-sub">Painel Geral de Gestão do Sistema</p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
           {isSuperAdmin && (
             <Button
               variant="secondary"
-              style={{ width: "auto", minHeight: "36px", padding: "0.35rem 0.8rem", fontSize: "0.85rem" }}
+              style={{ width: "auto", minHeight: "36px", padding: "0.35rem 0.8rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}
               onClick={() => setIsAdminModalOpen(true)}
             >
               + Admin
@@ -105,49 +116,65 @@ export function AdminHome() {
             onClick={handleLogout}
             title="Sair do painel administrativo"
           >
-            Sair ⎋
+            <span>Sair</span>
+            <FontAwesomeIcon icon={faRightFromBracket} />
           </button>
         </div>
       </div>
 
-      {/* Tabs Superiores Padronizadas */}
-      <div className="tabs-container">
+      {/* Tabs Superiores Padronizadas e Responsivas para Mobile */}
+      <div className="tabs-container" role="tablist" aria-label="Navegação do Painel">
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "overview"}
           className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
           onClick={() => setActiveTab("overview")}
         >
-          Visão Geral
+          <FontAwesomeIcon icon={faChartPie} />
+          <span>Visão Geral</span>
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "drivers"}
           className={`tab-btn ${activeTab === "drivers" ? "active" : ""}`}
           onClick={() => setActiveTab("drivers")}
         >
-          Motoristas
+          <FontAwesomeIcon icon={faVanShuttle} />
+          <span>Motoristas</span>
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "students"}
           className={`tab-btn ${activeTab === "students" ? "active" : ""}`}
           onClick={() => setActiveTab("students")}
         >
-          Alunos
+          <FontAwesomeIcon icon={faGraduationCap} />
+          <span>Alunos</span>
         </button>
         {isSuperAdmin && (
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "admins"}
             className={`tab-btn ${activeTab === "admins" ? "active" : ""}`}
             onClick={() => setActiveTab("admins")}
           >
-            Administradores
+            <FontAwesomeIcon icon={faUserShield} />
+            <span>Admins</span>
           </button>
         )}
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "settings"}
           className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
           onClick={() => setActiveTab("settings")}
         >
-          Configurações
+          <FontAwesomeIcon icon={faGear} />
+          <span>Configurações</span>
         </button>
       </div>
 
@@ -158,7 +185,9 @@ export function AdminHome() {
             {/* Card 1: Motoristas Ativos com Sparkline SVG */}
             <div className="stat-card">
               <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: "0.25rem" }}>
-                <span style={{ fontSize: "1.2rem" }}>🚐</span>
+                <span style={{ fontSize: "1.1rem", color: "var(--primary)" }}>
+                  <FontAwesomeIcon icon={faVanShuttle} />
+                </span>
                 <span style={{ fontSize: "0.7rem", color: "var(--success-dark)", fontWeight: 700, background: "var(--success-light)", padding: "0.15rem 0.45rem", borderRadius: "999px" }}>
                   +100%
                 </span>
@@ -182,7 +211,9 @@ export function AdminHome() {
             {/* Card 2: Alunos Cadastrados com Mini Barras SVG */}
             <div className="stat-card">
               <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: "0.25rem" }}>
-                <span style={{ fontSize: "1.2rem" }}>👥</span>
+                <span style={{ fontSize: "1.1rem", color: "var(--primary)" }}>
+                  <FontAwesomeIcon icon={faUsers} />
+                </span>
                 <span style={{ fontSize: "0.7rem", color: "var(--primary)", fontWeight: 700, background: "var(--primary-light)", padding: "0.15rem 0.45rem", borderRadius: "999px" }}>
                   Ativos
                 </span>
@@ -204,7 +235,9 @@ export function AdminHome() {
             {/* Card 3: Operação da Rede com Onda SVG */}
             <div className="stat-card">
               <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: "0.25rem" }}>
-                <span style={{ fontSize: "1.2rem" }}>⚡</span>
+                <span style={{ fontSize: "1.1rem", color: "var(--warning)" }}>
+                  <FontAwesomeIcon icon={faBolt} />
+                </span>
                 <span style={{ fontSize: "0.7rem", color: "var(--accent-gold-dark)", fontWeight: 700, background: "var(--accent-gold-light)", padding: "0.15rem 0.45rem", borderRadius: "999px" }}>
                   Ao Vivo
                 </span>
@@ -236,11 +269,21 @@ export function AdminHome() {
             </p>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-              <Button variant="primary" onClick={() => setActiveTab("drivers")}>
-                🚐 Ver Motoristas
+              <Button
+                variant="primary"
+                onClick={() => setActiveTab("drivers")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
+              >
+                <FontAwesomeIcon icon={faVanShuttle} />
+                <span>Ver Motoristas</span>
               </Button>
-              <Button variant="secondary" onClick={() => setActiveTab("students")}>
-                🎓 Ver Alunos
+              <Button
+                variant="secondary"
+                onClick={() => setActiveTab("students")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
+              >
+                <FontAwesomeIcon icon={faGraduationCap} />
+                <span>Ver Alunos</span>
               </Button>
             </div>
           </Card>

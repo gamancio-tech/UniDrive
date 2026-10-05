@@ -1,22 +1,34 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faVanShuttle,
+  faUsers,
+  faComments,
+  faBullhorn,
+  faGear,
+  faHouse,
+  faMoneyBillWave,
+  IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
+
 interface NavItem {
   tab: string;
-  icon: string;
+  icon: IconDefinition;
   label: string;
 }
 
 const DRIVER_TABS: NavItem[] = [
-  { tab: "operations", icon: "🚐", label: "Hoje" },
-  { tab: "students", icon: "👥", label: "Alunos" },
-  { tab: "chat", icon: "💬", label: "Chat" },
-  { tab: "announcements", icon: "📢", label: "Avisos" },
-  { tab: "settings", icon: "⚙️", label: "Ajustes" },
+  { tab: "operations", icon: faVanShuttle, label: "Hoje" },
+  { tab: "students", icon: faUsers, label: "Alunos" },
+  { tab: "chat", icon: faComments, label: "Chat" },
+  { tab: "announcements", icon: faBullhorn, label: "Avisos" },
+  { tab: "settings", icon: faGear, label: "Ajustes" },
 ];
 
 const STUDENT_TABS: NavItem[] = [
-  { tab: "home", icon: "🏠", label: "Início" },
-  { tab: "chat", icon: "💬", label: "Chat" },
-  { tab: "payments", icon: "💰", label: "Pagamentos" },
-  { tab: "settings", icon: "⚙️", label: "Ajustes" },
+  { tab: "home", icon: faHouse, label: "Início" },
+  { tab: "chat", icon: faComments, label: "Chat" },
+  { tab: "payments", icon: faMoneyBillWave, label: "Pagamentos" },
+  { tab: "settings", icon: faGear, label: "Ajustes" },
 ];
 
 interface BottomNavigationProps {
@@ -51,7 +63,7 @@ export function BottomNavigation({
             style={{ position: "relative" }}
           >
             <span className="bottom-nav-icon" aria-hidden="true">
-              {item.icon}
+              <FontAwesomeIcon icon={item.icon} />
             </span>
             <span className="bottom-nav-label">{item.label}</span>
 

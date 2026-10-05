@@ -10,6 +10,8 @@ import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
 import { deactivateAdminStudent, reactivateAdminStudent, getStudentById, StudentAdmin } from "../../api/admin";
 import type { Driver } from "./DriverManagement";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUsers, faShieldHalved, faEye, faVanShuttle } from "@fortawesome/free-solid-svg-icons";
 
 export interface Student {
   id: string;
@@ -158,14 +160,14 @@ export const StudentManagement: React.FC = () => {
             className={`filter-pill ${isActiveList ? "active-success" : ""}`}
             onClick={() => setStatusFilter("true")}
           >
-            <span>🟢 Ativos</span>
+            <span><FontAwesomeIcon icon={faUsers} style={{ marginRight: "0.4rem" }} />Ativos</span>
           </button>
           <button
             type="button"
             className={`filter-pill ${!isActiveList ? "active-danger" : ""}`}
             onClick={() => setStatusFilter("false")}
           >
-            <span>🔴 Desativados</span>
+            <span><FontAwesomeIcon icon={faShieldHalved} style={{ marginRight: "0.4rem" }} />Desativados</span>
           </button>
         </div>
 
@@ -222,8 +224,9 @@ export const StudentManagement: React.FC = () => {
                           </div>
                         </td>
                         <td>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--primary)" }}>
-                            🚐 {getDriverName(student.driverId)}
+                          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <FontAwesomeIcon icon={faVanShuttle} />
+                            <span>{getDriverName(student.driverId)}</span>
                           </div>
                         </td>
                         <td>
@@ -233,7 +236,7 @@ export const StudentManagement: React.FC = () => {
                         </td>
                         <td>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
-                            {/* Botão Ver Detalhes 👁️ */}
+                            {/* Botão Ver Detalhes */}
                             <button
                               type="button"
                               onClick={() => handleOpenDetails(student.id)}
@@ -250,7 +253,7 @@ export const StudentManagement: React.FC = () => {
                                 width: "auto",
                               }}
                             >
-                              👁️
+                              <FontAwesomeIcon icon={faEye} />
                             </button>
 
                             {/* ToggleSwitch para Ativar/Desativar */}
@@ -315,7 +318,7 @@ export const StudentManagement: React.FC = () => {
               ) : (
                 drivers.map((drv) => (
                   <option key={drv.id} value={drv.id}>
-                    🚐 {drv.name} ({drv.email})
+                    {drv.name} ({drv.email})
                   </option>
                 ))
               )}
@@ -373,8 +376,9 @@ export const StudentManagement: React.FC = () => {
 
             <div className="input-wrapper" style={{ margin: 0 }}>
               <span className="input-label">Motorista Responsável</span>
-              <div style={{ fontSize: "0.95rem", color: "var(--primary)", fontWeight: 600 }}>
-                🚐 {getDriverName(studentDetails.driverId)}
+              <div style={{ fontSize: "0.95rem", color: "var(--primary)", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <FontAwesomeIcon icon={faVanShuttle} />
+                <span>{getDriverName(studentDetails.driverId)}</span>
               </div>
             </div>
 

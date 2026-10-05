@@ -1,17 +1,31 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faClock,
+  faLocationDot,
+  faHourglassHalf,
+  faTrafficLight,
+  faTriangleExclamation,
+  IconDefinition,
+} from '@fortawesome/free-solid-svg-icons';
 
-const DEFAULT_CHIPS = [
-  '⏱️ Vou atrasar 5 min',
-  '🚐 Já estou no local',
-  '📍 Van no Bloco C',
-  '⏳ Aguardando últimos alunos',
-  '🚦 Saindo em 3 minutos',
-  '⚠️ Atenção ao horário',
+export interface ChipItem {
+  icon: IconDefinition;
+  text: string;
+}
+
+const DEFAULT_CHIPS: ChipItem[] = [
+  { icon: faClock, text: 'Vou atrasar 5 min' },
+  { icon: faLocationDot, text: 'Já estou no local' },
+  { icon: faLocationDot, text: 'Van no Bloco C' },
+  { icon: faHourglassHalf, text: 'Aguardando últimos alunos' },
+  { icon: faTrafficLight, text: 'Saindo em 3 minutos' },
+  { icon: faTriangleExclamation, text: 'Atenção ao horário' },
 ];
 
 interface QuickMessageChipsProps {
   onSelectMessage: (message: string) => void;
-  chips?: string[];
+  chips?: ChipItem[];
 }
 
 export const QuickMessageChips: React.FC<QuickMessageChipsProps> = ({
@@ -32,19 +46,15 @@ export const QuickMessageChips: React.FC<QuickMessageChipsProps> = ({
       </div>
       <div className="quick-chips-container">
         {chips.map((chip, index) => {
-          // Remove o emoji inicial caso queira apenas o texto limpo ou envie completo
           return (
             <button
               key={index}
               type="button"
               className="quick-chip"
-              onClick={() => {
-                // Remove o emoji se for apenas prefixo visual
-                const cleanText = chip.replace(/^[\p{Emoji}\s]+/u, '').trim();
-                onSelectMessage(cleanText || chip);
-              }}
+              onClick={() => onSelectMessage(chip.text)}
             >
-              {chip}
+              <FontAwesomeIcon icon={chip.icon} style={{ marginRight: '0.4rem' }} />
+              <span>{chip.text}</span>
             </button>
           );
         })}

@@ -10,6 +10,13 @@ import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCircleCheck,
+  faHourglassHalf,
+  faCheck,
+  faBell,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const StudentPaymentsCard: React.FC = () => {
   const { showToast } = useToast();
@@ -142,8 +149,9 @@ export const StudentPaymentsCard: React.FC = () => {
                 gap: "0.3rem",
               }}
             >
-              <div style={{ fontWeight: 700, color: "var(--success-dark)", fontSize: "0.95rem" }}>
-                ✓ Mensalidade quitada
+              <div style={{ fontWeight: 700, color: "var(--success-dark)", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <FontAwesomeIcon icon={faCircleCheck} />
+                <span>Mensalidade quitada</span>
               </div>
               <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 Pagamento registrado em {currentCycle?.paidAt ? formatDate(currentCycle.paidAt) : "data recente"}
@@ -163,8 +171,9 @@ export const StudentPaymentsCard: React.FC = () => {
                   gap: "0.4rem",
                 }}
               >
-                <div style={{ fontWeight: 700, color: "var(--accent-gold-dark, #b45309)", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span>⏳</span> Aguardando Confirmação do Motorista
+                <div style={{ fontWeight: 700, color: "var(--accent-gold-dark, #b45309)", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                  <FontAwesomeIcon icon={faHourglassHalf} />
+                  <span>Aguardando Confirmação do Motorista</span>
                 </div>
                 <div style={{ fontSize: "0.86rem", color: "var(--text-main)", lineHeight: 1.5 }}>
                   Você informou que realizou o pagamento
@@ -212,9 +221,19 @@ export const StudentPaymentsCard: React.FC = () => {
                     cursor: "pointer",
                     width: "auto",
                     minHeight: "32px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
                   }}
                 >
-                  {copiedPix ? "✓ Copiado!" : "Copiar Chave"}
+                  {copiedPix ? (
+                    <>
+                      <FontAwesomeIcon icon={faCheck} />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    "Copiar Chave"
+                  )}
                 </button>
               </div>
             </div>
@@ -260,9 +279,19 @@ export const StudentPaymentsCard: React.FC = () => {
                     cursor: "pointer",
                     width: "auto",
                     minHeight: "36px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
                   }}
                 >
-                  {copiedPix ? "✓ Copiado!" : "Copiar Chave"}
+                  {copiedPix ? (
+                    <>
+                      <FontAwesomeIcon icon={faCheck} />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    "Copiar Chave"
+                  )}
                 </button>
               </div>
 
@@ -270,9 +299,10 @@ export const StudentPaymentsCard: React.FC = () => {
                 variant="primary"
                 onClick={handleNotifyPayment}
                 isLoading={markingPaid}
-                style={{ minHeight: "50px", fontSize: "1rem" }}
+                style={{ minHeight: "50px", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
               >
-                ✓ Já Paguei (Avisar Motorista)
+                <FontAwesomeIcon icon={faCheck} />
+                <span>Já Paguei (Avisar Motorista)</span>
               </Button>
             </div>
           )}
@@ -287,8 +317,9 @@ export const StudentPaymentsCard: React.FC = () => {
               gap: "0.4rem",
             }}
           >
-            <label className="input-label" htmlFor="reminder-days-select">
-              🔔 Lembrete de vencimento
+            <label className="input-label" htmlFor="reminder-days-select" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <FontAwesomeIcon icon={faBell} />
+              <span>Lembrete de vencimento</span>
             </label>
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
               <select

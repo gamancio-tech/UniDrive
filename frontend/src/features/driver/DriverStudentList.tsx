@@ -22,6 +22,20 @@ import {
   DriverStudent,
   RegisteredStudent,
 } from "../../api/students";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSun,
+  faMoon,
+  faFlagCheckered,
+  faCircleCheck,
+  faVanShuttle,
+  faCheck,
+  faUsers,
+  faShieldHalved,
+  faHourglassHalf,
+  faTrashCan,
+  faRotateRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 export type TripType = "ida" | "volta";
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
@@ -363,7 +377,8 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
               className={`filter-pill ${tripType === "ida" ? "active" : ""}`}
               style={{ minHeight: "32px", padding: "0.2rem 0.75rem", fontSize: "0.8rem" }}
             >
-              🌅 Ida
+              <FontAwesomeIcon icon={faSun} style={{ marginRight: "0.35rem" }} />
+              Ida
             </button>
             <button
               type="button"
@@ -371,7 +386,8 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
               className={`filter-pill ${tripType === "volta" ? "active" : ""}`}
               style={{ minHeight: "32px", padding: "0.2rem 0.75rem", fontSize: "0.8rem" }}
             >
-              🌙 Volta
+              <FontAwesomeIcon icon={faMoon} style={{ marginRight: "0.35rem" }} />
+              Volta
             </button>
           </div>
 
@@ -383,9 +399,13 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
               minHeight: "34px",
               padding: "0.35rem 0.85rem",
               fontSize: "0.82rem",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
             }}
           >
-            🏁 Finalizar {tripType === "ida" ? "Ida" : "Volta"}
+            <FontAwesomeIcon icon={faFlagCheckered} />
+            <span>Finalizar {tripType === "ida" ? "Ida" : "Volta"}</span>
           </Button>
         </div>
 
@@ -425,7 +445,9 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
               <>
                 {pendingStudents.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                    <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>🎉</div>
+                    <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--success, #22c55e)" }}>
+                      <FontAwesomeIcon icon={faCircleCheck} />
+                    </div>
                     <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", margin: "0 0 0.35rem" }}>
                       Todos os alunos da {tripType === "ida" ? "Ida" : "Volta"} já embarcaram!
                     </h3>
@@ -438,9 +460,10 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                       <Button
                         variant="secondary"
                         onClick={() => setIsFinishTripModalOpen(true)}
-                        style={{ width: "auto", display: "inline-flex" }}
+                        style={{ width: "auto", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
                       >
-                        🏁 Finalizar Viagem de {tripType === "ida" ? "Ida" : "Volta"}
+                        <FontAwesomeIcon icon={faFlagCheckered} />
+                        <span>Finalizar Viagem de {tripType === "ida" ? "Ida" : "Volta"}</span>
                       </Button>
                     )}
                   </div>
@@ -486,7 +509,9 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
               <>
                 {boardedStudents.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                    <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>🚐</div>
+                    <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--primary)" }}>
+                      <FontAwesomeIcon icon={faVanShuttle} />
+                    </div>
                     <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", margin: "0 0 0.35rem" }}>
                       Nenhum aluno embarcado ainda
                     </h3>
@@ -513,7 +538,8 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                             <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
                               <span className="list-item-title">{student.name}</span>
                               <Badge variant="success" style={{ fontSize: "0.68rem" }}>
-                                ✓ A Bordo
+                                <FontAwesomeIcon icon={faCheck} style={{ marginRight: "0.25rem" }} />
+                                A Bordo
                               </Badge>
                             </div>
                             <span className="list-item-sub" style={{ marginTop: "0.2rem" }}>
@@ -529,7 +555,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                               disabled={isCheckingThis}
                               title="Embarcado! Clique para desfazer"
                             >
-                              {isCheckingThis ? "..." : "✓"}
+                              {isCheckingThis ? "..." : <FontAwesomeIcon icon={faCheck} />}
                             </button>
                           </div>
                         </div>
@@ -550,14 +576,20 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                     className={`filter-pill ${allStudentsSubTab === "active" ? "active-success" : ""}`}
                     onClick={() => setAllStudentsSubTab("active")}
                   >
-                    <span>🟢 Ativos ({activeStudents.length})</span>
+                    <span>
+                      <FontAwesomeIcon icon={faUsers} style={{ marginRight: "0.35rem" }} />
+                      Ativos ({activeStudents.length})
+                    </span>
                   </button>
                   <button
                     type="button"
                     className={`filter-pill ${allStudentsSubTab === "inactive" ? "active-danger" : ""}`}
                     onClick={() => setAllStudentsSubTab("inactive")}
                   >
-                    <span>⚪ Inativos ({inactiveStudents.length})</span>
+                    <span>
+                      <FontAwesomeIcon icon={faShieldHalved} style={{ marginRight: "0.35rem" }} />
+                      Inativos ({inactiveStudents.length})
+                    </span>
                   </button>
                 </div>
 
@@ -597,7 +629,8 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                                     ) : isAwaitingConfirmation ? (
                                       <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" }}>
                                         <Badge variant="warning" style={{ fontSize: "0.68rem" }}>
-                                          ⏳ Confirmar Pgto
+                                          <FontAwesomeIcon icon={faHourglassHalf} style={{ marginRight: "0.25rem" }} />
+                                          Confirmar Pgto
                                         </Badge>
                                         <button
                                           type="button"
@@ -614,9 +647,17 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                                             borderRadius: "4px",
                                             minHeight: "auto",
                                             width: "auto",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "0.25rem",
                                           }}
                                         >
-                                          {markingPaidId === student.id ? "..." : "✓ Confirmar"}
+                                          {markingPaidId === student.id ? "..." : (
+                                            <>
+                                              <FontAwesomeIcon icon={faCheck} />
+                                              <span>Confirmar</span>
+                                            </>
+                                          )}
                                         </button>
                                         <button
                                           type="button"
@@ -688,7 +729,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                                   onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
                                   onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-light)")}
                                 >
-                                  🗑️
+                                  <FontAwesomeIcon icon={faTrashCan} />
                                 </button>
                               </div>
                             </div>
@@ -704,7 +745,9 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                   <>
                     {inactiveStudents.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                        <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>🛡️</div>
+                        <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--text-muted)" }}>
+                          <FontAwesomeIcon icon={faShieldHalved} />
+                        </div>
                         <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", margin: "0 0 0.35rem" }}>
                           Nenhum aluno inativo
                         </h3>
@@ -757,7 +800,14 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                                     fontWeight: 600,
                                   }}
                                 >
-                                  {isReactivatingThis ? "Reativando..." : "⚡ Reativar Aluno"}
+                                  {isReactivatingThis ? (
+                                    "Reativando..."
+                                  ) : (
+                                    <>
+                                      <FontAwesomeIcon icon={faRotateRight} />
+                                      <span>Reativar Aluno</span>
+                                    </>
+                                  )}
                                 </Button>
                               </div>
                             </div>

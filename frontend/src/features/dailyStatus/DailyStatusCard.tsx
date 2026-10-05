@@ -2,6 +2,18 @@ import { DailyStatusValue, TripType, TripStep } from "./useDailyStatus";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faVanShuttle,
+  faSun,
+  faMoon,
+  faHouse,
+  faCircleCheck,
+  faClock,
+  faCheck,
+  faUserCheck,
+  IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface DailyStatusCardProps {
   missingCount: number | null;
@@ -17,11 +29,11 @@ interface DailyStatusCardProps {
   onCancelBoardedSelf: () => void;
 }
 
-const STATUS_OPTIONS: { value: DailyStatusValue; label: string; icon: string; desc: string }[] = [
-  { value: "vai_normal", label: "Vou normal", icon: "🚐", desc: "Ida e volta na van" },
-  { value: "so_ida", label: "Só vou na ida", icon: "🌅", desc: "Não volto com a van" },
-  { value: "so_volta", label: "Só volto", icon: "🌃", desc: "Apenas retorno da faculdade" },
-  { value: "nao_vai", label: "Não vou hoje", icon: "🏠", desc: "Não usarei a van hoje" },
+const STATUS_OPTIONS: { value: DailyStatusValue; label: string; icon: IconDefinition; desc: string }[] = [
+  { value: "vai_normal", label: "Vou normal", icon: faVanShuttle, desc: "Ida e volta na van" },
+  { value: "so_ida", label: "Só vou na ida", icon: faSun, desc: "Não volto com a van" },
+  { value: "so_volta", label: "Só volto", icon: faMoon, desc: "Apenas retorno da faculdade" },
+  { value: "nao_vai", label: "Não vou hoje", icon: faHouse, desc: "Não usarei a van hoje" },
 ];
 
 export function DailyStatusCard({
@@ -93,13 +105,18 @@ export function DailyStatusCard({
               : "info"
           }
         >
-          {isBoarded
-            ? "✓ A Bordo"
-            : isReturnTripStarted
-            ? "Viagem Iniciada"
-            : isWaitingForReturn
-            ? "Embarque Aberto"
-            : "Programado"}
+          {isBoarded ? (
+            <>
+              <FontAwesomeIcon icon={faCheck} style={{ marginRight: "0.25rem" }} />
+              A Bordo
+            </>
+          ) : isReturnTripStarted ? (
+            "Viagem Iniciada"
+          ) : isWaitingForReturn ? (
+            "Embarque Aberto"
+          ) : (
+            "Programado"
+          )}
         </Badge>
       </div>
 
@@ -130,9 +147,14 @@ export function DailyStatusCard({
             {missingCount ?? 0}
           </div>
           <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-muted)", marginTop: "0.35rem" }}>
-            {missingCount === 0
-              ? "🎉 Todos os alunos já embarcaram!"
-              : "aluno(s) restante(s) para a van partir"}
+            {missingCount === 0 ? (
+              <>
+                <FontAwesomeIcon icon={faCircleCheck} style={{ color: "var(--success, #22c55e)", marginRight: "0.35rem" }} />
+                Todos os alunos já embarcaram!
+              </>
+            ) : (
+              "aluno(s) restante(s) para a van partir"
+            )}
           </div>
 
           {lastUpdated && (
@@ -166,7 +188,9 @@ export function DailyStatusCard({
             margin: "0.75rem 0 1.25rem",
           }}
         >
-          <div style={{ fontSize: "1.8rem", marginBottom: "0.25rem" }}>🚐💨</div>
+          <div style={{ fontSize: "1.8rem", marginBottom: "0.25rem", color: "var(--primary)" }}>
+            <FontAwesomeIcon icon={faVanShuttle} />
+          </div>
           <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--primary-text)" }}>
             Viagem de Volta Iniciada
           </div>
@@ -187,8 +211,9 @@ export function DailyStatusCard({
             margin: "0.75rem 0 1.25rem",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
-            🕒 O embarque da volta será aberto pelo motorista no término das aulas
+          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+            <FontAwesomeIcon icon={faClock} />
+            <span>O embarque da volta será aberto pelo motorista no término das aulas</span>
           </div>
           <p style={{ margin: "0.2rem 0 0", fontSize: "0.76rem", color: "var(--text-light)" }}>
             Defina sua presença programada no painel abaixo
@@ -227,7 +252,9 @@ export function DailyStatusCard({
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                  <span style={{ fontSize: "1.35rem" }}>{option.icon}</span>
+                  <span style={{ fontSize: "1.25rem", color: isSelected ? "var(--primary-text)" : "var(--text-muted)" }}>
+                    <FontAwesomeIcon icon={option.icon} />
+                  </span>
                   {isSelected && (
                     <Badge variant="success" style={{ fontSize: "0.65rem", padding: "0.15rem 0.45rem" }}>
                       Ativo
@@ -263,7 +290,7 @@ export function DailyStatusCard({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--success-dark)", fontWeight: 700, fontSize: "0.95rem" }}>
-              <span>✅</span>
+              <FontAwesomeIcon icon={faCircleCheck} />
               <span>Você já está a bordo da van!</span>
             </div>
             {!isReturnTripStarted && (
@@ -292,9 +319,10 @@ export function DailyStatusCard({
             variant="primary"
             className="btn-giant"
             onClick={onCheckIn}
-            style={{ width: "100%", fontSize: "1.05rem" }}
+            style={{ width: "100%", fontSize: "1.05rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           >
-            🎒 JÁ CHEGUEI NA VAN (CHECK-IN)
+            <FontAwesomeIcon icon={faUserCheck} />
+            <span>JÁ CHEGUEI NA VAN (CHECK-IN)</span>
           </Button>
         ) : null}
       </div>

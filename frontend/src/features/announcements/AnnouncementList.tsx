@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Announcement, getAnnouncements } from "../../api/announcements";
 import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBullhorn, faClock } from "@fortawesome/free-solid-svg-icons";
 
 interface AnnouncementListProps {
   /** Gatilho para forçar recarregamento imediato (ex.: após nova publicação) */
@@ -79,7 +81,7 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
         </p>
       ) : announcements.length === 0 ? (
         <div style={{ textAlign: "center", padding: "1.5rem 0", color: "var(--text-muted)" }}>
-          <span style={{ fontSize: "1.8rem" }}>📢</span>
+          <FontAwesomeIcon icon={faBullhorn} style={{ fontSize: "1.8rem", color: "var(--primary)" }} />
           <p style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
             Nenhum aviso publicado até o momento.
           </p>
@@ -101,7 +103,7 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
               }}
             >
               <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <span>🕒</span>
+                <FontAwesomeIcon icon={faClock} />
                 <span>{formatAnnouncementTime(item.createdAt)}</span>
               </div>
               <p

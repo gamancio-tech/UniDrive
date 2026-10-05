@@ -7,6 +7,14 @@ import { AdminHome } from "./AdminHome";
 import LoginFormComponent from "../components/loginForms";
 import { Button } from "../components/Button";
 import { useTheme } from "../utils/theme";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSun,
+  faMoon,
+  faGraduationCap,
+  faVanShuttle,
+  faGear,
+} from "@fortawesome/free-solid-svg-icons";
 
 export type Role = "driver" | "student" | "admin" | null;
 
@@ -30,7 +38,7 @@ function ThemeToggleButton() {
         background: "rgba(255, 255, 255, 0.25)",
         border: "1px solid rgba(255, 255, 255, 0.35)",
         backdropFilter: "blur(8px)",
-        fontSize: "1.25rem",
+        fontSize: "1.1rem",
         cursor: "pointer",
         zIndex: 10,
         display: "flex",
@@ -39,7 +47,7 @@ function ThemeToggleButton() {
         boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
       }}
     >
-      {theme === "dark" ? "☀️" : "🌙"}
+      <FontAwesomeIcon icon={theme === "dark" ? faSun : faMoon} />
     </button>
   );
 }
@@ -75,23 +83,26 @@ function InitialMenu({ setPerfil }: { setPerfil: (perfil: Role) => void }) {
           <Button
             variant="primary"
             onClick={() => setPerfil("student")}
-            style={{ minHeight: "52px", fontSize: "1rem" }}
+            style={{ minHeight: "52px", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           >
-            🎓 Entrar como Aluno
+            <FontAwesomeIcon icon={faGraduationCap} />
+            <span>Entrar como Aluno</span>
           </Button>
           <Button
             variant="secondary"
             onClick={() => setPerfil("driver")}
-            style={{ minHeight: "52px", fontSize: "1rem" }}
+            style={{ minHeight: "52px", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           >
-            🚐 Entrar como Motorista
+            <FontAwesomeIcon icon={faVanShuttle} />
+            <span>Entrar como Motorista</span>
           </Button>
           <Button
             variant="ghost"
             onClick={() => setPerfil("admin")}
-            style={{ color: "var(--text-muted)", fontWeight: 500, minHeight: "44px" }}
+            style={{ color: "var(--text-muted)", fontWeight: 500, minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           >
-            ⚙️ Acesso Administrativo
+            <FontAwesomeIcon icon={faGear} />
+            <span>Acesso Administrativo</span>
           </Button>
         </div>
       </div>

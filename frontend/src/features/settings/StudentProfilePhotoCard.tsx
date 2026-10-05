@@ -8,6 +8,8 @@ import {
   StudentProfile,
 } from "../../api/students";
 import { compressProfileImage } from "../../utils/imageCompressor";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCamera } from "@fortawesome/free-solid-svg-icons";
 
 export const StudentProfilePhotoCard: React.FC = () => {
   const { showToast } = useToast();
@@ -154,8 +156,8 @@ export const StudentProfilePhotoCard: React.FC = () => {
               <div
                 style={{
                   position: "absolute",
-                  bottom: "2px",
-                  right: "2px",
+                  bottom: "4px",
+                  right: "4px",
                   width: "32px",
                   height: "32px",
                   borderRadius: "50%",
@@ -164,13 +166,13 @@ export const StudentProfilePhotoCard: React.FC = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "0.95rem",
+                  fontSize: "0.85rem",
                   border: "2.5px solid var(--bg-card)",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
                   transition: "transform 0.15s ease",
                 }}
               >
-                📷
+                <FontAwesomeIcon icon={faCamera} />
               </div>
             </div>
 
@@ -230,7 +232,7 @@ export const StudentProfilePhotoCard: React.FC = () => {
                     gap: "0.4rem",
                   }}
                 >
-                  <span>📷</span>
+                  <FontAwesomeIcon icon={faCamera} />
                   <span>{updating ? "Processando..." : profile?.photoUrl ? "Trocar Foto" : "Definir Foto"}</span>
                 </Button>
 

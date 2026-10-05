@@ -3,6 +3,17 @@ import { ConversationSummary, getDriverConversations } from "../../api/chat";
 import { ChatWindow } from "./ChatWindow";
 import { chatSocket, ChatSocketEvent } from "./chatSocket";
 import { Avatar } from "../../components/Avatar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faComments,
+  faMagnifyingGlass,
+  faUsers,
+  faCircleCheck,
+  faCircleXmark,
+  faSun,
+  faMoon,
+  faVanShuttle,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface DriverChatConversationListProps {
   tripType?: "ida" | "volta";
@@ -95,7 +106,7 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
         <div className="chat-sidebar-header">
           <div className="chat-sidebar-title-row">
             <h2 className="chat-sidebar-title">
-              <span>💬</span>
+              <FontAwesomeIcon icon={faComments} />
               <span>Passageiros</span>
             </h2>
             <span
@@ -114,7 +125,7 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
           </div>
 
           <div className="chat-sidebar-search">
-            <span className="chat-sidebar-search-icon">🔍</span>
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="chat-sidebar-search-icon" />
             <input
               type="text"
               placeholder="Buscar por nome..."
@@ -133,7 +144,10 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
             </p>
           ) : filteredConversations.length === 0 ? (
             <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-              <span style={{ fontSize: "1.75rem", display: "block", marginBottom: "0.5rem" }}>👥</span>
+              <FontAwesomeIcon
+                icon={faUsers}
+                style={{ fontSize: "1.75rem", display: "block", margin: "0 auto 0.5rem", color: "var(--text-muted)" }}
+              />
               <p style={{ fontWeight: 600, margin: 0, fontSize: "0.9rem", color: "var(--text-main)" }}>
                 {searchTerm ? "Nenhum aluno encontrado" : "Nenhum passageiro cadastrado"}
               </p>
@@ -179,13 +193,25 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
                     <div className="chat-sidebar-item-bottom">
                       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", minWidth: 0, flex: 1 }}>
                         {conv.isBoarded ? (
-                          <span className="chat-trip-badge boarded">✅ A bordo</span>
+                          <span className="chat-trip-badge boarded">
+                            <FontAwesomeIcon icon={faCircleCheck} style={{ marginRight: "0.25rem" }} />
+                            A bordo
+                          </span>
                         ) : conv.todayStatus === "nao_vai" ? (
-                          <span className="chat-trip-badge nao-vai">❌ Não vai</span>
+                          <span className="chat-trip-badge nao-vai">
+                            <FontAwesomeIcon icon={faCircleXmark} style={{ marginRight: "0.25rem" }} />
+                            Não vai
+                          </span>
                         ) : conv.todayStatus === "so_ida" ? (
-                          <span className="chat-trip-badge so-ida">🌅 Ida</span>
+                          <span className="chat-trip-badge so-ida">
+                            <FontAwesomeIcon icon={faSun} style={{ marginRight: "0.25rem" }} />
+                            Ida
+                          </span>
                         ) : conv.todayStatus === "so_volta" ? (
-                          <span className="chat-trip-badge so-volta">🌙 Volta</span>
+                          <span className="chat-trip-badge so-volta">
+                            <FontAwesomeIcon icon={faMoon} style={{ marginRight: "0.25rem" }} />
+                            Volta
+                          </span>
                         ) : null}
 
                         <p className="chat-sidebar-snippet">
@@ -229,7 +255,10 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
         />
       ) : (
         <section className="chat-empty-state" aria-label="Painel de conversa">
-          <div className="chat-empty-icon">🚐💬</div>
+          <div className="chat-empty-icon" style={{ display: "flex", justifyContent: "center", gap: "0.5rem" }}>
+            <FontAwesomeIcon icon={faVanShuttle} />
+            <FontAwesomeIcon icon={faComments} />
+          </div>
           <h3 className="chat-empty-title">Central de Mensagens da Van</h3>
           <p className="chat-empty-subtitle">
             Selecione um passageiro na lista ao lado para enviar avisos, tirar dúvidas ou confirmar embarques em tempo real.

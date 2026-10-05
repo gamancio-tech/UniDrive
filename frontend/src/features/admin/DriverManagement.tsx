@@ -9,6 +9,8 @@ import { Avatar } from "../../components/Avatar";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
 import { deactivateAdminDriver, reactivateAdminDriver, getDriverById, DriverAdmin } from "../../api/admin";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUsers, faShieldHalved, faEye } from "@fortawesome/free-solid-svg-icons";
 
 export interface Driver {
   id: string;
@@ -137,7 +139,7 @@ export const DriverManagement: React.FC = () => {
             className={`filter-pill ${statusFilter === "active" ? "active-success" : ""}`}
             onClick={() => setStatusFilter("active")}
           >
-            <span>🟢 Ativos</span>
+            <span><FontAwesomeIcon icon={faUsers} style={{ marginRight: "0.4rem" }} />Ativos</span>
             <span style={{ fontSize: "0.75rem", opacity: 0.85 }}>({activeCount})</span>
           </button>
           <button
@@ -145,7 +147,7 @@ export const DriverManagement: React.FC = () => {
             className={`filter-pill ${statusFilter === "inactive" ? "active-danger" : ""}`}
             onClick={() => setStatusFilter("inactive")}
           >
-            <span>🔴 Desativados</span>
+            <span><FontAwesomeIcon icon={faShieldHalved} style={{ marginRight: "0.4rem" }} />Desativados</span>
             <span style={{ fontSize: "0.75rem", opacity: 0.85 }}>({inactiveCount})</span>
           </button>
         </div>
@@ -217,7 +219,7 @@ export const DriverManagement: React.FC = () => {
                         </td>
                         <td>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
-                            {/* Botão Ver Detalhes 👁️ */}
+                            {/* Botão Ver Detalhes */}
                             <button
                               type="button"
                               onClick={() => handleOpenDetails(driver.id)}
@@ -234,7 +236,7 @@ export const DriverManagement: React.FC = () => {
                                 width: "auto",
                               }}
                             >
-                              👁️
+                              <FontAwesomeIcon icon={faEye} />
                             </button>
 
                             {/* ToggleSwitch para Ativar/Desativar */}

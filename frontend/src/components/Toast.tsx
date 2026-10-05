@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCircleCheck,
+  faTriangleExclamation,
+  faCircleInfo,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+
 export type ToastType = "success" | "error" | "info";
 
 export interface ToastMessage {
@@ -36,12 +44,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getIcon = (type: ToastType) => {
     switch (type) {
       case "success":
-        return "✅";
+        return <FontAwesomeIcon icon={faCircleCheck} style={{ color: "var(--success, #22c55e)" }} />;
       case "error":
-        return "⚠️";
+        return <FontAwesomeIcon icon={faTriangleExclamation} style={{ color: "var(--danger, #ef4444)" }} />;
       case "info":
       default:
-        return "ℹ️";
+        return <FontAwesomeIcon icon={faCircleInfo} style={{ color: "var(--primary, #0b63ce)" }} />;
     }
   };
 
@@ -62,7 +70,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 onClick={() => removeToast(toast.id)}
                 aria-label="Fechar"
               >
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
           ))}

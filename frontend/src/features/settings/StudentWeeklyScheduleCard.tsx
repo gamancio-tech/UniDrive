@@ -9,33 +9,45 @@ import {
   updateWeeklySchedule,
   WeeklyScheduleDay,
 } from "../../api/weeklySchedule";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faVanShuttle,
+  faSun,
+  faMoon,
+  faHouse,
+  faLightbulb,
+  faCalendarDays,
+  faCalendarDay,
+  faFloppyDisk,
+  IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
 
 const STATUS_CONFIG: Record<
   DailyStatusValue,
-  { label: string; shortLabel: string; icon: string; badgeVariant: "success" | "warning" | "info" | "neutral" }
+  { label: string; shortLabel: string; icon: IconDefinition; badgeVariant: "success" | "warning" | "info" | "neutral" }
 > = {
   vai_normal: {
     label: "Vou normal (Ida e Volta)",
     shortLabel: "Vou normal",
-    icon: "🚐",
+    icon: faVanShuttle,
     badgeVariant: "success",
   },
   so_ida: {
     label: "Só vou na ida",
     shortLabel: "Só ida",
-    icon: "🌅",
+    icon: faSun,
     badgeVariant: "warning",
   },
   so_volta: {
     label: "Só volto",
     shortLabel: "Só volta",
-    icon: "🌃",
+    icon: faMoon,
     badgeVariant: "info",
   },
   nao_vai: {
     label: "Não vou (Folga)",
     shortLabel: "Não vou",
-    icon: "🏠",
+    icon: faHouse,
     badgeVariant: "neutral",
   },
 };
@@ -120,7 +132,8 @@ export const StudentWeeklyScheduleCard: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          💡 <strong>Como funciona:</strong> Se você só vai para a faculdade 4 dias na semana, marque o dia de folga como <strong>"Não vou"</strong>. O sistema assumirá isso como seu padrão semanal. Em qualquer dia que você precisar mudar excepcionalmente, basta alterar direto na tela inicial.
+          <FontAwesomeIcon icon={faLightbulb} style={{ marginRight: "0.4rem", color: "var(--warning)" }} />
+          <strong>Como funciona:</strong> Se você só vai para a faculdade 4 dias na semana, marque o dia de folga como <strong>"Não vou"</strong>. O sistema assumirá isso como seu padrão semanal. Em qualquer dia que você precisar mudar excepcionalmente, basta alterar direto na tela inicial.
         </div>
 
         {/* Resumo da rotina atual */}
@@ -138,7 +151,7 @@ export const StudentWeeklyScheduleCard: React.FC = () => {
               color: "var(--text-main)",
             }}
           >
-            <span>🗓️</span>
+            <FontAwesomeIcon icon={faCalendarDays} style={{ color: "var(--primary)" }} />
             <span>
               <strong>Folga programada:</strong> {offDays.map((d) => d.dayName).join(", ")}
             </span>
@@ -175,7 +188,9 @@ export const StudentWeeklyScheduleCard: React.FC = () => {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-                      <span style={{ fontSize: "1.1rem" }}>📅</span>
+                      <span style={{ fontSize: "1rem", color: "var(--primary)" }}>
+                        <FontAwesomeIcon icon={faCalendarDay} />
+                      </span>
                       <span
                         style={{
                           fontWeight: 700,
@@ -188,7 +203,8 @@ export const StudentWeeklyScheduleCard: React.FC = () => {
                     </div>
 
                     <Badge variant={currentConfig.badgeVariant}>
-                      {currentConfig.icon} {currentConfig.shortLabel}
+                      <FontAwesomeIcon icon={currentConfig.icon} style={{ marginRight: "0.3rem" }} />
+                      <span>{currentConfig.shortLabel}</span>
                     </Badge>
                   </div>
 
@@ -227,7 +243,7 @@ export const StudentWeeklyScheduleCard: React.FC = () => {
                             minHeight: "36px",
                           }}
                         >
-                          <span>{optConfig.icon}</span>
+                          <FontAwesomeIcon icon={optConfig.icon} />
                           <span>{optConfig.shortLabel}</span>
                         </button>
                       );
@@ -246,9 +262,16 @@ export const StudentWeeklyScheduleCard: React.FC = () => {
             onClick={handleSave}
             isLoading={saving}
             disabled={loading || !hasChanges}
-            style={{ width: "100%", minHeight: "48px", fontSize: "0.98rem" }}
+            style={{ width: "100%", minHeight: "48px", fontSize: "0.98rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
           >
-            {saving ? "Salvando..." : "💾 Salvar Rotina Semanal"}
+            {saving ? (
+              "Salvando..."
+            ) : (
+              <>
+                <FontAwesomeIcon icon={faFloppyDisk} />
+                <span>Salvar Rotina Semanal</span>
+              </>
+            )}
           </Button>
         </div>
       </div>

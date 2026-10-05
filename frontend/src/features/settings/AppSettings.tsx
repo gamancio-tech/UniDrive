@@ -9,6 +9,17 @@ import { getPushStatus, subscribeToPush, unsubscribeFromPush, sendTestPush, Push
 import { logout } from "../../api/client";
 import { StudentWeeklyScheduleCard } from "./StudentWeeklyScheduleCard";
 import { StudentProfilePhotoCard } from "./StudentProfilePhotoCard";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSun,
+  faMoon,
+  faMobileScreen,
+  faBell,
+  faBellSlash,
+  faFlask,
+  faRocket,
+  faRightFromBracket,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface AppSettingsProps {
   role: "driver" | "student" | "admin";
@@ -109,8 +120,9 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
             }}
           >
             <div>
-              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-main)" }}>
-                {isDarkMode ? "🌙 Modo Escuro Ativo" : "☀️ Modo Claro Ativo"}
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                <FontAwesomeIcon icon={isDarkMode ? faMoon : faSun} />
+                <span>{isDarkMode ? "Modo Escuro Ativo" : "Modo Claro Ativo"}</span>
               </div>
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
                 {isDarkMode
@@ -147,7 +159,9 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                <span style={{ fontSize: "1.5rem" }}>☀️</span>
+                <span style={{ fontSize: "1.35rem", color: "#f59e0b" }}>
+                  <FontAwesomeIcon icon={faSun} />
+                </span>
                 {!isDarkMode && <Badge variant="success">Ativo</Badge>}
               </div>
               <div>
@@ -180,7 +194,9 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                <span style={{ fontSize: "1.5rem" }}>🌙</span>
+                <span style={{ fontSize: "1.35rem", color: "#60a5fa" }}>
+                  <FontAwesomeIcon icon={faMoon} />
+                </span>
                 {isDarkMode && <Badge variant="info">Ativo</Badge>}
               </div>
               <div>
@@ -229,7 +245,8 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
                 lineHeight: 1.5,
               }}
             >
-              📱 <strong>Dica para iPhone (iOS):</strong> Para receber notificações, adicione este app à Tela de Início via menu de compartilhamento do Safari.
+              <FontAwesomeIcon icon={faMobileScreen} style={{ marginRight: "0.4rem" }} />
+              <strong>Dica para iPhone (iOS):</strong> Para receber notificações, adicione este app à Tela de Início via menu de compartilhamento do Safari.
             </div>
           )}
 
@@ -259,8 +276,10 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
                 onClick={handleActivatePush}
                 isLoading={activatingPush}
                 disabled={pushStatus.permission === "denied"}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
               >
-                🔔 Ativar Notificações no Dispositivo
+                <FontAwesomeIcon icon={faBell} />
+                <span>Ativar Notificações no Dispositivo</span>
               </Button>
             )}
 
@@ -270,9 +289,10 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
                 variant="secondary"
                 onClick={handleDeactivatePush}
                 isLoading={activatingPush}
-                style={{ minHeight: "44px" }}
+                style={{ minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
               >
-                🔕 Desativar Notificações Neste Aparelho
+                <FontAwesomeIcon icon={faBellSlash} />
+                <span>Desativar Notificações Neste Aparelho</span>
               </Button>
             )}
 
@@ -290,8 +310,9 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "var(--text-main)" }}>
-                    🧪 Teste de Disparo de Notificação
+                  <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <FontAwesomeIcon icon={faFlask} />
+                    <span>Teste de Disparo de Notificação</span>
                   </div>
                   <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
                     Envia um alerta de teste em tempo real através do servidor via Web Push API.
@@ -302,9 +323,16 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
                   variant="secondary"
                   onClick={handleTestPush}
                   isLoading={testingPush}
-                  style={{ minHeight: "44px", fontSize: "0.9rem" }}
+                  style={{ minHeight: "44px", fontSize: "0.9rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
                 >
-                  {testingPush ? "Disparando teste..." : "🚀 Disparar Notificação de Teste"}
+                  {testingPush ? (
+                    "Disparando teste..."
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faRocket} />
+                      <span>Disparar Notificação de Teste</span>
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -329,8 +357,13 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
           </div>
 
           <div style={{ marginTop: "0.5rem" }}>
-            <Button variant="danger" onClick={handleLogout} style={{ minHeight: "44px" }}>
-              Encerrar Sessão (Sair) ⎋
+            <Button
+              variant="danger"
+              onClick={handleLogout}
+              style={{ minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
+            >
+              <span>Encerrar Sessão (Sair)</span>
+              <FontAwesomeIcon icon={faRightFromBracket} />
             </Button>
           </div>
         </div>

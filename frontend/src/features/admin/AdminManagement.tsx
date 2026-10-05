@@ -8,6 +8,8 @@ import { Avatar } from "../../components/Avatar";
 import { useToast } from "../../components/Toast";
 import { AdminUser, createAdmin, deleteAdmin, getAdmins } from "../../api/admin";
 import { getDecodedToken } from "../../api/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
 export const AdminManagement: React.FC = () => {
   const { showToast } = useToast();
@@ -253,7 +255,8 @@ export const AdminManagement: React.FC = () => {
               lineHeight: 1.4,
             }}
           >
-            ⚠️ <strong>Atenção:</strong> Esta ação é permanente e revogará imediatamente o login e
+            <FontAwesomeIcon icon={faTriangleExclamation} style={{ marginRight: "0.4rem" }} />
+            <strong>Atenção:</strong> Esta ação é permanente e revogará imediatamente o login e
             todos os privilégios deste administrador.
           </div>
 

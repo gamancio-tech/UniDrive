@@ -4,6 +4,12 @@ import { Button } from "./Button";
 import { Badge } from "./Badge";
 import { Card } from "./Card";
 import { useToast } from "./Toast";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faMobileScreen,
+  faBell,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 
 export function NotificationBanner() {
   const { showToast } = useToast();
@@ -60,7 +66,12 @@ export function NotificationBanner() {
   if (status.isIosNonStandalone) {
     return (
       <Card
-        title="📱 Notificações no iPhone"
+        title={
+          <span>
+            <FontAwesomeIcon icon={faMobileScreen} style={{ marginRight: "0.45rem" }} />
+            Notificações no iPhone
+          </span>
+        }
         subtitle="Para receber avisos da van em tempo real no iOS:"
         className="notification-banner"
       >
@@ -77,7 +88,12 @@ export function NotificationBanner() {
   if (!status.supported) {
     return (
       <Card
-        title="🔔 Notificações"
+        title={
+          <span>
+            <FontAwesomeIcon icon={faBell} style={{ marginRight: "0.45rem" }} />
+            Notificações
+          </span>
+        }
         subtitle="Este navegador ou ambiente não suporta Web Push (requer HTTPS ou localhost)."
         action={<Badge variant="neutral">Indisponível</Badge>}
         className="notification-banner"
@@ -94,7 +110,12 @@ export function NotificationBanner() {
   if (status.permission === "denied") {
     return (
       <Card
-        title="⚠️ Notificações Bloqueadas"
+        title={
+          <span>
+            <FontAwesomeIcon icon={faTriangleExclamation} style={{ marginRight: "0.45rem", color: "var(--danger)" }} />
+            Notificações Bloqueadas
+          </span>
+        }
         subtitle="As notificações estão bloqueadas nas configurações do seu navegador."
         action={<Badge variant="danger">Bloqueado</Badge>}
         className="notification-banner"
@@ -109,7 +130,12 @@ export function NotificationBanner() {
   // Caso padrão: Suportado, aguardando clique de ativação
   return (
     <Card
-      title="🔔 Ativar Notificações"
+      title={
+        <span>
+          <FontAwesomeIcon icon={faBell} style={{ marginRight: "0.45rem" }} />
+          Ativar Notificações
+        </span>
+      }
       subtitle="Receba avisos e alertas da van em tempo real diretamente neste dispositivo."
       action={<Badge variant="neutral">Pendente</Badge>}
       className="notification-banner"
@@ -120,7 +146,14 @@ export function NotificationBanner() {
           onClick={handleActivate}
           disabled={loading}
         >
-          {loading ? "Ativando..." : "🔔 Permitir e Ativar Notificações"}
+          {loading ? (
+            "Ativando..."
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faBell} style={{ marginRight: "0.45rem" }} />
+              Permitir e Ativar Notificações
+            </>
+          )}
         </Button>
       </div>
     </Card>

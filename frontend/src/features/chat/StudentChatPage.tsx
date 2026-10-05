@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { getStudentProfile, StudentProfile } from "../../api/students";
 import { useDailyStatus } from "../dailyStatus/useDailyStatus";
 import { ChatWindow } from "./ChatWindow";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
 interface StudentChatPageProps {
   onBack?: () => void;
@@ -38,7 +40,10 @@ export function StudentChatPage({ onBack }: StudentChatPageProps) {
           border: "1px solid var(--border-subtle)",
         }}
       >
-        <span style={{ fontSize: "2rem", display: "block", marginBottom: "0.5rem" }}>⚠️</span>
+        <FontAwesomeIcon
+          icon={faTriangleExclamation}
+          style={{ fontSize: "2rem", display: "block", margin: "0 auto 0.5rem", color: "var(--warning, #f59e0b)" }}
+        />
         <p style={{ fontWeight: 600, margin: 0, color: "var(--text-main)" }}>
           Motorista não encontrado
         </p>

@@ -17,6 +17,17 @@ import { AppSettings } from "../features/settings/AppSettings";
 import { resetAllDailyBoarded } from "../api/students";
 import { DriverChatConversationList } from "../features/chat/DriverChatConversationList";
 import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faRightFromBracket,
+  faSun,
+  faMoon,
+  faVanShuttle,
+  faRocket,
+  faFlagCheckered,
+  faRotateLeft,
+  faBullhorn,
+} from "@fortawesome/free-solid-svg-icons";
 
 type DriverTab = "operations" | "students" | "chat" | "announcements" | "settings";
 
@@ -138,7 +149,7 @@ export function DriverHome() {
         setIsActionModalOpen(false);
         await refresh();
         loadStudents();
-        showToast("🚐 Viagem de volta iniciada! A contagem de alunos foi encerrada para os passageiros.", "success");
+        showToast("Viagem de volta iniciada! A contagem de alunos foi encerrada para os passageiros.", "success");
       } else if (tripType === "volta" && tripStep === "em_viagem") {
         // Motorista encerra a viagem de volta -> reseta para a ida do próximo dia
         await resetAllDailyBoarded();
@@ -147,7 +158,7 @@ export function DriverHome() {
         setIsActionModalOpen(false);
         await refresh();
         loadStudents();
-        showToast("🏁 Viagem de volta concluída com sucesso! Embarques resetados para o próximo dia.", "success");
+        showToast("Viagem de volta concluída com sucesso! Embarques resetados para o próximo dia.", "success");
       }
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Erro ao atualizar estado da viagem.", "error");
@@ -211,8 +222,10 @@ export function DriverHome() {
               className="btn-logout-pill"
               onClick={handleLogout}
               title="Sair do sistema"
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
             >
-              Sair ⎋
+              <span>Sair</span>
+              <FontAwesomeIcon icon={faRightFromBracket} />
             </button>
           </div>
         )}
@@ -266,7 +279,16 @@ export function DriverHome() {
                     </p>
                   </div>
                   <Badge variant={isVoltaEmViagem ? "success" : isVoltaAguardando ? "warning" : "info"}>
-                    {isVoltaEmViagem ? "Em Viagem 🚐💨" : isVoltaAguardando ? "Aguardando Alunos" : "Em Andamento"}
+                    {isVoltaEmViagem ? (
+                      <>
+                        <FontAwesomeIcon icon={faVanShuttle} style={{ marginRight: "0.3rem" }} />
+                        Em Viagem
+                      </>
+                    ) : isVoltaAguardando ? (
+                      "Aguardando Alunos"
+                    ) : (
+                      "Em Andamento"
+                    )}
                   </Badge>
                 </div>
 
@@ -278,7 +300,8 @@ export function DriverHome() {
                     className={`filter-pill ${tripType === "ida" ? "active" : ""}`}
                     style={{ minHeight: "30px", padding: "0.18rem 0.75rem", fontSize: "0.78rem" }}
                   >
-                    🌅 Ida
+                    <FontAwesomeIcon icon={faSun} style={{ marginRight: "0.35rem" }} />
+                    Ida
                   </button>
                   <button
                     type="button"
@@ -286,7 +309,8 @@ export function DriverHome() {
                     className={`filter-pill ${tripType === "volta" ? "active" : ""}`}
                     style={{ minHeight: "30px", padding: "0.18rem 0.75rem", fontSize: "0.78rem" }}
                   >
-                    🌙 Volta
+                    <FontAwesomeIcon icon={faMoon} style={{ marginRight: "0.35rem" }} />
+                    Volta
                   </button>
                 </div>
 
@@ -316,10 +340,10 @@ export function DriverHome() {
                       className="btn-giant"
                       onClick={() => setIsActionModalOpen(true)}
                       disabled={executingAction}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
                     >
-                      {executingAction
-                        ? "FINALIZANDO IDA..."
-                        : "🚐 FINALIZAR IDA E ABRIR ESPERA DA VOLTA"}
+                      <FontAwesomeIcon icon={faVanShuttle} />
+                      <span>{executingAction ? "FINALIZANDO IDA..." : "FINALIZAR IDA E ABRIR ESPERA DA VOLTA"}</span>
                     </Button>
                   ) : isVoltaAguardando ? (
                     <Button
@@ -327,10 +351,10 @@ export function DriverHome() {
                       className="btn-giant"
                       onClick={() => setIsActionModalOpen(true)}
                       disabled={executingAction}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
                     >
-                      {executingAction
-                        ? "INICIANDO VIAGEM..."
-                        : "🚀 DECLARAR PARTIDA (INICIAR VIAGEM DE VOLTA)"}
+                      <FontAwesomeIcon icon={faRocket} />
+                      <span>{executingAction ? "INICIANDO VIAGEM..." : "DECLARAR PARTIDA (INICIAR VIAGEM DE VOLTA)"}</span>
                     </Button>
                   ) : (
                     <>
@@ -339,11 +363,10 @@ export function DriverHome() {
                         className="btn-giant"
                         onClick={() => setIsActionModalOpen(true)}
                         disabled={executingAction}
-                        style={{ background: "var(--success-dark)" }}
+                        style={{ background: "var(--success-dark)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
                       >
-                        {executingAction
-                          ? "FINALIZANDO RETORNO..."
-                          : "🏁 FINALIZAR VIAGEM DE RETORNO"}
+                        <FontAwesomeIcon icon={faFlagCheckered} />
+                        <span>{executingAction ? "FINALIZANDO RETORNO..." : "FINALIZAR VIAGEM DE RETORNO"}</span>
                       </Button>
                       <button
                         type="button"
@@ -358,9 +381,14 @@ export function DriverHome() {
                           cursor: "pointer",
                           padding: "0.2rem",
                           textDecoration: "underline",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "0.35rem",
                         }}
                       >
-                        ↺ Reabrir espera de embarque (caso tenha iniciado por engano)
+                        <FontAwesomeIcon icon={faRotateLeft} />
+                        <span>Reabrir espera de embarque (caso tenha iniciado por engano)</span>
                       </button>
                     </>
                   )}
@@ -435,9 +463,10 @@ export function DriverHome() {
                   onClick={publishAnnouncement}
                   isLoading={publishing}
                   disabled={!message.trim()}
-                  style={{ minHeight: "50px", fontSize: "1rem" }}
+                  style={{ minHeight: "50px", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
                 >
-                  📢 Enviar Aviso
+                  <FontAwesomeIcon icon={faBullhorn} />
+                  <span>Enviar Aviso</span>
                 </Button>
               </div>
             </Card>
@@ -533,8 +562,9 @@ export function DriverHome() {
                 </>
               ) : (
                 <>
-                  <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
-                    Todos os alunos previstos para a volta já estão a bordo! 🚐💨
+                  <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <span>Todos os alunos previstos para a volta já estão a bordo!</span>
+                    <FontAwesomeIcon icon={faVanShuttle} />
                   </p>
                   <div
                     style={{
