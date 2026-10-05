@@ -163,4 +163,8 @@ model PushSubscription {
   endpoint  String   @unique
   keys      Json
   createdAt DateTime @default(now())
+
+  @@index([studentId])
+  @@index([driverId])
+  @@index([adminId])
 }

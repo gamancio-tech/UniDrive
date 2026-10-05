@@ -70,17 +70,20 @@ export const studentService = {
   },
 
   async listActiveByDriver(driverId: string) {
-    return studentRepository.listActiveByDriver(driverId);
+    const students = await studentRepository.listActiveByDriver(driverId);
+    return students.map(({ passwordHash, ...rest }) => rest);
   },
 
   async listByStatus(status: string) {
+    let students;
     if (status === "true") {
-      return await studentRepository.listActiveAll();
+      students = await studentRepository.listActiveAll();
     } else if (status === "false") {
-      return await studentRepository.listDisableAll();
+      students = await studentRepository.listDisableAll();
     } else {
       throw new AppError("Status inválido.", StatusCodeHttp.BAD_REQUEST);
     }
+    return students.map(({ passwordHash, ...rest }) => rest);
   },
 
   async findById(id: string) {
