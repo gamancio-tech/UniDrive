@@ -42,6 +42,19 @@ export function DriverHome() {
     }
     return "operations";
   });
+  const [visitedTabs, setVisitedTabs] = useState<Set<DriverTab>>(() => new Set([activeTab]));
+
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) return prev;
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+    if (activeTab !== "chat") {
+      setIsDriverChatOpen(false);
+    }
+  }, [activeTab]);
   const [tripType, setTripType] = useState<TripType>(() => {
     const saved = localStorage.getItem("unidrive_driver_trip_type");
     return saved === "volta" ? "volta" : "ida";
@@ -231,8 +244,8 @@ export function DriverHome() {
         )}
 
         {/* Aba: Hoje (Operação) — Mockup tela1_motorista.jfif */}
-        {activeTab === "operations" && (
-          <>
+        {visitedTabs.has("operations") && (
+          <div style={{ display: activeTab === "operations" ? "block" : "none" }}>
             <NotificationBanner />
 
             {loading ? (
@@ -414,29 +427,33 @@ export function DriverHome() {
                 </div>
               </Card>
             )}
-          </>
+          </div>
         )}
 
         {/* Aba: Alunos — 3 Listas sincronizadas com o mesmo trajeto */}
-        {activeTab === "students" && (
-          <DriverStudentList
-            tripType={tripType}
-            onTripChange={handleTripChange}
-            onTripFinished={() => {
-              refresh();
-              loadStudents();
-            }}
-          />
+        {visitedTabs.has("students") && (
+          <div style={{ display: activeTab === "students" ? "block" : "none" }}>
+            <DriverStudentList
+              tripType={tripType}
+              onTripChange={handleTripChange}
+              onTripFinished={() => {
+                refresh();
+                loadStudents();
+              }}
+            />
+          </div>
         )}
 
         {/* Aba: Chat — Conversas 1:1 com os alunos */}
-        {activeTab === "chat" && (
-          <DriverChatConversationList tripType={tripType} onOpenConversation={setIsDriverChatOpen} />
+        {visitedTabs.has("chat") && (
+          <div style={{ display: activeTab === "chat" ? "block" : "none", height: "100%" }}>
+            <DriverChatConversationList tripType={tripType} onOpenConversation={setIsDriverChatOpen} />
+          </div>
         )}
 
         {/* Aba: Avisos — Mockup tela3_motorista.jfif */}
-        {activeTab === "announcements" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {visitedTabs.has("announcements") && (
+          <div style={{ display: activeTab === "announcements" ? "flex" : "none", flexDirection: "column", gap: "1rem" }}>
             <NotificationBanner />
 
             <Card
@@ -480,7 +497,11 @@ export function DriverHome() {
         )}
 
         {/* Aba: Configurações */}
-        {activeTab === "settings" && <AppSettings role="driver" />}
+        {visitedTabs.has("settings") && (
+          <div style={{ display: activeTab === "settings" ? "block" : "none" }}>
+            <AppSettings role="driver" />
+          </div>
+        )}
       </main>
 
       {/* Modal de Confirmação de Cancelamento de Viagem */}

@@ -12,5 +12,5 @@ chatRoutes.get("/history/:partnerId", chatController.getHistory);
 // Lista de conversas com alunos e unread count (exclusivo motorista)
 chatRoutes.get("/conversations", requireRole("driver"), chatController.getConversations);
 
-// Contador de mensagens pendentes (para o aluno exibir badge)
-chatRoutes.get("/unread-count", requireRole("student"), chatController.getUnreadCount);
+// Contador de mensagens pendentes (para aluno ou motorista exibir badge)
+chatRoutes.get("/unread-count", chatController.getUnreadCount);

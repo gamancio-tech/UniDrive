@@ -1,0 +1,6 @@
+export enum StatusCodeWs {
+  NORMAL_CLOSURE = 1000,
+  INTERNAL_ERROR = 1011,
+  UNAUTHORIZED = 4001,
+  FORBIDDEN = 4003,
+}

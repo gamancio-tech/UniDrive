@@ -87,6 +87,78 @@ export const chatMessageRepository = {
     });
   },
 
+  async countUnreadForDriver(driverId: string): Promise<number> {
+    return prisma.chatMessage.count({
+      where: {
+        driverId,
+        senderRole: "student",
+        readAt: null,
+      },
+    });
+  },
+
+  async getUnreadCountsGroupedByStudent(driverId: string): Promise<Map<string, number>> {
+    const grouped = await prisma.chatMessage.groupBy({
+      by: ["studentId"],
+      where: {
+        driverId,
+        senderRole: "student",
+        readAt: null,
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    const map = new Map<string, number>();
+    for (const item of grouped) {
+      map.set(item.studentId, item._count._all);
+    }
+    return map;
+  },
+
+  async getLatestMessagesPerStudent(driverId: string) {
+    try {
+      const messages = await prisma.$queryRaw<
+        Array<{
+          id: string;
+          studentId: string;
+          content: string;
+          createdAt: Date;
+          senderRole: string;
+          senderId: string;
+          readAt: Date | null;
+        }>
+      >`
+        SELECT DISTINCT ON ("studentId")
+          id, "studentId", content, "createdAt", "senderRole", "senderId", "readAt"
+        FROM "ChatMessage"
+        WHERE "driverId" = ${driverId}
+        ORDER BY "studentId", "createdAt" DESC;
+      `;
+
+      const map = new Map<string, (typeof messages)[0]>();
+      for (const msg of messages) {
+        map.set(msg.studentId, msg);
+      }
+      return map;
+    } catch (err) {
+      console.warn("[chatMessageRepository] Fallback no getLatestMessagesPerStudent:", err);
+      return new Map<
+        string,
+        {
+          id: string;
+          studentId: string;
+          content: string;
+          createdAt: Date;
+          senderRole: string;
+          senderId: string;
+          readAt: Date | null;
+        }
+      >();
+    }
+  },
+
   async getLatestMessage(driverId: string, studentId: string) {
     return prisma.chatMessage.findFirst({
       where: {

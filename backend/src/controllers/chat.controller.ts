@@ -52,7 +52,7 @@ export const chatController = {
 
   /**
    * GET /api/chat/unread-count
-   * Retorna a contagem de mensagens não lidas do motorista para o aluno logado
+   * Retorna a contagem de mensagens não lidas para o usuário logado (aluno ou motorista)
    */
   async getUnreadCount(req: Request, res: Response, next: NextFunction) {
     try {
@@ -60,12 +60,17 @@ export const chatController = {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado." });
       }
 
-      if (!hasRole(req.user, "student")) {
-        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas alunos podem consultar o contador individual." });
+      if (hasRole(req.user, "student")) {
+        const result = await chatService.getStudentUnreadCount(req.user.id);
+        return res.json(result);
       }
 
-      const result = await chatService.getStudentUnreadCount(req.user.id);
-      return res.json(result);
+      if (hasRole(req.user, "driver")) {
+        const result = await chatService.getDriverUnreadCount(req.user.id);
+        return res.json(result);
+      }
+
+      return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Perfil não autorizado." });
     } catch (err) {
       next(err);
     }

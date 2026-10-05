@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getDriverConversations, getStudentUnreadCount } from "../../api/chat";
+import { getUnreadCount } from "../../api/chat";
 import { getDecodedToken } from "../../api/client";
 import { chatSocket, ChatSocketEvent } from "./chatSocket";
 
@@ -12,14 +12,8 @@ export function useUnreadChatCount() {
     if (!role || role === "admin") return;
 
     try {
-      if (role === "driver") {
-        const conversations = await getDriverConversations();
-        const total = conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
-        setUnreadCount(total);
-      } else if (role === "student") {
-        const data = await getStudentUnreadCount();
-        setUnreadCount(data.unreadCount || 0);
-      }
+      const data = await getUnreadCount();
+      setUnreadCount(data.unreadCount || 0);
     } catch {
       // Ignora falhas em background
     }

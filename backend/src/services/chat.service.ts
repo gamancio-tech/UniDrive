@@ -196,35 +196,44 @@ export const chatService = {
 
   async getDriverConversations(driverId: string) {
     const students = await studentService.list(driverId);
+    if (!students || students.length === 0) return [];
 
-    const conversations = await Promise.all(
-      students.map(async (student) => {
-        const [latestMessage, unreadCount] = await Promise.all([
-          chatMessageRepository.getLatestMessage(driverId, student.id),
-          chatMessageRepository.countUnreadForDriverByStudent(driverId, student.id),
-        ]);
+    const [latestMessagesMap, unreadCountsMap] = await Promise.all([
+      chatMessageRepository.getLatestMessagesPerStudent(driverId),
+      chatMessageRepository.getUnreadCountsGroupedByStudent(driverId),
+    ]);
 
-        return {
-          studentId: student.id,
-          studentName: student.name,
-          studentPhone: student.phone,
-          studentPhotoUrl: student.photoUrl,
-          todayStatus: student.todayStatus,
-          isBoarded: student.isBoarded,
-          latestMessage: latestMessage
-            ? {
-                id: latestMessage.id,
-                content: latestMessage.content,
-                createdAt: latestMessage.createdAt,
-                senderRole: latestMessage.senderRole,
-                senderId: latestMessage.senderId,
-                readAt: latestMessage.readAt,
-              }
-            : null,
-          unreadCount,
-        };
-      })
-    );
+    const conversations = students.map((student) => {
+      const latestMessage = latestMessagesMap.get(student.id);
+      const unreadCount = unreadCountsMap.get(student.id) || 0;
+
+      return {
+        studentId: student.id,
+        studentName: student.name,
+        studentPhone: student.phone,
+        studentPhotoUrl: student.photoUrl,
+        todayStatus: student.todayStatus,
+        isBoarded: student.isBoarded,
+        latestMessage: latestMessage
+          ? {
+              id: latestMessage.id,
+              content: latestMessage.content,
+              createdAt:
+                latestMessage.createdAt instanceof Date
+                  ? latestMessage.createdAt.toISOString()
+                  : String(latestMessage.createdAt),
+              senderRole: latestMessage.senderRole,
+              senderId: latestMessage.senderId,
+              readAt: latestMessage.readAt
+                ? latestMessage.readAt instanceof Date
+                  ? latestMessage.readAt.toISOString()
+                  : String(latestMessage.readAt)
+                : null,
+            }
+          : null,
+        unreadCount,
+      };
+    });
 
     // Ordenação: conversas com mensagens recentes primeiro; caso sem mensagem, por ordem alfabética
     conversations.sort((a, b) => {
@@ -238,6 +247,11 @@ export const chatService = {
     });
 
     return conversations;
+  },
+
+  async getDriverUnreadCount(driverId: string) {
+    const unreadCount = await chatMessageRepository.countUnreadForDriver(driverId);
+    return { unreadCount };
   },
 
   async getStudentUnreadCount(studentId: string) {

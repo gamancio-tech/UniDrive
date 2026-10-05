@@ -4,9 +4,12 @@ import { WebSocketServer } from "ws";
 import { env } from "../config/env";
 import { AuthenticatedUser } from "../types/express";
 import { chatService } from "../services/chat.service";
+import { StatusCodeWs } from "../utils/statusCodeWs";
 import { activeSockets, AuthenticatedWebSocket, chatWebSocketManager } from "./chatConnectionManager";
 
 export { chatWebSocketManager } from "./chatConnectionManager";
+
+const INTERVAL = 30000
 
 export function initChatWebSocketServer(httpServer: HttpServer) {
   const wss = new WebSocketServer({
@@ -20,7 +23,7 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
       const token = parsedUrl.searchParams.get("token");
 
       if (!token) {
-        ws.close(4001, "Token de autenticação ausente");
+        ws.close(StatusCodeWs.UNAUTHORIZED, "Token de autenticação ausente");
         return;
       }
 
@@ -28,12 +31,12 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
       try {
         user = jwt.verify(token, env.jwtSecret) as AuthenticatedUser;
       } catch {
-        ws.close(4001, "Token inválido ou expirado");
+        ws.close(StatusCodeWs.UNAUTHORIZED, "Token inválido ou expirado");
         return;
       }
 
       if (user.role !== "driver" && user.role !== "student") {
-        ws.close(4003, "Perfil não autorizado no chat");
+        ws.close(StatusCodeWs.FORBIDDEN, "Perfil não autorizado no chat");
         return;
       }
 
@@ -90,7 +93,7 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
       });
     } catch (err) {
       console.error("[WebSocket Chat] Erro na conexão inicial:", err);
-      ws.close(1011, "Erro interno do servidor");
+      ws.close(StatusCodeWs.INTERNAL_ERROR, "Erro interno do servidor");
     }
   });
 
@@ -104,7 +107,7 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
       ws.isAlive = false;
       ws.ping();
     });
-  }, 30000);
+  }, INTERVAL);
 
   wss.on("close", () => {
     clearInterval(interval);

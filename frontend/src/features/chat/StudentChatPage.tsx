@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
 import { getStudentProfile, StudentProfile } from "../../api/students";
-import { useDailyStatus } from "../dailyStatus/useDailyStatus";
 import { ChatWindow } from "./ChatWindow";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
 interface StudentChatPageProps {
   onBack?: () => void;
+  tripTitle?: string;
 }
 
-export function StudentChatPage({ onBack }: StudentChatPageProps) {
+export function StudentChatPage({ onBack, tripTitle }: StudentChatPageProps) {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { missingCount, cancelled, currentTrip, tripStep } = useDailyStatus();
 
   useEffect(() => {
     getStudentProfile()
@@ -54,13 +53,7 @@ export function StudentChatPage({ onBack }: StudentChatPageProps) {
     );
   }
 
-  const computedTripTitle = cancelled
-    ? "Viagem Cancelada"
-    : currentTrip === "volta"
-    ? tripStep === "em_viagem"
-      ? "Retorno em Viagem"
-      : "Volta Faculdade"
-    : "Ida Faculdade";
+  const computedTripTitle = tripTitle || "Viagem da Van";
 
   return (
     <div className="student-chat-wrapper">

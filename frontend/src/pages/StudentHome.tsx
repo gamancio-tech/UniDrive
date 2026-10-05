@@ -26,6 +26,8 @@ export function StudentHome() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const { unreadCount: chatUnreadCount } = useUnreadChatCount();
 
+  const [visitedTabs, setVisitedTabs] = useState<Set<StudentTab>>(() => new Set([activeTab]));
+
   const {
     missingCount,
     cancelled,
@@ -41,14 +43,31 @@ export function StudentHome() {
   } = useDailyStatus();
 
   useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) return prev;
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
+
+  useEffect(() => {
     getStudentProfile()
       .then(setProfile)
       .catch(() => {});
-  }, [activeTab]);
+  }, []);
 
   const handleLogout = () => {
     logout();
   };
+
+  const computedTripTitle = cancelled
+    ? "Viagem Cancelada"
+    : currentTrip === "volta"
+    ? tripStep === "em_viagem"
+      ? "Retorno em Viagem"
+      : "Volta Faculdade"
+    : "Ida Faculdade";
 
   return (
     <>
@@ -95,8 +114,8 @@ export function StudentHome() {
           </div>
         )}
 
-        {activeTab === "home" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {visitedTabs.has("home") && (
+          <div style={{ display: activeTab === "home" ? "flex" : "none", flexDirection: "column", gap: "1rem" }}>
             <NotificationBanner />
             <DailyStatusCard
               missingCount={missingCount}
@@ -143,11 +162,23 @@ export function StudentHome() {
           </div>
         )}
 
-        {activeTab === "chat" && <StudentChatPage onBack={() => setActiveTab("home")} />}
+        {visitedTabs.has("chat") && (
+          <div style={{ display: activeTab === "chat" ? "block" : "none", height: "100%" }}>
+            <StudentChatPage onBack={() => setActiveTab("home")} tripTitle={computedTripTitle} />
+          </div>
+        )}
 
-        {activeTab === "payments" && <StudentPaymentsCard />}
+        {visitedTabs.has("payments") && (
+          <div style={{ display: activeTab === "payments" ? "block" : "none" }}>
+            <StudentPaymentsCard />
+          </div>
+        )}
 
-        {activeTab === "settings" && <AppSettings role="student" />}
+        {visitedTabs.has("settings") && (
+          <div style={{ display: activeTab === "settings" ? "block" : "none" }}>
+            <AppSettings role="student" />
+          </div>
+        )}
       </main>
 
       <BottomNavigation

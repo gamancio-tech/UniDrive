@@ -59,8 +59,10 @@ export async function getDriverConversations(): Promise<ConversationSummary[]> {
 }
 
 /**
- * Retorna o número de mensagens pendentes do motorista para o aluno
+ * Retorna o número de mensagens pendentes (para motorista ou aluno)
  */
-export async function getStudentUnreadCount(): Promise<UnreadCountResponse> {
+export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiRequest<UnreadCountResponse>("/chat/unread-count");
 }
+
+export const getStudentUnreadCount = getUnreadCount;
