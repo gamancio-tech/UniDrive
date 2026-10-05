@@ -16,7 +16,8 @@ export function createApp() {
 
   app.use(helmet());
 
-  const corsOrigin = env.frontendUrls.includes("*") ? "*" : env.frontendUrls;
+  const isProd = process.env.NODE_ENV === "production";
+  const corsOrigin = (!isProd && env.frontendUrls.includes("*")) ? "*" : env.frontendUrls;
   app.use(cors({ origin: corsOrigin }));
   app.use(compression());
   app.use(express.json({ limit: "1mb" }));

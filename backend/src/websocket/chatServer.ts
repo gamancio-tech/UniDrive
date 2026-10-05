@@ -6,15 +6,17 @@ import { AuthenticatedUser } from "../types/express";
 import { chatService } from "../services/chat.service";
 import { StatusCodeWs } from "../utils/statusCodeWs";
 import { activeSockets, AuthenticatedWebSocket, chatWebSocketManager } from "./chatConnectionManager";
+import { isAccountActive } from "../lib/accountStatus";
 
 export { chatWebSocketManager } from "./chatConnectionManager";
 
-const INTERVAL = 30000
+const INTERVAL = 30000;
 
 export function initChatWebSocketServer(httpServer: HttpServer) {
   const wss = new WebSocketServer({
     server: httpServer,
     path: "/ws/chat",
+    maxPayload: 16 * 1024, // Limite de 16KB por frame para evitar DoS por exaustão de memória
   });
 
   wss.on("connection", async (ws: AuthenticatedWebSocket, req) => {
@@ -29,7 +31,7 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
 
       let user: AuthenticatedUser;
       try {
-        user = jwt.verify(token, env.jwtSecret) as AuthenticatedUser;
+        user = jwt.verify(token, env.jwtSecret, { algorithms: ["HS256"] }) as AuthenticatedUser;
       } catch {
         ws.close(StatusCodeWs.UNAUTHORIZED, "Token inválido ou expirado");
         return;
@@ -37,6 +39,19 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
 
       if (user.role !== "driver" && user.role !== "student") {
         ws.close(StatusCodeWs.FORBIDDEN, "Perfil não autorizado no chat");
+        return;
+      }
+
+      const active = await isAccountActive(user.role, user.id);
+      if (!active) {
+        ws.close(StatusCodeWs.FORBIDDEN, "Conta desativada ou inexistente");
+        return;
+      }
+
+      // Limita concorrência abusiva de abas/conexões por usuário (máx. 5)
+      const userSockets = activeSockets.get(user.id);
+      if (userSockets && userSockets.size >= 5) {
+        ws.close(StatusCodeWs.POLICY_VIOLATION, "Limite de conexões simultâneas atingido");
         return;
       }
 
@@ -55,8 +70,25 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
         ws.isAlive = true;
       });
 
+      // Rate limit por conexão de WebSocket (máx. 20 mensagens por 10s)
+      let messageCount = 0;
+      let windowStart = Date.now();
+      const MAX_MESSAGES_PER_WINDOW = 20;
+      const WINDOW_MS = 10_000;
+
       ws.on("message", async (raw) => {
         try {
+          const now = Date.now();
+          if (now - windowStart > WINDOW_MS) {
+            messageCount = 0;
+            windowStart = now;
+          }
+          messageCount++;
+          if (messageCount > MAX_MESSAGES_PER_WINDOW) {
+            ws.close(StatusCodeWs.POLICY_VIOLATION, "Muitas mensagens enviadas.");
+            return;
+          }
+
           const data = JSON.parse(raw.toString());
 
           if (data.type === "send_message" && data.payload) {

@@ -3,11 +3,24 @@ import { studentRepository } from "../repositories/student.repository";
 import { dailyStatusRepository } from "../repositories/dailyStatus.repository";
 import { AppError } from "../middlewares/errorHandler.middleware";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
+import { invalidateAccountCache } from "../lib/accountStatus";
 
 const SALT_ROUNDS = 10;
 
 function toDateOnly(date: Date): Date {
   return new Date(date.toISOString().slice(0, 10));
+}
+
+/** Aceita apenas JPEG/PNG/WEBP em base64 (SVG é recusado de propósito: pode carregar script). */
+const PHOTO_REGEX = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/;
+const MAX_PHOTO_CHARS = 150_000;
+
+/** Confere os "magic bytes" para garantir que o conteúdo é mesmo a imagem declarada. */
+function hasValidImageSignature(mime: string, base64: string): boolean {
+  const head = Buffer.from(base64.slice(0, 32), "base64");
+  if (mime === "jpeg") return head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+  if (mime === "png") return head.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+  return head.subarray(0, 4).toString("ascii") === "RIFF" && head.subarray(8, 12).toString("ascii") === "WEBP";
 }
 
 export const studentService = {
@@ -29,26 +42,43 @@ export const studentService = {
     return studentRepository.create({ driverId, name, email, passwordHash, phone: phone?.trim() || null });
   },
 
-  async deactivate(id: string) {
-    const student = await studentRepository.findById(id);
+  /**
+   * Garante que o aluno pertence à van do motorista. Retorna 404 (e não 403)
+   * para não revelar que o ID existe em outra van.
+   */
+  async assertBelongsToDriver(studentId: string, driverId: string) {
+    const student = await studentRepository.findById(studentId);
+    if (!student || student.driverId !== driverId) {
+      throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
+    }
+    return student;
+  },
+
+  /** Se driverId for informado (chamada de motorista), exige que o aluno seja da van dele. */
+  async deactivate(id: string, driverId?: string) {
+    const student = driverId ? await this.assertBelongsToDriver(id, driverId) : await studentRepository.findById(id);
     if (!student) {
       throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
     }
     if (!student.active) {
       throw new AppError("Aluno já desativado.", StatusCodeHttp.BAD_REQUEST);
     }
-    return studentRepository.deactivate(id);
+    const updated = await studentRepository.deactivate(id);
+    invalidateAccountCache(id);
+    return updated;
   },
 
-  async reactivate(id: string) {
-    const student = await studentRepository.findById(id);
+  async reactivate(id: string, driverId?: string) {
+    const student = driverId ? await this.assertBelongsToDriver(id, driverId) : await studentRepository.findById(id);
     if (!student) {
       throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
     }
     if (student.active) {
       throw new AppError("Aluno já ativo.", StatusCodeHttp.BAD_REQUEST);
     }
-    return studentRepository.reactivate(id);
+    const updated = await studentRepository.reactivate(id);
+    invalidateAccountCache(id);
+    return updated;
   },
 
   async list(driverId: string) {
@@ -74,15 +104,16 @@ export const studentService = {
     return students.map(({ passwordHash, ...rest }) => rest);
   },
 
-  async listByStatus(status: string) {
-    let students;
-    if (status === "true") {
-      students = await studentRepository.listActiveAll();
-    } else if (status === "false") {
-      students = await studentRepository.listDisableAll();
-    } else {
+  /** Se driverId for informado, lista só os alunos daquela van; sem ele (admin), lista todos. */
+  async listByStatus(status: string, driverId?: string) {
+    if (status !== "true" && status !== "false") {
       throw new AppError("Status inválido.", StatusCodeHttp.BAD_REQUEST);
     }
+    const active = status === "true";
+    if (driverId) {
+      return studentRepository.listByDriverAndActive(driverId, active);
+    }
+    const students = active ? await studentRepository.listActiveAll() : await studentRepository.listDisableAll();
     return students.map(({ passwordHash, ...rest }) => rest);
   },
 
@@ -91,7 +122,8 @@ export const studentService = {
     if (!student) {
       throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
     }
-    return student;
+    const { passwordHash, ...safe } = student;
+    return safe;
   },
 
   async getProfile(id: string) {
@@ -118,11 +150,12 @@ export const studentService = {
       throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
     }
     if (photoUrl) {
-      if (photoUrl.length > 500_000) {
+      if (photoUrl.length > MAX_PHOTO_CHARS) {
         throw new AppError("A imagem selecionada é muito grande. Escolha uma foto menor.", StatusCodeHttp.BAD_REQUEST);
       }
-      if (!photoUrl.startsWith("data:image/")) {
-        throw new AppError("Formato de imagem inválido. Envie uma imagem válida.", StatusCodeHttp.BAD_REQUEST);
+      const match = PHOTO_REGEX.exec(photoUrl);
+      if (!match || !hasValidImageSignature(match[1], match[2])) {
+        throw new AppError("Formato de imagem inválido. Envie uma imagem JPEG, PNG ou WEBP.", StatusCodeHttp.BAD_REQUEST);
       }
     }
     const updated = await studentRepository.updatePhoto(id, photoUrl);

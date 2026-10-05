@@ -29,6 +29,9 @@ export const chatService = {
     if (!content) {
       throw new AppError("O conteúdo da mensagem não pode ser vazio.", StatusCodeHttp.BAD_REQUEST);
     }
+    if (content.length > 1000) {
+      throw new AppError("O conteúdo da mensagem não pode ultrapassar 1000 caracteres.", StatusCodeHttp.BAD_REQUEST);
+    }
 
     let driverId = "";
     let studentId = "";
@@ -140,6 +143,11 @@ export const chatService = {
     if (user.role === "driver") {
       driverId = user.id;
       studentId = payload.conversationWith;
+
+      const student = await studentRepository.findById(studentId);
+      if (!student || student.driverId !== driverId) {
+        return;
+      }
     } else if (user.role === "student") {
       studentId = user.id;
       const studentUser = user as StudentUser;
@@ -148,6 +156,10 @@ export const chatService = {
       if (!driverId) {
         const student = await studentRepository.findById(user.id);
         driverId = student?.driverId ?? "";
+      }
+
+      if (!driverId || payload.conversationWith !== driverId) {
+        return;
       }
     } else {
       return;

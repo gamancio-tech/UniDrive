@@ -1,6 +1,7 @@
 import { AppError } from "../middlewares/errorHandler.middleware";
 import { driverRepository } from "../repositories/driver.repository";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
+import { invalidateAccountCache } from "../lib/accountStatus";
 import bcrypt from "bcrypt";
 
 const SALT_ROUNDS = 10;
@@ -37,6 +38,7 @@ export const driverService = {
     }
     
     await driverRepository.deactivate(id);
+    invalidateAccountCache(id);
     return driver;
   },
 
@@ -48,7 +50,9 @@ export const driverService = {
     if (driver.active) {
       throw new AppError("Motorista já ativo.", StatusCodeHttp.BAD_REQUEST);
     }
-    return driverRepository.reactivate(id);
+    const updated = await driverRepository.reactivate(id);
+    invalidateAccountCache(id);
+    return updated;
   },
 
   async getAllDrivers() {

@@ -4,6 +4,7 @@ import { dailyStatusRepository } from "../repositories/dailyStatus.repository";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
 import { hasRole } from "../utils/roles";
 import { studentWeeklyScheduleService } from "../services/studentWeeklySchedule.service";
+import { studentService } from "../services/student.service";
 
 function toDateOnly(date: Date): Date {
   return new Date(date.toISOString().slice(0, 10));
@@ -56,6 +57,7 @@ export const dailyStatusController = {
       }
       const driverId = req.user.id;
       const { studentId } = req.params;
+      await studentService.assertBelongsToDriver(studentId, driverId);
       const updated = await dailyStatusService.checkIn(studentId, new Date(), driverId);
       res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {
@@ -70,6 +72,7 @@ export const dailyStatusController = {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
       }
       const { studentId } = req.params;
+      await studentService.assertBelongsToDriver(studentId, req.user.id);
       const updated = await dailyStatusService.cancelBoarded(studentId, new Date());
       res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {

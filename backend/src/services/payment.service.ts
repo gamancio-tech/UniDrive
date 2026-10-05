@@ -3,6 +3,8 @@ import { paymentRepository } from "../repositories/payment.repository";
 import { studentRepository } from "../repositories/student.repository";
 import { pushService } from "./push.service";
 import { env } from "../config/env";
+import { AppError } from "../middlewares/errorHandler.middleware";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
 
 const DEFAULT_REMINDER_DAYS_BEFORE = env.reminderDaysBeforePayment;
 
@@ -49,7 +51,7 @@ export const paymentService = {
   async confirmPaymentByDriver(studentId: string, driverId: string) {
     const student = await studentRepository.findById(studentId);
     if (!student || student.driverId !== driverId) {
-      throw new Error("Aluno não encontrado ou não pertence a esta van.");
+      throw new AppError("Aluno não encontrado ou não pertence a esta van.", StatusCodeHttp.NOT_FOUND);
     }
 
     await this.getOrCreateCurrentCycle(studentId);
@@ -71,7 +73,7 @@ export const paymentService = {
   async rejectPaymentByDriver(studentId: string, driverId: string) {
     const student = await studentRepository.findById(studentId);
     if (!student || student.driverId !== driverId) {
-      throw new Error("Aluno não encontrado ou não pertence a esta van.");
+      throw new AppError("Aluno não encontrado ou não pertence a esta van.", StatusCodeHttp.NOT_FOUND);
     }
 
     await this.getOrCreateCurrentCycle(studentId);

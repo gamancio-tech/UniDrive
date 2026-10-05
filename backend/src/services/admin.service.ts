@@ -1,6 +1,7 @@
 import { AppError } from "../middlewares/errorHandler.middleware";
 import { adminRepository } from "../repositories/admin.repository";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
+import { invalidateAccountCache } from "../lib/accountStatus";
 import bcrypt from "bcrypt"
 
 const SALT_ROUNDS = 12;
@@ -39,6 +40,8 @@ export const adminService = {
       throw new AppError("Não é permitido remover o perfil do Super Administrador.", StatusCodeHttp.FORBIDDEN);
     }
 
-    return adminRepository.deleteAdmin(id);
+    const deleted = await adminRepository.deleteAdmin(id);
+    invalidateAccountCache(id);
+    return deleted;
   },
 };

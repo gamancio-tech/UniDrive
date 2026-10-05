@@ -9,17 +9,35 @@ interface SaveSubscriptionInput {
   adminId?: string;
 }
 
+import { AppError } from "../middlewares/errorHandler.middleware";
+import { StatusCodeHttp } from "../utils/statusCodeHttp";
+
 export const pushSubscriptionRepository = {
-  save(data: SaveSubscriptionInput) {
-    return prisma.pushSubscription.upsert({
+  async save(data: SaveSubscriptionInput) {
+    const existing = await prisma.pushSubscription.findUnique({
       where: { endpoint: data.endpoint },
-      update: {
-        keys: data.keys,
-        studentId: data.studentId ?? null,
-        driverId: data.driverId ?? null,
-        adminId: data.adminId ?? null,
-      },
-      create: data,
+    });
+
+    if (existing) {
+      const isOwner =
+        (data.studentId && existing.studentId === data.studentId) ||
+        (data.driverId && existing.driverId === data.driverId) ||
+        (data.adminId && existing.adminId === data.adminId);
+
+      if (!isOwner) {
+        throw new AppError("Inscrição push já vinculada a outro usuário.", StatusCodeHttp.CONFLICT);
+      }
+
+      return prisma.pushSubscription.update({
+        where: { endpoint: data.endpoint },
+        data: {
+          keys: data.keys,
+        },
+      });
+    }
+
+    return prisma.pushSubscription.create({
+      data,
     });
   },
 
@@ -39,6 +57,16 @@ export const pushSubscriptionRepository = {
 
   deleteByEndpoint(endpoint: string) {
     return prisma.pushSubscription.deleteMany({ where: { endpoint } });
+  },
+
+  /** Remove a inscrição apenas se ela pertencer ao usuário informado. */
+  deleteByEndpointAndUser(endpoint: string, userId: string) {
+    return prisma.pushSubscription.deleteMany({
+      where: {
+        endpoint,
+        OR: [{ studentId: userId }, { driverId: userId }, { adminId: userId }],
+      },
+    });
   },
 
   deleteByUserId(userId: string) {

@@ -6,8 +6,6 @@ export const globalLimiter = rateLimit({
   max: 500, // limite de 500 requisições por janela
   message: { error: "Muitas requisições efetuadas. Aguarde um instante." },
   keyGenerator: (req: Request) => {
-    // Se logado (via req.user inserido pelo middleware de autenticação), usa o ID. 
-    // Se não, usa o IP da rede.
     if (req.user && req.user.id) {
       return req.user.id;
     }
@@ -15,15 +13,24 @@ export const globalLimiter = rateLimit({
   },
 });
 
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 15, // 15 tentativas
-  message: { error: "Muitas tentativas de acesso. Tente novamente após 15 minutos." },
+// Limita tentativas brutas por endereço IP (anti-spray)
+const authIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: "Muitas tentativas a partir deste IP. Tente novamente após 15 minutos." },
+  keyGenerator: (req: Request) => req.ip || "unknown-ip",
+});
+
+// Limita tentativas brutas por conta de e-mail (anti-brute-force distribuído)
+const authEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Muitas tentativas de acesso para esta conta. Tente novamente após 15 minutos." },
   keyGenerator: (req: Request) => {
-    // Para autenticação, combina o IP e o e-mail tentado para evitar brute-force
-    // cruzado (um IP tentando várias contas ou vários IPs tentando uma conta).
-    const email = req.body?.email || "unknown-email";
-    const ip = req.ip || "unknown-ip";
-    return `${ip}_${email}`;
+    const raw = req.body?.email;
+    const email = typeof raw === "string" ? raw.trim().toLowerCase() : "unknown-email";
+    return `email_${email}`;
   },
 });
+
+export const authLimiter = [authIpLimiter, authEmailLimiter];

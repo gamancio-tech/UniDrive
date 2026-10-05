@@ -3,27 +3,46 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { AuthenticatedUser } from "../types/express";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
+import { isAccountActive } from "../lib/accountStatus";
+
+const ROLES = ["driver", "student", "admin"];
 
 /**
  * Verifica o token JWT enviado no header "Authorization: Bearer <token>"
  * e popula req.user. Use em qualquer rota que exija login.
  */
-export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
 
   if (!header?.startsWith("Bearer ")) {
     return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Token de autenticação ausente." });
   }
 
-  const token = header.replace("Bearer ", "");
+  const token = header.slice("Bearer ".length);
 
+  let payload: AuthenticatedUser;
   try {
-    const payload = jwt.verify(token, env.jwtSecret) as AuthenticatedUser;
-    req.user = payload;
-    next();
+    // Fixa o algoritmo para evitar troca de algoritmo no token.
+    payload = jwt.verify(token, env.jwtSecret, { algorithms: ["HS256"] }) as AuthenticatedUser;
   } catch {
     return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Token inválido ou expirado." });
   }
+
+  if (!payload || typeof payload.id !== "string" || !ROLES.includes(payload.role)) {
+    return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Token inválido ou expirado." });
+  }
+
+  try {
+    // Conta desativada ou removida não pode mais usar um token ainda válido.
+    if (!(await isAccountActive(payload.role, payload.id))) {
+      return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Conta desativada ou inexistente." });
+    }
+  } catch (err) {
+    return next(err);
+  }
+
+  req.user = payload;
+  next();
 }
 
 /**

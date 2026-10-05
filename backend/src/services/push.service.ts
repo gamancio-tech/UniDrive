@@ -20,15 +20,14 @@ export const pushService = {
     return pushSubscriptionRepository.save(input);
   },
 
-  async unsubscribe(endpoint?: string, userId?: string) {
+  /** Remove inscrições do usuário autenticado (por endpoint específico ou todas as dele). */
+  async unsubscribe(userId: string, endpoint?: string) {
     if (endpoint) {
-      console.log(`[Push] Removendo inscrição por endpoint: ${endpoint.slice(0, 45)}...`);
-      return pushSubscriptionRepository.deleteByEndpoint(endpoint);
+      console.log(`[Push] Removendo inscrição do usuário ${userId} por endpoint.`);
+      return pushSubscriptionRepository.deleteByEndpointAndUser(endpoint, userId);
     }
-    if (userId) {
-      console.log(`[Push] Removendo inscrições do usuário: ${userId}`);
-      return pushSubscriptionRepository.deleteByUserId(userId);
-    }
+    console.log(`[Push] Removendo inscrições do usuário: ${userId}`);
+    return pushSubscriptionRepository.deleteByUserId(userId);
   },
 
   /** Envia uma notificação a um conjunto de alunos (usado pelo RF03 e pelo mural, RF05). */

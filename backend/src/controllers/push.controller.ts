@@ -31,11 +31,7 @@ export const pushController = {
   async unsubscribe(req: Request, res: Response, next: NextFunction) {
     try {
       const { endpoint } = req.body;
-      const userId = req.user?.id;
-      if (!endpoint && !userId) {
-        return res.status(StatusCodeHttp.BAD_REQUEST).json({ error: "Endpoint ou usuário obrigatório para desinscrever." });
-      }
-      await pushService.unsubscribe(endpoint, userId);
+      await pushService.unsubscribe(req.user!.id, endpoint);
       res.status(StatusCodeHttp.OK).json({ ok: true, message: "Inscrição removida com sucesso." });
     } catch (err) {
       next(err);

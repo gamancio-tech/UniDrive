@@ -20,6 +20,10 @@ export function errorHandlerMiddleware(err: unknown, req: Request, res: Response
     return res.status(err.statusCode).json({ error: err.message });
   }
 
+  if (err instanceof SyntaxError && "status" in err && (err as { status: number }).status === 400) {
+    return res.status(StatusCodeHttp.BAD_REQUEST).json({ error: "Formato JSON inválido no corpo da requisição." });
+  }
+
   console.error(err);
   return res.status(StatusCodeHttp.INTERNAL_SERVER_ERROR).json({ error: "Erro interno do servidor." });
 }

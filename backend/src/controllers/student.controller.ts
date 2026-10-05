@@ -33,7 +33,8 @@ export const studentController = {
         const driverId = req.user.id;
         const statusParam = req.query.status as string | undefined;
         if (statusParam === "true" || statusParam === "false") {
-          const students = await studentService.listByStatus(statusParam);
+          // Sempre filtrado pela van do motorista logado.
+          const students = await studentService.listByStatus(statusParam, driverId);
           return res.status(StatusCodeHttp.OK).json(students);
         }
         const students = await studentService.list(driverId);
@@ -55,22 +56,18 @@ export const studentController = {
   async reactivate(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const student = await studentService.findById(id);
-      if (hasRole(req.user!, "driver") && student.driverId !== req.user!.id) {
-        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
-      }
-      await studentService.reactivate(id);
+      await studentService.reactivate(id, req.user!.id);
       res.status(StatusCodeHttp.OK).json({ message: "Aluno reativado com sucesso" });
     } catch (err) {
       next(err);
     }
   },
 
-  /** DELETE /api/students/:id (somente motorista) */
+  /** DELETE /api/students/:id (somente motorista, apenas alunos da própria van) */
   async deactivate(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await studentService.deactivate(id);
+      await studentService.deactivate(id, req.user!.id);
       res.status(StatusCodeHttp.NO_CONTENT).send();
     } catch (err) {
       next(err);
@@ -110,7 +107,7 @@ export const studentController = {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
       }
 
-      const { id } = req.params;
+      const id = req.params.id ?? "me";
       const { phone } = req.body;
 
       if (hasRole(req.user, "driver")) {
