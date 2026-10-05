@@ -53,14 +53,18 @@ export const studentService = {
 
   async list(driverId: string) {
     const today = toDateOnly(new Date());
+    const dayOfWeek = today.getDay();
     const students = await dailyStatusRepository.listStudentsWithStatusForDate(driverId, today);
-    return students.map((student) => ({
-      id: student.id,
-      name: student.name,
-      email: student.email,
-      todayStatus: student.dailyStatuses[0]?.status ?? "vai_normal",
-      isBoarded: Boolean(student.dailyStatuses[0]?.boardedAt),
-    }));
+    return students.map((student) => {
+      const weeklyDefault = student.weeklySchedules.find((w) => w.dayOfWeek === dayOfWeek)?.status ?? "vai_normal";
+      return {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        todayStatus: student.dailyStatuses[0]?.status ?? weeklyDefault,
+        isBoarded: Boolean(student.dailyStatuses[0]?.boardedAt),
+      };
+    });
   },
 
   async listActiveByDriver(driverId: string) {

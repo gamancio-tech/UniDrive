@@ -102,11 +102,13 @@ export const dailyStatusService = {
 
     const students = await dailyStatusRepository.listStudentsWithStatusForDate(driverId, normalizedDate);
     const validStatuses = trip === "ida" ? IDA_STATUSES : VOLTA_STATUSES;
+    const dayOfWeek = normalizedDate.getDay();
 
     const missingStudentIds = students
       .filter((student) => {
         const todayStatus = student.dailyStatuses[0];
-        const status = todayStatus?.status ?? "vai_normal"; // padrão quando não há registro
+        const weeklyDefault = student.weeklySchedules.find((w) => w.dayOfWeek === dayOfWeek)?.status ?? "vai_normal";
+        const status = todayStatus?.status ?? weeklyDefault;
         const isTripToday = validStatuses.includes(status);
         const alreadyBoarded = Boolean(todayStatus?.boardedAt);
         return isTripToday && !alreadyBoarded;

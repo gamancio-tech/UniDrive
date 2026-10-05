@@ -3,6 +3,7 @@ import { dailyStatusService } from "../services/dailyStatus.service";
 import { dailyStatusRepository } from "../repositories/dailyStatus.repository";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
 import { hasRole } from "../utils/roles";
+import { studentWeeklyScheduleService } from "../services/studentWeeklySchedule.service";
 
 function toDateOnly(date: Date): Date {
   return new Date(date.toISOString().slice(0, 10));
@@ -108,7 +109,11 @@ export const dailyStatusController = {
       if (req.user.role === "student") {
         isBoarded = await dailyStatusService.isStudentBoarded(req.user.id, new Date());
         const statusRecord = await dailyStatusRepository.findByStudentAndDate(req.user.id, toDateOnly(new Date()));
-        currentStatus = statusRecord?.status ?? "vai_normal";
+        if (statusRecord) {
+          currentStatus = statusRecord.status;
+        } else {
+          currentStatus = await studentWeeklyScheduleService.getDefaultStatusForDate(req.user.id, new Date());
+        }
       }
 
       res.status(StatusCodeHttp.OK).json({

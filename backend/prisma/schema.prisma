@@ -59,12 +59,29 @@ model Student {
   dailyStatuses     DailyStatus[]
   paymentCycles     PaymentCycle[]
   pushSubscriptions PushSubscription[]
+  weeklySchedules   StudentWeeklySchedule[]
 
   @@index([driverId])
 }
 
+// Rotina semanal padrão do aluno (Segunda a Sábado/Domingo).
+// Se o aluno não tiver registrado exceção pontual em DailyStatus para a data,
+// o status do dia corresponderá ao configurado aqui para o dia da semana.
+model StudentWeeklySchedule {
+  id        String           @id @default(uuid())
+  studentId String
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  dayOfWeek Int              // 0 = Domingo, 1 = Segunda, 2 = Terça, 3 = Quarta, 4 = Quinta, 5 = Sexta, 6 = Sábado
+  status    DailyStatusValue @default(vai_normal)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([studentId, dayOfWeek])
+  @@index([studentId])
+}
+
 // Um registro por aluno por dia. Se não existir registro para a data, o sistema
-// assume "vai_normal" (ver regra em docs/03-modelo-dados.md).
+// consulta a rotina semanal padrão do aluno (ou assume "vai_normal").
 model DailyStatus {
   id        String            @id @default(uuid())
   studentId String

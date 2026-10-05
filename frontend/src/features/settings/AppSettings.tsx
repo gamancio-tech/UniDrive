@@ -7,6 +7,7 @@ import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
 import { getPushStatus, subscribeToPush, unsubscribeFromPush, sendTestPush, PushStatus } from "../../api/push";
 import { logout } from "../../api/client";
+import { StudentWeeklyScheduleCard } from "./StudentWeeklyScheduleCard";
 
 interface AppSettingsProps {
   role: "driver" | "student" | "admin";
@@ -193,6 +194,9 @@ export const AppSettings: React.FC<AppSettingsProps> = ({ role }) => {
           </div>
         </div>
       </Card>
+
+      {/* Rotina Semanal Padrão (Exclusivo para Alunos) */}
+      {role === "student" && <StudentWeeklyScheduleCard />}
 
       {/* Card de Notificações e Teste (Realoque do Teste de Notificação) */}
       <Card

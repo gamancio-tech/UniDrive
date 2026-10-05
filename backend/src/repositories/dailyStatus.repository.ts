@@ -54,6 +54,7 @@ export const dailyStatusRepository = {
       orderBy: { name: "asc" },
       include: {
         dailyStatuses: { where: { date } },
+        weeklySchedules: true,
       },
     });
   },
