@@ -53,3 +53,13 @@ Este documento descreve as otimizações e correções de gargalos implementadas
 - **A Solução:** 
   - Limite severo via Express: O `app.use(express.json({ limit: "1mb" }))` bloqueia conexões grosseiras acima de 1 MegaByte antes de entrarem na arquitetura.
   - Validação da Camada de Serviço: O arquivo `student.service.ts` garante que fotos enviadas sempre respeitem o limite de 500.000 caracteres (~500kb em base64) e obriga explicitamente que a String comece com a declaração `data:image/`, banindo formatos ou injeções nocivas.
+
+## 6. Validação Estrutural de Payloads (Zod DTOs)
+
+### 6.1 Interceptação de Dados Maliciosos ou Malformados
+- **O Problema:** Os controllers recebiam os dados do `req.body` (ex: `name, email, password`) assumindo de forma "cega" que eles vinham exatamente com o formato e tipo que o frontend deveria enviar. Se um atacante enviasse um Objeto no lugar de uma String, ou um texto de 10.000 caracteres no lugar do nome, a aplicação quebrava na tentativa de execução do Prisma ou do Bcrypt, gerando logs sujos e risco de negação de serviço.
+- **A Solução:** Implementada uma camada oficial de Data Transfer Object (DTO) usando **Zod**. Foi criado o middleware `validate.middleware.ts` e uma série de schemas rigorosos (`schemas/index.ts`). Agora, antes da requisição atingir a lógica de negócio do Controller, o Express valida rigidamente:
+  - Tipagem estrita (se é String, se é número).
+  - Formato (se o E-mail é estruturalmente válido, ou se as rotinas da semana respeitam os Enums corretos).
+  - Limites máximos de comprimento (`.max(100)` para e-mails e nomes, impedindo payloads inchados que poderiam impactar as tabelas).
+  - O sistema aborta a operação automaticamente retornando `400 Bad Request` detalhando o erro sem tocar no banco de dados.

@@ -2,6 +2,8 @@ import { Router } from "express";
 import { studentController } from "../controllers/student.controller";
 import { studentWeeklyScheduleController } from "../controllers/studentWeeklySchedule.controller";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware";
+import { validate } from "../middlewares/validate.middleware";
+import { createStudentByDriverSchema, updateSchedulesSchema } from "../schemas";
 
 export const studentRoutes = Router();
 
@@ -13,10 +15,10 @@ studentRoutes.get("/me/profile", requireRole("student"), studentController.getPr
 studentRoutes.patch("/me/photo", requireRole("student"), studentController.updatePhoto);
 studentRoutes.patch("/me/phone", requireRole("student"), studentController.updatePhone);
 studentRoutes.get("/me/weekly-schedule", requireRole("student"), studentWeeklyScheduleController.getMySchedule);
-studentRoutes.put("/me/weekly-schedule", requireRole("student"), studentWeeklyScheduleController.updateMySchedule);
+studentRoutes.put("/me/weekly-schedule", requireRole("student"), validate(updateSchedulesSchema), studentWeeklyScheduleController.updateMySchedule);
 
 // Rotas de gestão de alunos (exclusivas do motorista)
-studentRoutes.post("/", requireRole("driver"), studentController.create);
+studentRoutes.post("/", requireRole("driver"), validate(createStudentByDriverSchema), studentController.create);
 studentRoutes.get("/", requireRole("driver"), studentController.list);
 studentRoutes.patch("/:id/phone", requireRole("driver"), studentController.updatePhone);
 studentRoutes.patch("/:id/reactivate", requireRole("driver"), studentController.reactivate);
