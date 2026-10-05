@@ -117,8 +117,13 @@ export const studentService = {
     if (!student) {
       throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
     }
-    if (photoUrl && photoUrl.length > 500_000) {
-      throw new AppError("A imagem selecionada é muito grande. Escolha uma foto menor.", StatusCodeHttp.BAD_REQUEST);
+    if (photoUrl) {
+      if (photoUrl.length > 500_000) {
+        throw new AppError("A imagem selecionada é muito grande. Escolha uma foto menor.", StatusCodeHttp.BAD_REQUEST);
+      }
+      if (!photoUrl.startsWith("data:image/")) {
+        throw new AppError("Formato de imagem inválido. Envie uma imagem válida.", StatusCodeHttp.BAD_REQUEST);
+      }
     }
     const updated = await studentRepository.updatePhoto(id, photoUrl);
     return {

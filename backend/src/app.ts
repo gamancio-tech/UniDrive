@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import compression from "compression";
+import helmet from "helmet";
 import { env } from "./config/env";
 import { errorHandlerMiddleware } from "./middlewares/errorHandler.middleware";
 import { routes } from "./routes";
@@ -13,10 +14,12 @@ export function createApp() {
   // Essencial para o rate limiter capturar o IP real do usuário.
   app.set("trust proxy", 1);
 
+  app.use(helmet());
+
   const corsOrigin = env.frontendUrls.includes("*") ? "*" : env.frontendUrls;
   app.use(cors({ origin: corsOrigin }));
   app.use(compression());
-  app.use(express.json());
+  app.use(express.json({ limit: "1mb" }));
 
   app.get("/health", (_req, res) => res.json({ ok: true }));
   
