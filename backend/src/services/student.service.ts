@@ -15,7 +15,7 @@ export const studentService = {
    * RF09: motorista cadastra um aluno diretamente com uma senha provisória.
    * Simplificação para o MVP — um fluxo de convite por link/código pode substituir isso depois.
    */
-  async create(driverId: string, name: string, email: string, temporaryPassword: string) {
+  async create(driverId: string, name: string, email: string, temporaryPassword: string, phone?: string | null) {
     const existing = await studentRepository.findByEmail(email);
     if (existing) {
       if (existing.active) {
@@ -26,7 +26,7 @@ export const studentService = {
     }
 
     const passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
-    return studentRepository.create({ driverId, name, email, passwordHash });
+    return studentRepository.create({ driverId, name, email, passwordHash, phone: phone?.trim() || null });
   },
 
   async deactivate(id: string) {
@@ -61,6 +61,7 @@ export const studentService = {
         id: student.id,
         name: student.name,
         email: student.email,
+        phone: student.phone,
         photoUrl: student.photoUrl,
         todayStatus: student.dailyStatuses[0]?.status ?? weeklyDefault,
         isBoarded: Boolean(student.dailyStatuses[0]?.boardedAt),
@@ -99,8 +100,12 @@ export const studentService = {
       id: student.id,
       name: student.name,
       email: student.email,
+      phone: student.phone,
       photoUrl: student.photoUrl,
       driverId: student.driverId,
+      driverName: student.driver?.name ?? "Motorista",
+      driverPhotoUrl: student.driver?.photoUrl ?? null,
+      driverPhone: student.driver?.phone ?? null,
     };
   },
 
@@ -117,6 +122,20 @@ export const studentService = {
       id: updated.id,
       name: updated.name,
       photoUrl: updated.photoUrl,
+    };
+  },
+
+  async updatePhone(id: string, phone: string | null) {
+    const student = await studentRepository.findById(id);
+    if (!student) {
+      throw new AppError("Aluno não encontrado.", StatusCodeHttp.NOT_FOUND);
+    }
+    const cleanPhone = phone ? phone.trim() : null;
+    const updated = await studentRepository.updatePhone(id, cleanPhone);
+    return {
+      id: updated.id,
+      name: updated.name,
+      phone: updated.phone,
     };
   },
 };

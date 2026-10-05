@@ -14,8 +14,8 @@ export const driverRepository = {
     return prisma.driver.findUnique({ where: { id } });
   },
 
-  create(data: { name: string; email: string; passwordHash: string; pixKey?: string }) {
-    return prisma.driver.create({ data });
+  create(data: { name: string; email: string; passwordHash: string; pixKey?: string; phone?: string }) {
+    return prisma.driver.create({ data: { ...data, phone: data.phone ?? "" } });
   },
 
   deactivate(id: string) {

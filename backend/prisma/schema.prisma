@@ -38,6 +38,7 @@ model Driver {
   passwordHash  String
   pixKey        String?
   photoUrl      String?  @db.Text
+  phone         String   @default("")
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
@@ -45,6 +46,7 @@ model Driver {
   tripCancellations TripCancellation[]
   announcements     Announcement[]
   pushSubscriptions PushSubscription[]
+  chatMessages      ChatMessage[]
 }
 
 model Student {
@@ -55,6 +57,7 @@ model Student {
   email         String   @unique
   passwordHash  String
   photoUrl      String?  @db.Text
+  phone         String?
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
@@ -62,8 +65,26 @@ model Student {
   paymentCycles     PaymentCycle[]
   pushSubscriptions PushSubscription[]
   weeklySchedules   StudentWeeklySchedule[]
+  chatMessages      ChatMessage[]
 
   @@index([driverId])
+}
+
+model ChatMessage {
+  id         String    @id @default(uuid())
+  driverId   String
+  studentId  String
+  senderRole String    // "driver" | "student"
+  senderId   String    // ID do usuário remetente (Driver ou Student)
+  content    String    @db.Text
+  readAt     DateTime? // nulo = não lida; preenchido quando o destinatário visualiza
+  createdAt  DateTime  @default(now())
+
+  driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([driverId, studentId, createdAt])
+  @@index([studentId, readAt])
 }
 
 // Rotina semanal padrão do aluno (Segunda a Sábado/Domingo).

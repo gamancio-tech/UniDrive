@@ -32,10 +32,10 @@ export const adminController = {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
       }
 
-      const { name, email, password, pixKey } = req.body;
-      const driver = await driverService.create(name, email, password, pixKey);
+      const { name, email, password, pixKey, phone } = req.body;
+      const driver = await driverService.create(name, email, password, pixKey, phone);
 
-      res.status(StatusCodeHttp.CREATED).json({ id: driver.id, name: driver.name, email: driver.email });
+      res.status(StatusCodeHttp.CREATED).json({ id: driver.id, name: driver.name, email: driver.email, phone: driver.phone });
     } catch (err) {
       next(err);
     }

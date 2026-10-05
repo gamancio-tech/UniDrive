@@ -15,12 +15,22 @@ import { AnnouncementList } from "../features/announcements/AnnouncementList";
 import { publishAnnouncement as apiPublishAnnouncement } from "../api/announcements";
 import { AppSettings } from "../features/settings/AppSettings";
 import { resetAllDailyBoarded } from "../api/students";
+import { DriverChatConversationList } from "../features/chat/DriverChatConversationList";
+import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
 
-type DriverTab = "operations" | "students" | "announcements" | "settings";
+type DriverTab = "operations" | "students" | "chat" | "announcements" | "settings";
 
 export function DriverHome() {
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<DriverTab>("operations");
+  const { unreadCount: chatUnreadCount } = useUnreadChatCount();
+  const [isDriverChatOpen, setIsDriverChatOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<DriverTab>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "chat") return "chat";
+    }
+    return "operations";
+  });
   const [tripType, setTripType] = useState<TripType>(() => {
     const saved = localStorage.getItem("unidrive_driver_trip_type");
     return saved === "volta" ? "volta" : "ida";
@@ -185,25 +195,27 @@ export function DriverHome() {
 
   return (
     <>
-      <main>
-        {/* Cabeçalho Minimalista com Botão Sair em pílula */}
-        <div className="header-row">
-          <div className="brand-header">
-            <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
-            <div>
-              <h1>UniDrive</h1>
-              <p className="list-item-sub">Painel do Motorista</p>
+      <main className={activeTab === "chat" ? "main-chat-layout" : undefined}>
+        {/* Cabeçalho Minimalista com Botão Sair em pílula (ocultado durante o chat para aproveitamento de tela) */}
+        {activeTab !== "chat" && (
+          <div className="header-row">
+            <div className="brand-header">
+              <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
+              <div>
+                <h1>UniDrive</h1>
+                <p className="list-item-sub">Painel do Motorista</p>
+              </div>
             </div>
+            <button
+              type="button"
+              className="btn-logout-pill"
+              onClick={handleLogout}
+              title="Sair do sistema"
+            >
+              Sair ⎋
+            </button>
           </div>
-          <button
-            type="button"
-            className="btn-logout-pill"
-            onClick={handleLogout}
-            title="Sair do sistema"
-          >
-            Sair ⎋
-          </button>
-        </div>
+        )}
 
         {/* Aba: Hoje (Operação) — Mockup tela1_motorista.jfif */}
         {activeTab === "operations" && (
@@ -387,6 +399,11 @@ export function DriverHome() {
               loadStudents();
             }}
           />
+        )}
+
+        {/* Aba: Chat — Conversas 1:1 com os alunos */}
+        {activeTab === "chat" && (
+          <DriverChatConversationList tripType={tripType} onOpenConversation={setIsDriverChatOpen} />
         )}
 
         {/* Aba: Avisos — Mockup tela3_motorista.jfif */}
@@ -583,6 +600,7 @@ export function DriverHome() {
         role="driver"
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as DriverTab)}
+        chatUnreadCount={chatUnreadCount}
       />
     </>
   );

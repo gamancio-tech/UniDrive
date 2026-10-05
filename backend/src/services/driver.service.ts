@@ -7,7 +7,7 @@ const SALT_ROUNDS = 10;
 
 export const driverService = {
 
-  async create(name: string, email: string, password: string, pixKey?: string) {
+  async create(name: string, email: string, password: string, pixKey?: string, phone?: string) {
     const existing = await driverRepository.findByEmail(email);
     if (existing) {
       if (existing.active) {
@@ -17,8 +17,12 @@ export const driverService = {
       }
     }
 
+    if (!phone || !phone.trim()) {
+      throw new AppError("O telefone do motorista é obrigatório.", StatusCodeHttp.BAD_REQUEST);
+    }
+
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const driver = await driverRepository.create({ name, email, passwordHash, pixKey });
+    const driver = await driverRepository.create({ name, email, passwordHash, pixKey, phone: phone.trim() });
     
     return driver;
   },

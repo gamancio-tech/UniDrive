@@ -32,7 +32,10 @@ export const pushService = {
   },
 
   /** Envia uma notificação a um conjunto de alunos (usado pelo RF03 e pelo mural, RF05). */
-  async notifyStudents(studentIds: string[], payload: { title: string; body: string }) {
+  async notifyStudents(
+    studentIds: string[],
+    payload: { title: string; body: string; icon?: string; badge?: string; tag?: string; url?: string }
+  ) {
     console.log(`[Push] Disparando notificação para ${studentIds.length} aluno(s): "${payload.title}"`);
     const subscriptions = await pushSubscriptionRepository.listByStudentIds(studentIds);
     console.log(`[Push] Encontradas ${subscriptions.length} inscrição(ões) no banco para os alunos.`);
@@ -70,7 +73,10 @@ export const pushService = {
     console.log(`[Push] Envio finalizado: ${successCount}/${subscriptions.length} entregues com sucesso.`);
   },
 
-  async notifyDriver(driverId: string, payload: { title: string; body: string }) {
+  async notifyDriver(
+    driverId: string,
+    payload: { title: string; body: string; icon?: string; badge?: string; tag?: string; url?: string }
+  ) {
     console.log(`[Push] Disparando notificação para motorista ${driverId}: "${payload.title}"`);
     const subscriptions = await pushSubscriptionRepository.listByDriverId(driverId);
     console.log(`[Push] Encontradas ${subscriptions.length} inscrição(ões) no banco para o motorista.`);

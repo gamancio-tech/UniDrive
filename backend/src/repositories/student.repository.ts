@@ -6,7 +6,10 @@ export const studentRepository = {
   },
 
   findById(id: string) {
-    return prisma.student.findUnique({ where: { id } });
+    return prisma.student.findUnique({
+      where: { id },
+      include: { driver: { select: { id: true, name: true, photoUrl: true, phone: true } } },
+    });
   },
 
   listActiveByDriver(driverId: string) {
@@ -30,7 +33,7 @@ export const studentRepository = {
     });
   },
 
-  create(data: { driverId: string; name: string; email: string; passwordHash: string }) {
+  create(data: { driverId: string; name: string; email: string; passwordHash: string; phone?: string | null }) {
     return prisma.student.create({ data });
   },
 
@@ -44,5 +47,9 @@ export const studentRepository = {
 
   updatePhoto(id: string, photoUrl: string | null) {
     return prisma.student.update({ where: { id }, data: { photoUrl } });
+  },
+
+  updatePhone(id: string, phone: string | null) {
+    return prisma.student.update({ where: { id }, data: { phone } });
   },
 };

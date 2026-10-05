@@ -11,9 +11,9 @@ export const studentController = {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
       } else if (hasRole(req.user, "driver")) {
         const driverId = req.user.id;
-        const { name, email, temporaryPassword } = req.body;
-        const student = await studentService.create(driverId, name, email, temporaryPassword);
-        res.status(StatusCodeHttp.CREATED).json({ id: student.id, name: student.name, email: student.email });
+        const { name, email, temporaryPassword, phone } = req.body;
+        const student = await studentService.create(driverId, name, email, temporaryPassword, phone);
+        res.status(StatusCodeHttp.CREATED).json({ id: student.id, name: student.name, email: student.email, phone: student.phone });
       } else {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
       }
@@ -96,6 +96,45 @@ export const studentController = {
       const updated = await studentService.updatePhoto(studentId, photoUrl ?? null);
       res.status(StatusCodeHttp.OK).json({
         message: photoUrl ? "Foto de perfil atualizada com sucesso!" : "Foto de perfil removida com sucesso!",
+        student: updated,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** PATCH /api/students/:id/phone (motorista ou o próprio aluno atualiza telefone) */
+  async updatePhone(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
+      }
+
+      const { id } = req.params;
+      const { phone } = req.body;
+
+      if (hasRole(req.user, "driver")) {
+        const student = await studentService.findById(id);
+        if (student.driverId !== req.user.id) {
+          return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Você só pode editar alunos da sua van." });
+        }
+      } else if (hasRole(req.user, "student")) {
+        if (req.user.id !== id && id !== "me") {
+          return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Você só pode editar seu próprio perfil." });
+        }
+      } else {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado." });
+      }
+
+      const targetId = id === "me" ? req.user.id : id;
+
+      if (!phone || typeof phone !== "string" || !phone.trim()) {
+        return res.status(StatusCodeHttp.BAD_REQUEST).json({ error: "Informe um número de telefone válido." });
+      }
+
+      const updated = await studentService.updatePhone(targetId, phone);
+      res.status(StatusCodeHttp.OK).json({
+        message: "Telefone atualizado com sucesso!",
         student: updated,
       });
     } catch (err) {

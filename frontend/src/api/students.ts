@@ -8,18 +8,21 @@ export interface DriverStudent {
   todayStatus?: "vai_normal" | "so_ida" | "so_volta" | "nao_vai" | string;
   isBoarded?: boolean;
   photoUrl?: string | null;
+  phone?: string | null;
 }
 
 export interface CreateStudentPayload {
   name: string;
   email: string;
   temporaryPassword: string;
+  phone?: string | null;
 }
 
 export interface CreatedStudentResponse {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
 }
 
 export interface RegisteredStudent {
@@ -28,6 +31,7 @@ export interface RegisteredStudent {
   email: string;
   active: boolean;
   photoUrl?: string | null;
+  phone?: string | null;
 }
 
 export interface StudentProfile {
@@ -35,7 +39,11 @@ export interface StudentProfile {
   name: string;
   email: string;
   photoUrl?: string | null;
+  phone?: string | null;
   driverId: string;
+  driverName?: string;
+  driverPhotoUrl?: string | null;
+  driverPhone?: string | null;
 }
 
 /**
@@ -108,6 +116,22 @@ export async function updateStudentProfilePhoto(
     {
       method: "PATCH",
       body: { photoUrl },
+    }
+  );
+}
+
+/**
+ * Atualiza o telefone do aluno (chamado pelo próprio aluno ou pelo motorista).
+ */
+export async function updateStudentPhone(
+  studentId: string,
+  phone: string
+): Promise<{ message: string; student: { id: string; name: string; phone: string } }> {
+  return apiRequest<{ message: string; student: { id: string; name: string; phone: string } }>(
+    `/students/${studentId}/phone`,
+    {
+      method: "PATCH",
+      body: { phone },
     }
   );
 }
