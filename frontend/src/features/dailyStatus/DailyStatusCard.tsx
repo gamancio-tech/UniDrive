@@ -1,4 +1,4 @@
-import { DailyStatusValue } from "./useDailyStatus";
+import { DailyStatusValue, TripType, TripStep } from "./useDailyStatus";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
@@ -9,6 +9,8 @@ interface DailyStatusCardProps {
   loading: boolean;
   isBoarded: boolean;
   currentStatus?: DailyStatusValue;
+  currentTrip?: TripType;
+  tripStep?: TripStep;
   lastUpdated?: Date | null;
   onSetStatus: (status: DailyStatusValue) => void;
   onCheckIn: () => void;
@@ -28,6 +30,8 @@ export function DailyStatusCard({
   loading,
   isBoarded,
   currentStatus,
+  currentTrip = "ida",
+  tripStep = "aguardando",
   lastUpdated,
   onSetStatus,
   onCheckIn,
@@ -59,6 +63,10 @@ export function DailyStatusCard({
     );
   }
 
+  // O restante de alunos para embarcar só aparece no estado de esperar para a volta do motorista.
+  const isWaitingForReturn = currentTrip === "volta" && tripStep === "aguardando";
+  const isReturnTripStarted = currentTrip === "volta" && tripStep === "em_viagem";
+
   return (
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
@@ -67,62 +75,126 @@ export function DailyStatusCard({
             Volta da Faculdade
           </h2>
           <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.15rem 0 0" }}>
-            Informe sua presença e acompanhe o embarque
+            {isWaitingForReturn
+              ? "Embarque aberto • Acompanhe a saída ao vivo"
+              : isReturnTripStarted
+              ? "Viagem de retorno em andamento"
+              : "Defina sua presença programada para hoje"}
           </p>
         </div>
-        <Badge variant={isBoarded ? "success" : "info"}>
-          {isBoarded ? "✓ A Bordo" : "Aguardando"}
+        <Badge
+          variant={
+            isBoarded
+              ? "success"
+              : isReturnTripStarted
+              ? "info"
+              : isWaitingForReturn
+              ? "warning"
+              : "info"
+          }
+        >
+          {isBoarded
+            ? "✓ A Bordo"
+            : isReturnTripStarted
+            ? "Viagem Iniciada"
+            : isWaitingForReturn
+            ? "Embarque Aberto"
+            : "Programado"}
         </Badge>
       </div>
 
-      {/* Contador de Alunos Faltantes com Pulso Ao Vivo */}
-      <div
-        style={{
-          background: "var(--bg-input)",
-          borderRadius: "var(--radius-md)",
-          padding: "1.25rem 1rem",
-          textAlign: "center",
-          margin: "0.75rem 0 1.25rem",
-          border: "1px solid var(--border-subtle)",
-        }}
-      >
+      {/* 
+        RF02: O restante de alunos para embarcar só aparece no estado de esperar para a volta do motorista.
+        Depois que ele confirma o início de viagem, esse contador some também.
+      */}
+      {isWaitingForReturn ? (
         <div
-          className="stat-number"
           style={{
-            fontSize: "3.2rem",
-            fontWeight: 800,
-            color: missingCount === 0 ? "var(--success-dark)" : "var(--primary-text)",
-            lineHeight: 1,
+            background: "var(--bg-input)",
+            borderRadius: "var(--radius-md)",
+            padding: "1.25rem 1rem",
+            textAlign: "center",
+            margin: "0.75rem 0 1.25rem",
+            border: "1px solid var(--border-subtle)",
           }}
         >
-          {missingCount ?? 0}
-        </div>
-        <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-muted)", marginTop: "0.35rem" }}>
-          {missingCount === 0
-            ? "🎉 Todos os alunos já embarcaram!"
-            : "aluno(s) restante(s) para a van partir"}
-        </div>
-
-        {lastUpdated && (
           <div
+            className="stat-number"
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.4rem",
-              fontSize: "0.78rem",
-              color: "var(--text-muted)",
-              marginTop: "0.65rem",
+              fontSize: "3.2rem",
+              fontWeight: 800,
+              color: missingCount === 0 ? "var(--success-dark)" : "var(--primary-text)",
+              lineHeight: 1,
             }}
           >
-            <span className="live-dot" />
-            <span>
-              Atualizado às{" "}
-              {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Ao vivo
-            </span>
+            {missingCount ?? 0}
           </div>
-        )}
-      </div>
+          <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-muted)", marginTop: "0.35rem" }}>
+            {missingCount === 0
+              ? "🎉 Todos os alunos já embarcaram!"
+              : "aluno(s) restante(s) para a van partir"}
+          </div>
+
+          {lastUpdated && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.4rem",
+                fontSize: "0.78rem",
+                color: "var(--text-muted)",
+                marginTop: "0.65rem",
+              }}
+            >
+              <span className="live-dot" />
+              <span>
+                Atualizado às{" "}
+                {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Ao vivo
+              </span>
+            </div>
+          )}
+        </div>
+      ) : isReturnTripStarted ? (
+        <div
+          style={{
+            background: "var(--primary-light)",
+            border: "1px solid rgba(11, 99, 206, 0.2)",
+            borderRadius: "var(--radius-md)",
+            padding: "1.1rem 1rem",
+            textAlign: "center",
+            margin: "0.75rem 0 1.25rem",
+          }}
+        >
+          <div style={{ fontSize: "1.8rem", marginBottom: "0.25rem" }}>🚐💨</div>
+          <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--primary-text)" }}>
+            Viagem de Volta Iniciada
+          </div>
+          <p style={{ margin: "0.25rem 0 0", fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
+            {isBoarded
+              ? "Você já está a bordo! Tenha uma ótima viagem de retorno."
+              : "O motorista confirmou o início da viagem e a van já partiu."}
+          </p>
+        </div>
+      ) : (
+        <div
+          style={{
+            background: "var(--bg-input)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "var(--radius-md)",
+            padding: "0.85rem 1rem",
+            textAlign: "center",
+            margin: "0.75rem 0 1.25rem",
+          }}
+        >
+          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-muted)" }}>
+            🕒 O embarque da volta será aberto pelo motorista no término das aulas
+          </div>
+          <p style={{ margin: "0.2rem 0 0", fontSize: "0.76rem", color: "var(--text-light)" }}>
+            Defina sua presença programada no painel abaixo
+          </p>
+        </div>
+      )}
 
       {/* Seleção do Status Diário — Cartões Táteis com Variáveis de Tema */}
       <div style={{ marginBottom: "1.25rem" }}>
@@ -194,26 +266,28 @@ export function DailyStatusCard({
               <span>✅</span>
               <span>Você já está a bordo da van!</span>
             </div>
-            <button
-              type="button"
-              onClick={onCancelBoardedSelf}
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border-subtle)",
-                color: "var(--danger-dark)",
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                padding: "0.45rem 1rem",
-                borderRadius: "var(--radius-full)",
-                cursor: "pointer",
-                width: "auto",
-                minHeight: "36px",
-              }}
-            >
-              Desfazer / Não embarquei
-            </button>
+            {!isReturnTripStarted && (
+              <button
+                type="button"
+                onClick={onCancelBoardedSelf}
+                style={{
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--danger-dark)",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  padding: "0.45rem 1rem",
+                  borderRadius: "var(--radius-full)",
+                  cursor: "pointer",
+                  width: "auto",
+                  minHeight: "36px",
+                }}
+              >
+                Desfazer / Não embarquei
+              </button>
+            )}
           </div>
-        ) : !cancelled ? (
+        ) : isWaitingForReturn && !cancelled ? (
           <Button
             variant="primary"
             className="btn-giant"

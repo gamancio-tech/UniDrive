@@ -31,6 +31,11 @@ export const studentController = {
 
       if (hasRole(req.user, "driver")) {
         const driverId = req.user.id;
+        const statusParam = req.query.status as string | undefined;
+        if (statusParam === "true" || statusParam === "false") {
+          const students = await studentService.listByStatus(statusParam);
+          return res.status(StatusCodeHttp.OK).json(students);
+        }
         const students = await studentService.list(driverId);
         return res.status(StatusCodeHttp.OK).json(students);
       }
@@ -41,6 +46,21 @@ export const studentController = {
       }
 
       return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** PATCH /api/students/:id/reactivate (somente motorista) */
+  async reactivate(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const student = await studentService.findById(id);
+      if (hasRole(req.user!, "driver") && student.driverId !== req.user!.id) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
+      }
+      await studentService.reactivate(id);
+      res.status(StatusCodeHttp.OK).json({ message: "Aluno reativado com sucesso" });
     } catch (err) {
       next(err);
     }

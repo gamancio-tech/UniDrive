@@ -11,4 +11,6 @@ dailyStatusRoutes.post("/checkin", requireRole("student"), dailyStatusController
 dailyStatusRoutes.post("/cancel-boarded", requireRole("student"), dailyStatusController.cancelBoardedSelf);
 dailyStatusRoutes.post("/checkin/:studentId", requireRole("driver"), dailyStatusController.checkInByDriver);
 dailyStatusRoutes.post("/cancel-boarded/:studentId", requireRole("driver"), dailyStatusController.cancelBoardedByDriver);
+dailyStatusRoutes.post("/reset-all", requireRole("driver"), dailyStatusController.resetAllBoarded);
+dailyStatusRoutes.post("/trip-state", requireRole("driver"), dailyStatusController.setTripState);
 dailyStatusRoutes.get("/missing-count", dailyStatusController.getMissingCount);

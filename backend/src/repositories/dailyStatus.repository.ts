@@ -33,6 +33,16 @@ export const dailyStatusRepository = {
       create: { studentId, date, boardedAt: null },
     });
   },
+  /** Reseta o embarque de todos os alunos ativos do motorista na data (ao finalizar trajeto). */
+  resetAllBoarded(driverId: string, date: Date) {
+    return prisma.dailyStatus.updateMany({
+      where: {
+        date,
+        student: { driverId, active: true },
+      },
+      data: { boardedAt: null },
+    });
+  },
   /**
    * Lista os alunos ativos do motorista junto com o status do dia (se existir).
    * Quando não existe registro para a data, o aluno não vem com dailyStatuses —
@@ -41,6 +51,7 @@ export const dailyStatusRepository = {
   listStudentsWithStatusForDate(driverId: string, date: Date) {
     return prisma.student.findMany({
       where: { driverId, active: true },
+      orderBy: { name: "asc" },
       include: {
         dailyStatuses: { where: { date } },
       },

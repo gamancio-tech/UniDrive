@@ -8,4 +8,5 @@ studentRoutes.use(authMiddleware, requireRole("driver"));
 
 studentRoutes.post("/", studentController.create);
 studentRoutes.get("/", studentController.list);
+studentRoutes.patch("/:id/reactivate", studentController.reactivate);
 studentRoutes.delete("/:id", studentController.deactivate);

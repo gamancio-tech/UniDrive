@@ -18,6 +18,8 @@ export function StudentHome() {
     loading,
     isBoarded,
     currentStatus,
+    currentTrip,
+    tripStep,
     lastUpdated,
     setStatus,
     checkIn,
@@ -59,6 +61,8 @@ export function StudentHome() {
               loading={loading}
               isBoarded={isBoarded}
               currentStatus={currentStatus}
+              currentTrip={currentTrip}
+              tripStep={tripStep}
               lastUpdated={lastUpdated}
               onSetStatus={setStatus}
               onCheckIn={checkIn}

@@ -4,25 +4,32 @@ import { apiRequest } from "../../api/client";
 const POLL_INTERVAL_MS = 15_000; // RF02/RNF04: até ~15s de defasagem é aceitável para este caso de uso
 
 export type DailyStatusValue = "vai_normal" | "so_ida" | "so_volta" | "nao_vai";
+export type TripType = "ida" | "volta";
+export type TripStep = "aguardando" | "em_viagem" | "finalizada";
 
 interface MissingCountResponse {
   cancelled: boolean;
   missingCount: number;
   isBoarded?: boolean;
   currentStatus?: DailyStatusValue;
+  trip?: TripType;
+  tripStep?: TripStep;
 }
 
-export function useDailyStatus() {
+export function useDailyStatus(trip?: "ida" | "volta") {
   const [missingCount, setMissingCount] = useState<number | null>(null);
   const [cancelled, setCancelled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isBoarded, setIsBoarded] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<DailyStatusValue>("vai_normal");
+  const [currentTrip, setCurrentTrip] = useState<TripType>("ida");
+  const [tripStep, setTripStep] = useState<TripStep>("aguardando");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchMissingCount = useCallback(async () => {
     try {
-      const data = await apiRequest<MissingCountResponse>("/daily-status/missing-count");
+      const url = trip ? `/daily-status/missing-count?trip=${trip}` : "/daily-status/missing-count";
+      const data = await apiRequest<MissingCountResponse>(url);
       setMissingCount(data.missingCount);
       setCancelled(data.cancelled);
       if (typeof data.isBoarded === "boolean") {
@@ -31,13 +38,19 @@ export function useDailyStatus() {
       if (data.currentStatus) {
         setCurrentStatus(data.currentStatus);
       }
+      if (data.trip) {
+        setCurrentTrip(data.trip);
+      }
+      if (data.tripStep) {
+        setTripStep(data.tripStep);
+      }
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Falha ao buscar contagem de faltantes:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [trip]);
 
   useEffect(() => {
     fetchMissingCount();
@@ -81,17 +94,34 @@ export function useDailyStatus() {
     await fetchMissingCount();
   }, [fetchMissingCount]);
 
+  const updateTripState = useCallback(
+    async (newTrip: TripType, newStep: TripStep) => {
+      setCurrentTrip(newTrip);
+      setTripStep(newStep);
+      await apiRequest("/daily-status/trip-state", {
+        method: "POST",
+        body: { trip: newTrip, step: newStep },
+      });
+      await fetchMissingCount();
+    },
+    [fetchMissingCount],
+  );
+
   return {
     missingCount,
     cancelled,
     loading,
     isBoarded,
     currentStatus,
+    currentTrip,
+    tripStep,
     lastUpdated,
     setStatus,
     checkIn,
     cancelBoardedSelf,
     cancelTrip,
     uncancelTrip,
+    updateTripState,
+    refresh: fetchMissingCount,
   };
 }

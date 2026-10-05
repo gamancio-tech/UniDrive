@@ -76,6 +76,19 @@ export const dailyStatusController = {
     }
   },
 
+  /** POST /api/daily-status/reset-all (motorista reseta todos os embarques do dia ao finalizar trajeto) */
+  async resetAllBoarded(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!hasRole(req.user!, "driver")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
+      }
+      await dailyStatusService.resetAllBoarded(req.user!.id, new Date());
+      res.status(StatusCodeHttp.OK).json({ message: "Check-ins resetados com sucesso" });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   /** RF02 — GET /api/daily-status/missing-count (consultado via polling pelo frontend) */
   async getMissingCount(req: Request, res: Response, next: NextFunction) {
     try {
@@ -86,7 +99,9 @@ export const dailyStatusController = {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas e alunos podem realizar essa ação" });
       }
       const driverId = req.user.role === "student" ? req.user.driverId : req.user.id;
-      const result = await dailyStatusService.getMissingStudents(driverId, new Date());
+      const tripState = dailyStatusService.getTripState(driverId, new Date());
+      const trip = (req.query.trip as "ida" | "volta") || tripState.trip;
+      const result = await dailyStatusService.getMissingStudents(driverId, new Date(), trip);
 
       let isBoarded = false;
       let currentStatus = "vai_normal";
@@ -101,7 +116,28 @@ export const dailyStatusController = {
         missingCount: result.missingStudentIds.length,
         isBoarded,
         currentStatus,
+        trip: tripState.trip,
+        tripStep: tripState.step,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /** POST /api/daily-status/trip-state (somente motorista) */
+  async setTripState(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!hasRole(req.user!, "driver")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
+      }
+      const { trip, step } = req.body;
+      const updated = dailyStatusService.setTripState(
+        req.user!.id,
+        new Date(),
+        trip ?? "ida",
+        step ?? "aguardando"
+      );
+      res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {
       next(err);
     }

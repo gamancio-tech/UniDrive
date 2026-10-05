@@ -9,10 +9,37 @@ function toDateOnly(date: Date): Date {
   return new Date(date.toISOString().slice(0, 10));
 }
 
-/** Status que indicam que o aluno volta de van hoje (relevantes para o contador da volta). */
-const RETURNING_STATUSES: DailyStatusValue[] = ["vai_normal", "so_volta"];
+/** Status que indicam que o aluno vai de van hoje (Ida ou Volta). */
+const IDA_STATUSES: DailyStatusValue[] = ["vai_normal", "so_ida"];
+const VOLTA_STATUSES: DailyStatusValue[] = ["vai_normal", "so_volta"];
+
+export type TripType = "ida" | "volta";
+export type TripStep = "aguardando" | "em_viagem" | "finalizada";
+
+export interface DriverTripState {
+  trip: TripType;
+  step: TripStep;
+}
+
+const driverTripStates = new Map<string, DriverTripState>();
+
+function getTripKey(driverId: string, date: Date): string {
+  return `${driverId}_${toDateOnly(date).toISOString().slice(0, 10)}`;
+}
 
 export const dailyStatusService = {
+  getTripState(driverId: string, date: Date): DriverTripState {
+    const key = getTripKey(driverId, date);
+    return driverTripStates.get(key) ?? { trip: "ida", step: "aguardando" };
+  },
+
+  setTripState(driverId: string, date: Date, trip: TripType, step: TripStep): DriverTripState {
+    const key = getTripKey(driverId, date);
+    const updated: DriverTripState = { trip, step };
+    driverTripStates.set(key, updated);
+    return updated;
+  },
+
   /** RF01: aluno define o status do dia (padrão é "vai_normal" quando nunca definido). */
   async setStatus(studentId: string, date: Date, status: DailyStatusValue) {
     return dailyStatusRepository.upsertStatus(studentId, toDateOnly(date), status);
@@ -26,7 +53,7 @@ export const dailyStatusService = {
     const normalizedDate = toDateOnly(date);
     const updated = await dailyStatusRepository.markBoarded(studentId, normalizedDate);
 
-    const { missingStudentIds } = await this.getMissingStudents(driverId, normalizedDate);
+    const { missingStudentIds } = await this.getMissingStudents(driverId, normalizedDate, "volta");
 
     if (missingStudentIds.length > 0 && missingStudentIds.length <= env.missingCountNotificationThreshold) {
       // NOTA para quem for evoluir: isso pode notificar repetidamente a cada novo check-in
@@ -48,6 +75,11 @@ export const dailyStatusService = {
     return updated;
   },
 
+  async resetAllBoarded(driverId: string, date: Date) {
+    const normalizedDate = toDateOnly(date);
+    return dailyStatusRepository.resetAllBoarded(driverId, normalizedDate);
+  },
+
   /** Verifica se o aluno já realizou o embarque na data indicada. */
   async isStudentBoarded(studentId: string, date: Date): Promise<boolean> {
     const normalizedDate = toDateOnly(date);
@@ -56,11 +88,11 @@ export const dailyStatusService = {
   },
 
   /**
-   * RF02: calcula quantos e quais alunos ainda faltam embarcar na volta de hoje.
+   * RF02: calcula quantos e quais alunos ainda faltam embarcar no trajeto indicado (ida ou volta).
    * Aplica a regra do padrão "vai_normal" quando o aluno não definiu status (RF01)
    * e retorna null quando o dia foi cancelado pelo motorista (RF06).
    */
-  async getMissingStudents(driverId: string, date: Date) {
+  async getMissingStudents(driverId: string, date: Date, trip: "ida" | "volta" = "volta") {
     const normalizedDate = toDateOnly(date);
 
     const cancellation = await tripCancellationRepository.findByDriverAndDate(driverId, normalizedDate);
@@ -69,14 +101,15 @@ export const dailyStatusService = {
     }
 
     const students = await dailyStatusRepository.listStudentsWithStatusForDate(driverId, normalizedDate);
+    const validStatuses = trip === "ida" ? IDA_STATUSES : VOLTA_STATUSES;
 
     const missingStudentIds = students
       .filter((student) => {
         const todayStatus = student.dailyStatuses[0];
         const status = todayStatus?.status ?? "vai_normal"; // padrão quando não há registro
-        const isReturningToday = RETURNING_STATUSES.includes(status);
+        const isTripToday = validStatuses.includes(status);
         const alreadyBoarded = Boolean(todayStatus?.boardedAt);
-        return isReturningToday && !alreadyBoarded;
+        return isTripToday && !alreadyBoarded;
       })
       .map((student) => student.id);
 
