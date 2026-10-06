@@ -9,6 +9,7 @@ export interface ChatMessage {
   content: string;
   readAt: string | null;
   createdAt: string;
+  deletedForEveryoneAt?: string | null;
   tempId?: string;
   status?: "sending" | "sent" | "error";
 }
@@ -27,6 +28,7 @@ export interface ConversationSummary {
     senderRole: "driver" | "student";
     senderId: string;
     readAt: string | null;
+    deletedForEveryoneAt?: string | null;
   } | null;
   unreadCount: number;
 }
@@ -49,6 +51,35 @@ export async function getChatHistory(
 
   const query = params.toString() ? `?${params.toString()}` : "";
   return apiRequest<ChatMessage[]>(`/chat/history/${partnerId}${query}`);
+}
+
+/**
+ * Exclui uma mensagem específica (só para você ou para todos)
+ */
+export async function deleteChatMessage(
+  messageId: string,
+  scope: "me" | "everyone" = "me"
+): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>(
+    `/chat/messages/${messageId}?scope=${scope}`,
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+/**
+ * Limpa todas as mensagens da conversa com um parceiro somente para você
+ */
+export async function clearChatHistory(
+  partnerId: string
+): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>(
+    `/chat/history/${partnerId}`,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
 /**

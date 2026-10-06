@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useChat } from "./useChat";
+import { ChatMessage } from "../../api/chat";
 import { getDecodedToken } from "../../api/client";
 import { updateStudentPhone } from "../../api/students";
 import { Modal } from "../../components/Modal";
@@ -22,6 +23,9 @@ import {
   faHand,
   faThumbsUp,
   faFlagCheckered,
+  faTrash,
+  faChevronDown,
+  faBan,
   IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -52,7 +56,16 @@ export function ChatWindow({
   hideBackOnDesktop = false,
   onPartnerPhoneUpdated,
 }: ChatWindowProps) {
-  const { messages, loading, isConnected, sendMessage, loadOlderMessages, hasMore } = useChat({
+  const {
+    messages,
+    loading,
+    isConnected,
+    sendMessage,
+    deleteMessage,
+    clearConversation,
+    loadOlderMessages,
+    hasMore,
+  } = useChat({
     partnerId,
   });
 
@@ -93,6 +106,156 @@ export function ChatWindow({
   const [savingPhone, setSavingPhone] = useState(false);
   const [phoneError, setPhoneError] = useState("");
 
+  // Estado para modal de limpar conversa
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [clearingChat, setClearingChat] = useState(false);
+
+  // Estados para exclusão de mensagens e menu de contexto
+  const [menuMessage, setMenuMessage] = useState<ChatMessage | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    isOpen: boolean;
+    message: ChatMessage | null;
+    scope: "me" | "everyone";
+  }>({
+    isOpen: false,
+    message: null,
+    scope: "me",
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Refs para controle do toque longo (~1.5s - 2s)
+  const longPressTimerRef = useRef<number | null>(null);
+  const pointerStartPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  const closeMenu = () => {
+    setMenuMessage(null);
+    setMenuPosition(null);
+  };
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeMenu();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
+  const openMenuForMessage = (msg: ChatMessage, clientX: number, clientY: number) => {
+    if (msg.status === "sending") return;
+
+    const menuWidth = 210;
+    const menuHeight = 110;
+    const padding = 12;
+
+    let x = clientX;
+    let y = clientY;
+
+    if (x + menuWidth > window.innerWidth - padding) {
+      x = window.innerWidth - menuWidth - padding;
+    }
+    if (x < padding) x = padding;
+
+    if (y + menuHeight > window.innerHeight - padding) {
+      y = window.innerHeight - menuHeight - padding;
+    }
+    if (y < padding) y = padding;
+
+    setMenuMessage(msg);
+    setMenuPosition({ x, y });
+  };
+
+  const handlePointerDownMessage = (msg: ChatMessage, e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    pointerStartPosRef.current = { x: e.clientX, y: e.clientY };
+
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+
+    longPressTimerRef.current = window.setTimeout(() => {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(40);
+        } catch {
+          // Ignora caso a API de vibração não seja permitida
+        }
+      }
+      openMenuForMessage(msg, e.clientX, e.clientY);
+      longPressTimerRef.current = null;
+    }, 1500);
+  };
+
+  const handlePointerMoveMessage = (e: React.PointerEvent) => {
+    if (!pointerStartPosRef.current || !longPressTimerRef.current) return;
+    const dist = Math.hypot(
+      e.clientX - pointerStartPosRef.current.x,
+      e.clientY - pointerStartPosRef.current.y
+    );
+    if (dist > 10) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handlePointerUpMessage = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleContextMenuMessage = (msg: ChatMessage, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    openMenuForMessage(msg, e.clientX, e.clientY);
+  };
+
+  const handleChevronClick = (msg: ChatMessage, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    openMenuForMessage(msg, rect.right, rect.bottom + 4);
+  };
+
+  const handleSelectDeleteOption = (msg: ChatMessage, scope: "me" | "everyone") => {
+    closeMenu();
+    setDeleteConfirmModal({
+      isOpen: true,
+      message: msg,
+      scope,
+    });
+  };
+
+  const handleExecuteDelete = async () => {
+    if (!deleteConfirmModal.message) return;
+    setIsDeleting(true);
+    try {
+      await deleteMessage(deleteConfirmModal.message.id, deleteConfirmModal.scope);
+      setDeleteConfirmModal({ isOpen: false, message: null, scope: "me" });
+    } catch {
+      alert("Não foi possível excluir a mensagem.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleConfirmClearChat = async () => {
+    setClearingChat(true);
+    try {
+      await clearConversation();
+      setIsClearModalOpen(false);
+    } catch {
+      alert("Não foi possível limpar a conversa.");
+    } finally {
+      setClearingChat(false);
+    }
+  };
+
   useEffect(() => {
     setCurrentPhone(partnerPhone || "");
   }, [partnerPhone]);
@@ -111,7 +274,6 @@ export function ChatWindow({
       window.location.href = `tel:${cleanDigits}`;
     } else {
       if (partnerRole === "student") {
-        // Aluno não tem telefone cadastrado: abre o modal para cadastrar e ligar
         setInputPhone("");
         setPhoneError("");
         setIsPhoneModalOpen(true);
@@ -236,11 +398,10 @@ export function ChatWindow({
           {tripTitle || (partnerRole === "driver" ? "Ida Faculdade" : "Viagem UniDrive")}
         </div>
 
-        {/* Espaçador para manter o título centralizado com o botão voltar */}
         <div style={{ width: "36px" }} className={hideBackOnDesktop ? "chat-back-btn-desktop-hide" : ""} />
       </div>
 
-      {/* 2. Card de Perfil do Contato (Inspirado no Modelo da Foto) */}
+      {/* 2. Card de Perfil do Contato */}
       <div className="chat-contact-header">
         <div className="chat-contact-left">
           <div className="chat-avatar-wrapper">
@@ -308,7 +469,7 @@ export function ChatWindow({
           </div>
         </div>
 
-        {/* Botões de Ação Rápida (Telefone e Ponto) */}
+        {/* Botões de Ação Rápida (Telefone e Limpar Conversa) */}
         <div className="chat-contact-actions">
           <button
             type="button"
@@ -330,25 +491,15 @@ export function ChatWindow({
             </svg>
           </button>
 
+          {/* Substituído botão de localização por Limpar Conversa */}
           <button
             type="button"
-            className="chat-action-icon-btn"
-            onClick={() => handleQuickReply(currentRole === "student" ? "Já estou no ponto!" : "Cheguei no ponto")}
-            title="Avisar que está no ponto"
+            className="chat-action-icon-btn chat-action-clear-btn"
+            onClick={() => setIsClearModalOpen(true)}
+            title="Limpar toda a conversa (somente para você)"
+            aria-label="Limpar toda a conversa (somente para você)"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
+            <FontAwesomeIcon icon={faTrash} style={{ fontSize: "0.95rem" }} />
           </button>
         </div>
       </div>
@@ -389,31 +540,62 @@ export function ChatWindow({
               Nenhuma mensagem ainda
             </p>
             <p style={{ margin: "0.35rem 0 0", fontSize: "0.85rem" }}>
-              Envie uma mensagem rápida abaixo para iniciar a conversa!
+              Envie uma mensagem abaixo para iniciar a conversa!
             </p>
           </div>
         ) : (
           messages.map((msg, index) => {
             const isMine = msg.senderId === myId;
+            const isDeletedForEveryone = Boolean(msg.deletedForEveryoneAt);
             const prevMsg = messages[index - 1];
             const showDate =
               !prevMsg ||
               new Date(prevMsg.createdAt).toDateString() !== new Date(msg.createdAt).toDateString();
+            const isMenuTarget = menuMessage?.id === msg.id;
 
             return (
               <div key={msg.id || msg.tempId} style={{ display: "flex", flexDirection: "column" }}>
                 {showDate && <div className="chat-date-chip">{formatMessageDate(msg.createdAt)}</div>}
 
-                <div className={`chat-bubble ${isMine ? "chat-bubble-mine" : "chat-bubble-theirs"}`}>
+                <div
+                  className={`chat-bubble ${isMine ? "chat-bubble-mine" : "chat-bubble-theirs"} ${
+                    isMenuTarget ? "menu-open" : ""
+                  } ${!isDeletedForEveryone ? "chat-bubble-has-menu" : ""}`}
+                  onPointerDown={(e) => handlePointerDownMessage(msg, e)}
+                  onPointerMove={handlePointerMoveMessage}
+                  onPointerUp={handlePointerUpMessage}
+                  onPointerCancel={handlePointerUpMessage}
+                  onContextMenu={(e) => handleContextMenuMessage(msg, e)}
+                >
+                  {/* Setinha pequena no canto ao passar o mouse */}
+                  {!isDeletedForEveryone && msg.status !== "sending" && (
+                    <button
+                      type="button"
+                      className="chat-bubble-menu-trigger"
+                      onClick={(e) => handleChevronClick(msg, e)}
+                      title="Opções da mensagem"
+                      aria-label="Opções da mensagem"
+                    >
+                      <FontAwesomeIcon icon={faChevronDown} />
+                    </button>
+                  )}
+
                   {!isMine && partnerFirstName && (
                     <div className="chat-bubble-sender-name">{partnerFirstName}</div>
                   )}
 
-                  <div>{msg.content}</div>
+                  {isDeletedForEveryone ? (
+                    <div className="chat-bubble-deleted">
+                      <FontAwesomeIcon icon={faBan} className="chat-bubble-deleted-icon" />
+                      <span>Mensagem apagada</span>
+                    </div>
+                  ) : (
+                    <div>{msg.content}</div>
+                  )}
 
                   <div className="chat-bubble-meta">
                     <span>{formatMessageTime(msg.createdAt)}</span>
-                    {isMine && (
+                    {isMine && !isDeletedForEveryone && (
                       <span title={msg.readAt ? "Lida" : "Enviada"}>
                         {msg.status === "sending" ? (
                           <FontAwesomeIcon icon={faClock} style={{ fontSize: "0.72rem" }} />
@@ -434,6 +616,40 @@ export function ChatWindow({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Menu flutuante de contexto da mensagem */}
+      {menuMessage && menuPosition && (
+        <>
+          <div className="chat-context-menu-backdrop" onClick={closeMenu} />
+          <div
+            className="chat-context-menu"
+            style={{
+              left: `${menuPosition.x}px`,
+              top: `${menuPosition.y}px`,
+            }}
+          >
+            <button
+              type="button"
+              className="chat-context-menu-item"
+              onClick={() => handleSelectDeleteOption(menuMessage, "me")}
+            >
+              <FontAwesomeIcon icon={faTrash} style={{ fontSize: "0.85rem" }} />
+              <span>Excluir só para você</span>
+            </button>
+
+            {menuMessage.senderId === myId && !menuMessage.deletedForEveryoneAt && (
+              <button
+                type="button"
+                className="chat-context-menu-item danger"
+                onClick={() => handleSelectDeleteOption(menuMessage, "everyone")}
+              >
+                <FontAwesomeIcon icon={faTrash} style={{ fontSize: "0.85rem" }} />
+                <span>Excluir para todos</span>
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       {/* 4. Chips de Respostas Rápidas */}
       {showQuickReplies && (
@@ -459,7 +675,7 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* 5. Barra de Digitação com Botão de Setinha e Botão Enviar com Aviãozinho */}
+      {/* 5. Barra de Digitação */}
       <div className="chat-input-bar">
         <button
           type="button"
@@ -513,6 +729,99 @@ export function ChatWindow({
           </svg>
         </button>
       </div>
+
+      {/* Modal para confirmação de exclusão da mensagem */}
+      <Modal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ isOpen: false, message: null, scope: "me" })}
+        title={
+          deleteConfirmModal.scope === "everyone"
+            ? "Excluir mensagem para todos?"
+            : "Excluir mensagem só para você?"
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ margin: 0, fontSize: "0.92rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+            {deleteConfirmModal.scope === "everyone"
+              ? "Esta mensagem será apagada para todos os participantes da conversa."
+              : "Esta mensagem será removida apenas do seu histórico de visualização."}
+          </p>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setDeleteConfirmModal({ isOpen: false, message: null, scope: "me" })}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleExecuteDelete}
+              disabled={isDeleting}
+              style={{
+                background: "var(--danger, #ef4444)",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.4rem",
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+              <span>
+                {isDeleting
+                  ? "Excluindo..."
+                  : deleteConfirmModal.scope === "everyone"
+                  ? "Excluir para todos"
+                  : "Excluir só para mim"}
+              </span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de confirmação para limpar toda a conversa */}
+      <Modal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        title="Limpar toda a conversa?"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ margin: 0, fontSize: "0.92rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+            Tem certeza de que deseja limpar todas as mensagens desta conversa? As mensagens serão apagadas{" "}
+            <strong>somente para você</strong>. O outro participante ainda continuará vendo o histórico dele.
+          </p>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setIsClearModalOpen(false)}
+              disabled={clearingChat}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleConfirmClearChat}
+              disabled={clearingChat}
+              style={{
+                background: "var(--danger, #ef4444)",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.4rem",
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+              <span>{clearingChat ? "Limpando..." : "Limpar conversa"}</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal para cadastrar telefone do aluno antes de ligar */}
       <Modal

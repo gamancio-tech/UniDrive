@@ -30,6 +30,52 @@ export const chatController = {
   },
 
   /**
+   * DELETE /api/chat/messages/:id?scope=me|everyone
+   * Exclui uma mensagem específica (só para você ou para todos)
+   */
+  async deleteMessage(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado." });
+      }
+
+      const { id } = req.params;
+      if (!id) {
+        return res.status(StatusCodeHttp.BAD_REQUEST).json({ error: "Identificador da mensagem obrigatório." });
+      }
+
+      const scope = req.query.scope === "everyone" ? "everyone" : "me";
+      await chatService.deleteMessage(req.user, id, scope);
+
+      return res.json({ success: true, message: "Mensagem excluída com sucesso." });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * DELETE /api/chat/history/:partnerId
+   * Limpa todas as mensagens da conversa com um parceiro somente para o usuário logado
+   */
+  async clearConversation(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado." });
+      }
+
+      const { partnerId } = req.params;
+      if (!partnerId) {
+        return res.status(StatusCodeHttp.BAD_REQUEST).json({ error: "Identificador da conversa obrigatório." });
+      }
+
+      await chatService.clearConversation(req.user, partnerId);
+      return res.json({ success: true, message: "Conversa limpa com sucesso." });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
    * GET /api/chat/conversations
    * Retorna a lista de conversas com alunos e mensagens não lidas (exclusivo para motorista)
    */

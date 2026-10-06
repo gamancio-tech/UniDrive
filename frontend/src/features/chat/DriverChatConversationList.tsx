@@ -47,7 +47,12 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
     loadConversations();
 
     const unsub = chatSocket.subscribe((event: ChatSocketEvent) => {
-      if (event.type === "new_message" || event.type === "messages_read") {
+      if (
+        event.type === "new_message" ||
+        event.type === "messages_read" ||
+        event.type === "message_deleted" ||
+        event.type === "conversation_cleared"
+      ) {
         loadConversations();
       }
     });

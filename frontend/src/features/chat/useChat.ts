@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChatMessage, getChatHistory } from "../../api/chat";
+import {
+  ChatMessage,
+  getChatHistory,
+  deleteChatMessage,
+  clearChatHistory,
+} from "../../api/chat";
 import { getDecodedToken } from "../../api/client";
 import { chatSocket, ChatSocketEvent } from "./chatSocket";
 
@@ -96,6 +101,56 @@ export function useChat({ partnerId, autoMarkRead = true }: UseChatOptions) {
     [partnerId, role, myId]
   );
 
+  // Exclui uma mensagem pontual com atualização otimista
+  const deleteMessage = useCallback(
+    async (messageId: string, scope: "me" | "everyone") => {
+      if (!messageId) return;
+
+      const previousMessages = [...messages];
+
+      if (scope === "everyone") {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  content: "Mensagem apagada",
+                  deletedForEveryoneAt: new Date().toISOString(),
+                }
+              : msg
+          )
+        );
+      } else {
+        setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+      }
+
+      try {
+        await deleteChatMessage(messageId, scope);
+      } catch (err) {
+        console.error("[useChat] Erro ao excluir mensagem:", err);
+        setMessages(previousMessages);
+        throw err;
+      }
+    },
+    [messages]
+  );
+
+  // Limpa todas as mensagens da conversa com o parceiro
+  const clearConversation = useCallback(async () => {
+    if (!partnerId) return;
+
+    const previousMessages = [...messages];
+    setMessages([]);
+
+    try {
+      await clearChatHistory(partnerId);
+    } catch (err) {
+      console.error("[useChat] Erro ao limpar histórico:", err);
+      setMessages(previousMessages);
+      throw err;
+    }
+  }, [partnerId, messages]);
+
   const markAsRead = useCallback(() => {
     if (!partnerId) return;
     chatSocket.markAsRead(partnerId);
@@ -169,6 +224,31 @@ export function useChat({ partnerId, autoMarkRead = true }: UseChatOptions) {
             )
           );
         }
+      } else if (event.type === "message_deleted") {
+        const payload = event.payload;
+        if (payload.conversationWith === currentPartner) {
+          if (payload.scope === "everyone") {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === payload.id
+                  ? {
+                      ...msg,
+                      content: "Mensagem apagada",
+                      deletedForEveryoneAt: new Date().toISOString(),
+                    }
+                  : msg
+              )
+            );
+          } else {
+            // scope === "me"
+            setMessages((prev) => prev.filter((msg) => msg.id !== payload.id));
+          }
+        }
+      } else if (event.type === "conversation_cleared") {
+        const payload = event.payload;
+        if (payload.partnerId === currentPartner) {
+          setMessages([]);
+        }
       }
     });
 
@@ -185,6 +265,8 @@ export function useChat({ partnerId, autoMarkRead = true }: UseChatOptions) {
     hasMore,
     isConnected,
     sendMessage,
+    deleteMessage,
+    clearConversation,
     markAsRead,
     loadOlderMessages,
     reload: loadHistory,

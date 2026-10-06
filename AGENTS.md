@@ -14,7 +14,7 @@ Contexto completo de produto em `docs/01-visao-produto.md` e requisitos detalhad
 - **Backend**: Node + Express + TypeScript
 - **ORM**: Prisma
 - **Banco de dados**: PostgreSQL (Neon)
-- **Tempo real**: polling REST periódico — **não usar WebSocket/Socket.io**, decisão deliberada dado o volume de usuários (ver `docs/04-stack-decisoes.md`)
+- **Tempo real**: polling REST periódico para status/contador de faltantes; **WebSocket nativo (biblioteca `ws`) apenas para o chat** (`backend/src/websocket/`). Não usar Socket.io (ver `docs/04-stack-decisoes.md`)
 - **Notificações**: Web Push API com VAPID, biblioteca `web-push` no backend
 - **Hospedagem**: backend no Render, banco no Neon, frontend estático na HostGator
 
@@ -57,9 +57,21 @@ Lista completa e critérios em `docs/02-requisitos.md`.
 - Chat bidirecional (individual com o motorista ou geral entre alunos)
 - Gateway de pagamento integrado (Pix API, cartão)
 - Rastreamento por GPS em tempo real
-- WebSocket (usar polling, ver decisão em `docs/04-stack-decisoes.md`)
+- WebSocket fora do chat e Socket.io (status/contador continuam via polling, ver `docs/04-stack-decisoes.md`)
 
 Se uma tarefa parecer exigir um desses itens, avise o autor em vez de implementar — são decisões deliberadas de escopo, não lacunas a preencher.
+
+## Segurança — obrigatório em todo código novo
+
+O projeto passou por uma auditoria de segurança (`docs/otimizacao/01-otimizacoes.md`, seção 7, V01–V15). Todo código novo ou alterado **deve seguir** `docs/seguranca/01-principios-seguranca.md` e passar pelo `docs/seguranca/02-checklist-pr.md` antes de a tarefa ser dada como concluída. Regras inegociáveis:
+
+- **Autorização por recurso (BOLA/IDOR)**: todo acesso por ID confere dono/van no *service*; "não existe" e "não é seu" respondem 404 igual. Nunca confiar no frontend nem em dados do JWT que possam mudar (ex.: `driverId`).
+- **Validação**: toda rota tem schema Zod aplicado com `validate(...)` (`params`, `query`, `body`); payloads de WebSocket são validados com `safeParse` em `chatServer.ts`.
+- **Exposição de dados**: usar `select`/DTO; nunca devolver entidade inteira (`passwordHash` etc.).
+- **Abuso**: respeitar rate limits (HTTP e WebSocket) e limites de tamanho/paginação.
+- **Erros e logs**: `AppError` com status correto; sem PII, tokens ou conteúdo de mensagens em logs.
+- **Frontend**: sem `dangerouslySetInnerHTML`/`innerHTML`; esconder botão não é controle de acesso.
+- Mudanças de schema exigem migration aplicada. Se uma tarefa conflitar com algum princípio, avise o autor em vez de contornar.
 
 ## Sobre o autor
 
@@ -71,3 +83,5 @@ Estudante de Ciências da Computação (2º semestre), primeiro projeto de porte
 - `docs/02-requisitos.md` — requisitos funcionais/não funcionais, escopo MVP x Fase 2
 - `docs/03-modelo-dados.md` — entidades, campos, diagrama de relacionamento
 - `docs/04-stack-decisoes.md` — justificativa de cada escolha técnica
+- `docs/seguranca/` — princípios e checklist de segurança para novas implementações
+- `docs/otimizacao/01-otimizacoes.md` — auditoria de segurança (seção 7) e otimizações

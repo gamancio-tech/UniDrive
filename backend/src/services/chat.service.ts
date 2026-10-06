@@ -203,7 +203,115 @@ export const chatService = {
       throw new AppError("Acesso não permitido.", StatusCodeHttp.FORBIDDEN);
     }
 
-    return chatMessageRepository.getHistory(driverId, studentId, options);
+    return chatMessageRepository.getHistory(driverId, studentId, {
+      ...options,
+      role: user.role as "driver" | "student",
+    });
+  },
+
+  async deleteMessage(
+    user: AuthenticatedUser,
+    messageId: string,
+    scope: "me" | "everyone"
+  ) {
+    const message = await chatMessageRepository.findById(messageId);
+
+    // Valida se o usuário pertence à conversa. Responde 404 igual para "não existe" e
+    // "não é seu", para não permitir descobrir quais IDs de mensagem existem.
+    const isParticipant =
+      !!message &&
+      ((user.role === "driver" && message.driverId === user.id) ||
+        (user.role === "student" && message.studentId === user.id));
+
+    if (!message || !isParticipant) {
+      throw new AppError("Mensagem não encontrada.", StatusCodeHttp.NOT_FOUND);
+    }
+
+    if (scope === "everyone") {
+      // Somente o próprio remetente pode excluir para todos
+      if (message.senderId !== user.id) {
+        throw new AppError("Apenas o remetente pode excluir a mensagem para todos.", StatusCodeHttp.FORBIDDEN);
+      }
+
+      const updated = await chatMessageRepository.deleteForEveryone(messageId);
+      const recipientId = user.role === "driver" ? message.studentId : message.driverId;
+
+      // Notifica o destinatário via WebSocket
+      chatWebSocketManager.sendToUser(recipientId, {
+        type: "message_deleted",
+        payload: {
+          id: message.id,
+          scope: "everyone",
+          conversationWith: user.id,
+        },
+      });
+
+      // Notifica outras conexões ativas do remetente
+      chatWebSocketManager.sendToUser(user.id, {
+        type: "message_deleted",
+        payload: {
+          id: message.id,
+          scope: "everyone",
+          conversationWith: recipientId,
+        },
+      });
+
+      return updated;
+    } else {
+      // Excluir só para quem solicitou
+      const updated = await chatMessageRepository.hideForRole(messageId, user.role as "driver" | "student");
+      const partnerId = user.role === "driver" ? message.studentId : message.driverId;
+
+      // Notifica outras abas/dispositivos do próprio usuário
+      chatWebSocketManager.sendToUser(user.id, {
+        type: "message_deleted",
+        payload: {
+          id: message.id,
+          scope: "me",
+          conversationWith: partnerId,
+        },
+      });
+
+      return updated;
+    }
+  },
+
+  async clearConversation(user: AuthenticatedUser, partnerId: string) {
+    let driverId = "";
+    let studentId = "";
+
+    if (user.role === "driver") {
+      driverId = user.id;
+      studentId = partnerId;
+
+      const student = await studentRepository.findById(studentId);
+      if (!student || student.driverId !== driverId) {
+        throw new AppError("Conversa não encontrada.", StatusCodeHttp.NOT_FOUND);
+      }
+    } else if (user.role === "student") {
+      studentId = user.id;
+
+      // O motorista vem do banco: o driverId do JWT pode estar desatualizado.
+      const student = await studentRepository.findById(user.id);
+      if (!student || student.driverId !== partnerId) {
+        throw new AppError("Conversa não encontrada.", StatusCodeHttp.NOT_FOUND);
+      }
+      driverId = student.driverId;
+    } else {
+      throw new AppError("Acesso não permitido.", StatusCodeHttp.FORBIDDEN);
+    }
+
+    await chatMessageRepository.hideAllForRole(driverId, studentId, user.role as "driver" | "student");
+
+    // Notifica as abas do usuário que limpou a conversa
+    chatWebSocketManager.sendToUser(user.id, {
+      type: "conversation_cleared",
+      payload: {
+        partnerId,
+      },
+    });
+
+    return { success: true };
   },
 
   async getDriverConversations(driverId: string) {
@@ -229,7 +337,9 @@ export const chatService = {
         latestMessage: latestMessage
           ? {
               id: latestMessage.id,
-              content: latestMessage.content,
+              content: latestMessage.deletedForEveryoneAt
+                ? "Mensagem apagada"
+                : latestMessage.content,
               createdAt:
                 latestMessage.createdAt instanceof Date
                   ? latestMessage.createdAt.toISOString()
@@ -240,6 +350,11 @@ export const chatService = {
                 ? latestMessage.readAt instanceof Date
                   ? latestMessage.readAt.toISOString()
                   : String(latestMessage.readAt)
+                : null,
+              deletedForEveryoneAt: latestMessage.deletedForEveryoneAt
+                ? latestMessage.deletedForEveryoneAt instanceof Date
+                  ? latestMessage.deletedForEveryoneAt.toISOString()
+                  : String(latestMessage.deletedForEveryoneAt)
                 : null,
             }
           : null,

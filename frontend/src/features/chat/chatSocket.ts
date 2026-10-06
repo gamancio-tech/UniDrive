@@ -3,7 +3,9 @@ import { authStorage } from "../../api/client";
 export type ChatSocketEvent =
   | { type: "new_message"; payload: { id: string; senderId: string; senderRole: "driver" | "student"; content: string; createdAt: string; readAt: string | null } }
   | { type: "message_sent"; payload: { id: string; tempId?: string; createdAt: string; readAt: string | null } }
-  | { type: "messages_read"; payload: { conversationWith: string; readAt: string } };
+  | { type: "messages_read"; payload: { conversationWith: string; readAt: string } }
+  | { type: "message_deleted"; payload: { id: string; scope: "me" | "everyone"; conversationWith: string } }
+  | { type: "conversation_cleared"; payload: { partnerId: string } };
 
 type Listener = (event: ChatSocketEvent) => void;
 type StatusListener = (connected: boolean) => void;

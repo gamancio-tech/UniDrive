@@ -1,13 +1,32 @@
 import { Router } from "express";
 import { chatController } from "../controllers/chat.controller";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware";
+import { validate } from "../middlewares/validate.middleware";
+import { chatHistorySchema, chatPartnerParamSchema, deleteChatMessageSchema } from "../schemas";
+import { chatDeletionLimiter, chatClearLimiter } from "../middlewares/rateLimiter.middleware";
 
 export const chatRoutes = Router();
 
 chatRoutes.use(authMiddleware);
 
 // Histórico de mensagens da conversa com um parceiro específico
-chatRoutes.get("/history/:partnerId", chatController.getHistory);
+chatRoutes.get("/history/:partnerId", validate(chatHistorySchema), chatController.getHistory);
+
+// Exclusão de mensagem específica (para mim ou para todos) - com rate limit dedicado
+chatRoutes.delete(
+  "/messages/:id",
+  chatDeletionLimiter,
+  validate(deleteChatMessageSchema),
+  chatController.deleteMessage
+);
+
+// Limpeza do histórico completo de conversa (apenas para o usuário logado) - com rate limit dedicado
+chatRoutes.delete(
+  "/history/:partnerId",
+  chatClearLimiter,
+  validate(chatPartnerParamSchema),
+  chatController.clearConversation
+);
 
 // Lista de conversas com alunos e unread count (exclusivo motorista)
 chatRoutes.get("/conversations", requireRole("driver"), chatController.getConversations);

@@ -7,6 +7,7 @@ import { chatService } from "../services/chat.service";
 import { StatusCodeWs } from "../utils/statusCodeWs";
 import { activeSockets, AuthenticatedWebSocket, chatWebSocketManager } from "./chatConnectionManager";
 import { isAccountActive } from "../lib/accountStatus";
+import { wsMarkAsReadPayloadSchema, wsSendMessagePayloadSchema } from "../schemas";
 
 export { chatWebSocketManager } from "./chatConnectionManager";
 
@@ -91,10 +92,17 @@ export function initChatWebSocketServer(httpServer: HttpServer) {
 
           const data = JSON.parse(raw.toString());
 
-          if (data.type === "send_message" && data.payload) {
-            await chatService.handleSendMessage(user, data.payload, ws);
-          } else if (data.type === "mark_as_read" && data.payload) {
-            await chatService.handleMarkAsRead(user, data.payload);
+          if (data.type === "send_message") {
+            const parsed = wsSendMessagePayloadSchema.safeParse(data.payload);
+            if (!parsed.success) {
+              ws.send(JSON.stringify({ type: "error", payload: { message: "Mensagem inválida." } }));
+              return;
+            }
+            await chatService.handleSendMessage(user, { recipientId: parsed.data.recipientId ?? "", content: parsed.data.content, tempId: parsed.data.tempId }, ws);
+          } else if (data.type === "mark_as_read") {
+            const parsed = wsMarkAsReadPayloadSchema.safeParse(data.payload);
+            if (!parsed.success) return;
+            await chatService.handleMarkAsRead(user, parsed.data);
           }
         } catch (err) {
           console.error("[WebSocket Chat] Erro ao processar mensagem do cliente:", err);

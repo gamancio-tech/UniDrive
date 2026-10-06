@@ -80,6 +80,10 @@ model ChatMessage {
   readAt     DateTime? // nulo = não lida; preenchido quando o destinatário visualiza
   createdAt  DateTime  @default(now())
 
+  deletedForEveryoneAt DateTime?
+  hiddenForDriver      Boolean   @default(false)
+  hiddenForStudent     Boolean   @default(false)
+
   driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
   student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 

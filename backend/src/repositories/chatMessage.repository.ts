@@ -21,10 +21,43 @@ export const chatMessageRepository = {
     });
   },
 
+  findById(id: string) {
+    return prisma.chatMessage.findUnique({
+      where: { id },
+    });
+  },
+
+  deleteForEveryone(id: string) {
+    return prisma.chatMessage.update({
+      where: { id },
+      data: {
+        content: "Mensagem apagada",
+        deletedForEveryoneAt: new Date(),
+      },
+    });
+  },
+
+  hideForRole(id: string, role: "driver" | "student") {
+    return prisma.chatMessage.update({
+      where: { id },
+      data: role === "driver" ? { hiddenForDriver: true } : { hiddenForStudent: true },
+    });
+  },
+
+  hideAllForRole(driverId: string, studentId: string, role: "driver" | "student") {
+    return prisma.chatMessage.updateMany({
+      where: {
+        driverId,
+        studentId,
+      },
+      data: role === "driver" ? { hiddenForDriver: true } : { hiddenForStudent: true },
+    });
+  },
+
   async getHistory(
     driverId: string,
     studentId: string,
-    options: { limit?: number; beforeId?: string } = {}
+    options: { limit?: number; beforeId?: string; role?: "driver" | "student" } = {}
   ) {
     const limit = options.limit ?? 50;
 
@@ -32,6 +65,11 @@ export const chatMessageRepository = {
       where: {
         driverId,
         studentId,
+        ...(options.role === "driver"
+          ? { hiddenForDriver: false }
+          : options.role === "student"
+          ? { hiddenForStudent: false }
+          : {}),
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -72,6 +110,8 @@ export const chatMessageRepository = {
         studentId,
         senderRole: "driver",
         readAt: null,
+        hiddenForStudent: false,
+        deletedForEveryoneAt: null,
       },
     });
   },
@@ -83,6 +123,8 @@ export const chatMessageRepository = {
         studentId,
         senderRole: "student",
         readAt: null,
+        hiddenForDriver: false,
+        deletedForEveryoneAt: null,
       },
     });
   },
@@ -93,6 +135,8 @@ export const chatMessageRepository = {
         driverId,
         senderRole: "student",
         readAt: null,
+        hiddenForDriver: false,
+        deletedForEveryoneAt: null,
       },
     });
   },
@@ -104,6 +148,8 @@ export const chatMessageRepository = {
         driverId,
         senderRole: "student",
         readAt: null,
+        hiddenForDriver: false,
+        deletedForEveryoneAt: null,
       },
       _count: {
         _all: true,
@@ -128,12 +174,13 @@ export const chatMessageRepository = {
           senderRole: string;
           senderId: string;
           readAt: Date | null;
+          deletedForEveryoneAt: Date | null;
         }>
       >`
         SELECT DISTINCT ON ("studentId")
-          id, "studentId", content, "createdAt", "senderRole", "senderId", "readAt"
+          id, "studentId", content, "createdAt", "senderRole", "senderId", "readAt", "deletedForEveryoneAt"
         FROM "ChatMessage"
-        WHERE "driverId" = ${driverId}
+        WHERE "driverId" = ${driverId} AND "hiddenForDriver" = false
         ORDER BY "studentId", "createdAt" DESC;
       `;
 
@@ -154,6 +201,7 @@ export const chatMessageRepository = {
           senderRole: string;
           senderId: string;
           readAt: Date | null;
+          deletedForEveryoneAt: Date | null;
         }
       >();
     }
@@ -164,6 +212,7 @@ export const chatMessageRepository = {
       where: {
         driverId,
         studentId,
+        hiddenForDriver: false,
       },
       orderBy: { createdAt: "desc" },
     });

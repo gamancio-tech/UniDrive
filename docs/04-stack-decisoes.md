@@ -28,10 +28,10 @@ Registradas no formato "decisão → alternativas consideradas → motivo → tr
 - **Alternativas consideradas**: Supabase (equivalente), SQLite.
 - **Motivo da escolha**: relacional (dados com relações claras entre motorista, alunos, status diários e pagamentos), free tier viável sem custo, serverless (sem gerenciamento de servidor de banco).
 
-## Tempo real: polling REST, não WebSocket
+## Tempo real: polling REST (status) + WebSocket (chat)
 
-- **Motivo da escolha**: com ~15 usuários simultâneos, WebSocket adiciona complexidade (gerenciamento de conexão, reconexão, salas) sem benefício perceptível. Um polling a cada 10-15 segundos enquanto a viagem está ativa entrega a mesma percepção de "tempo real" para esse volume de uso, com implementação e depuração muito mais simples.
-- **Trade-off aceito**: latência de até ~15 segundos para refletir mudanças — irrelevante para o caso de uso (esperar a van não exige atualização por segundo).
+- **Status e contador de faltantes**: polling REST. Com ~15 usuários simultâneos, um polling a cada 10-15 segundos enquanto a viagem está ativa entrega a mesma percepção de "tempo real", com implementação e depuração mais simples. Trade-off aceito: latência de até ~15 segundos — irrelevante para esperar a van.
+- **Chat**: WebSocket nativo (biblioteca `ws`, endpoint `/ws/chat`, autenticado por JWT). Mensagens, confirmação de leitura e exclusão de mensagens precisam de entrega instantânea, o que o polling não atende bem. Socket.io não é usado.
 
 ## Notificações: Web Push API (VAPID)
 

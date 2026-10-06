@@ -10,4 +10,4 @@ Este projeto usa o arquivo [`AGENTS.md`](AGENTS.md), na raiz, como fonte princip
 - O frontend ainda não tem telas de login/cadastro — ver o `TODO` em `frontend/src/App.tsx` antes de assumir que a autenticação está pronta.
 - Antes de sugerir ou instalar uma dependência nova, verifique se o que ela resolve já está coberto pela stack definida em `AGENTS.md` — o projeto prioriza deliberadamente poucas dependências.
 - O autor é iniciante em programação (2º semestre de Ciências da Computação). Ao gerar código, prefira soluções simples e explicadas a padrões avançados ou abstrações desnecessárias para o porte do projeto.
-- Mudanças que envolvam chat, gateway de pagamento, GPS ou WebSocket estão marcadas como fora de escopo em `AGENTS.md` — confirme com o autor antes de implementar qualquer uma delas.
+- Mudanças que envolvam chat, gateway de pagamento ou GPS estão marcadas como fora de escopo em `AGENTS.md` — confirme com o autor antes de implementar qualquer uma delas. O chat usa WebSocket (`ws`); fora dele, use polling.
