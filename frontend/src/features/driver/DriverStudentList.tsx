@@ -22,12 +22,14 @@ import {
   DriverStudent,
   RegisteredStudent,
 } from "../../api/students";
+import { DriverClass, getDriverClasses } from "../../api/classes";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSun,
   faMoon,
   faFlagCheckered,
   faCircleCheck,
+  faCircleXmark,
   faVanShuttle,
   faCheck,
   faUsers,
@@ -35,6 +37,7 @@ import {
   faHourglassHalf,
   faTrashCan,
   faRotateRight,
+  faGraduationCap,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type TripType = "ida" | "volta";
@@ -43,6 +46,8 @@ type StudentStatusSubTab = "active" | "inactive";
 
 export interface DriverStudentListProps {
   tripType?: TripType;
+  activeClassId?: string;
+  activeClassName?: string;
   onTripChange?: (trip: TripType) => void;
   onTripFinished?: () => void;
 }
@@ -51,6 +56,8 @@ const POLL_INTERVAL_MS = 15_000;
 
 export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   tripType: controlledTripType,
+  activeClassId,
+  activeClassName,
   onTripChange,
   onTripFinished,
 }) => {
@@ -60,6 +67,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   // Alunos cadastrados (sem status diário de viagem) (RF09)
   const [activeStudents, setActiveStudents] = useState<RegisteredStudent[]>([]);
   const [inactiveStudents, setInactiveStudents] = useState<RegisteredStudent[]>([]);
+  const [availableClasses, setAvailableClasses] = useState<DriverClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<StudentTab>("a_embarcar");
   const [allStudentsSubTab, setAllStudentsSubTab] = useState<StudentStatusSubTab>("active");
@@ -88,18 +96,21 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [temporaryPassword, setTemporaryPassword] = useState("");
+  const [targetClassId, setTargetClassId] = useState<string>("");
 
   const loadStudents = useCallback(async (isInitial = false) => {
     try {
       if (isInitial) setLoading(true);
-      const [dailyData, activeData, inactiveData] = await Promise.all([
-        getDriverStudents(),
-        getStudentsByStatus(true),
-        getStudentsByStatus(false),
+      const [dailyData, activeData, inactiveData, classesData] = await Promise.all([
+        getDriverStudents(activeClassId),
+        getStudentsByStatus(true, activeClassId),
+        getStudentsByStatus(false, activeClassId),
+        getDriverClasses().catch(() => []),
       ]);
       setDailyStudents(dailyData);
       setActiveStudents(activeData);
       setInactiveStudents(inactiveData);
+      setAvailableClasses(classesData);
 
       const paymentEntries = await Promise.allSettled(
         activeData.map(async (s) => {
@@ -119,7 +130,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     } finally {
       if (isInitial) setLoading(false);
     }
-  }, []);
+  }, [activeClassId]);
 
   useEffect(() => {
     loadStudents(true);
@@ -127,17 +138,27 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     return () => clearInterval(interval);
   }, [loadStudents]);
 
-  // Alunos que participam do trajeto atual (apenas ativos)
+  // Sincroniza a turma padrão quando o modal de cadastro é aberto
+  useEffect(() => {
+    if (isModalOpen) {
+      setError(null);
+      setTargetClassId((prev) => prev || activeClassId || availableClasses[0]?.id || "");
+    }
+  }, [isModalOpen, activeClassId, availableClasses]);
+
+  // Alunos que participam do trajeto atual (apenas ativos, filtrados pela turma ativa se selecionada)
   const tripFilteredStudents = useMemo(() => {
-    return dailyStudents.filter((s) => {
-      const status = s.todayStatus || "vai_normal";
-      if (tripType === "ida") {
-        return status === "vai_normal" || status === "so_ida";
-      } else {
-        return status === "vai_normal" || status === "so_volta";
-      }
-    });
-  }, [dailyStudents, tripType]);
+    return dailyStudents
+      .filter((s) => !activeClassId || !s.classId || s.classId === activeClassId)
+      .filter((s) => {
+        const status = s.todayStatus || "vai_normal";
+        if (tripType === "ida") {
+          return status === "vai_normal" || status === "so_ida";
+        } else {
+          return status === "vai_normal" || status === "so_volta";
+        }
+      });
+  }, [dailyStudents, tripType, activeClassId]);
 
   // Lista 1: Alunos que vão mas ainda não embarcaram
   const pendingStudents = useMemo(() => {
@@ -148,6 +169,17 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const boardedStudents = useMemo(() => {
     return tripFilteredStudents.filter((s) => Boolean(s.isBoarded));
   }, [tripFilteredStudents]);
+
+  // Alunos cadastrados filtrados pela turma ativa
+  const filteredActiveStudents = useMemo(() => {
+    if (!activeClassId) return activeStudents;
+    return activeStudents.filter((s) => !s.classId || s.classId === activeClassId);
+  }, [activeStudents, activeClassId]);
+
+  const filteredInactiveStudents = useMemo(() => {
+    if (!activeClassId) return inactiveStudents;
+    return inactiveStudents.filter((s) => !s.classId || s.classId === activeClassId);
+  }, [inactiveStudents, activeClassId]);
 
   const handleSelectTrip = (type: TripType) => {
     if (onTripChange) {
@@ -161,7 +193,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const handleConfirmFinishTrip = async () => {
     try {
       setFinishingTrip(true);
-      await resetAllDailyBoarded();
+      await resetAllDailyBoarded(activeClassId);
 
       // Zera localmente o embarque de todos os alunos do trajeto diário
       setDailyStudents((prev) => prev.map((s) => ({ ...s, isBoarded: false })));
@@ -203,16 +235,32 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (temporaryPassword.length < 8) {
+      setError("A senha provisória deve ter no mínimo 8 caracteres.");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      const classToAssign = targetClassId || activeClassId || availableClasses[0]?.id;
+      if (!classToAssign) {
+        throw new Error("Selecione uma turma para vincular o aluno.");
+      }
       await apiRequest("/students", {
         method: "POST",
-        body: { name, email, temporaryPassword },
+        body: {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          temporaryPassword,
+          classId: classToAssign,
+        },
       });
       setIsModalOpen(false);
       setName("");
       setEmail("");
       setTemporaryPassword("");
+      setTargetClassId("");
       await loadStudents();
       showToast("Aluno cadastrado com sucesso!", "success");
     } catch (err: unknown) {
@@ -325,26 +373,29 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     if (activeTab === "embarcados") {
       return `${boardedStudents.length} passageiro(s) a bordo na ${tripType === "ida" ? "Ida" : "Volta"}`;
     }
-    return `${activeStudents.length} ativo(s) • ${inactiveStudents.length} inativo(s)`;
+    return `${filteredActiveStudents.length} ativo(s) • ${filteredInactiveStudents.length} inativo(s)`;
   }, [
     activeTab,
     pendingStudents.length,
     boardedStudents.length,
-    activeStudents.length,
-    inactiveStudents.length,
+    filteredActiveStudents.length,
+    filteredInactiveStudents.length,
     tripType,
   ]);
 
   return (
     <>
       <Card
-        title="Meus Alunos"
+        title={activeClassName ? `Alunos — ${activeClassName}` : "Meus Alunos"}
         subtitle={cardSubtitle}
         action={
           activeTab === "todos" ? (
             <Button
               variant="primary"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setTargetClassId(activeClassId || availableClasses[0]?.id || "");
+                setIsModalOpen(true);
+              }}
               style={{ width: "auto", minHeight: "38px", padding: "0.4rem 0.95rem", fontSize: "0.85rem" }}
             >
               + Novo Aluno
@@ -578,7 +629,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                   >
                     <span>
                       <FontAwesomeIcon icon={faUsers} style={{ marginRight: "0.35rem" }} />
-                      Ativos ({activeStudents.length})
+                      Ativos ({filteredActiveStudents.length})
                     </span>
                   </button>
                   <button
@@ -588,7 +639,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                   >
                     <span>
                       <FontAwesomeIcon icon={faShieldHalved} style={{ marginRight: "0.35rem" }} />
-                      Inativos ({inactiveStudents.length})
+                      Inativos ({filteredInactiveStudents.length})
                     </span>
                   </button>
                 </div>
@@ -596,16 +647,22 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                 {/* Sub-Aba: ALUNOS ATIVOS */}
                 {allStudentsSubTab === "active" && (
                   <>
-                    {activeStudents.length === 0 ? (
+                    {filteredActiveStudents.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--text-muted)" }}>
                         <p style={{ marginBottom: "1rem" }}>Nenhum aluno ativo na sua van no momento.</p>
-                        <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setTargetClassId(activeClassId || availableClasses[0]?.id || "");
+                            setIsModalOpen(true);
+                          }}
+                        >
                           Cadastrar Primeiro Aluno
                         </Button>
                       </div>
                     ) : (
                       <div className="item-list">
-                        {activeStudents.map((student) => {
+                        {filteredActiveStudents.map((student) => {
                           const payment = paymentStatuses[student.id];
                           const isPaid = payment ? Boolean(payment.paidAt) : null;
                           const isAwaitingConfirmation = payment ? (!isPaid && Boolean(payment.paymentRequestedAt)) : false;
@@ -619,6 +676,13 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
 
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
                                   <span className="list-item-sub">{student.email}</span>
+
+                                  {student.class?.name && (
+                                    <span className="class-tag-badge">
+                                      <FontAwesomeIcon icon={faGraduationCap} />
+                                      {student.class.name}
+                                    </span>
+                                  )}
 
                                   {/* Status de Mensalidade */}
                                   {payment && (
@@ -743,7 +807,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                 {/* Sub-Aba: ALUNOS INATIVOS (Com ação rápida de reativação) */}
                 {allStudentsSubTab === "inactive" && (
                   <>
-                    {inactiveStudents.length === 0 ? (
+                    {filteredInactiveStudents.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
                         <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--text-muted)" }}>
                           <FontAwesomeIcon icon={faShieldHalved} />
@@ -757,7 +821,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                       </div>
                     ) : (
                       <div className="item-list">
-                        {inactiveStudents.map((student) => {
+                        {filteredInactiveStudents.map((student) => {
                           const isReactivatingThis = reactivatingId === student.id;
                           return (
                             <div
@@ -893,11 +957,48 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
           <Input
             label="Senha Provisória"
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 8 caracteres"
+            minLength={8}
             value={temporaryPassword}
             onChange={(e) => setTemporaryPassword(e.target.value)}
             required
           />
+
+          {availableClasses.length > 0 && (
+            <div style={{ marginBottom: "1rem" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  color: "var(--text-main)",
+                  marginBottom: "0.35rem",
+                }}
+              >
+                Turma
+              </label>
+              <select
+                value={targetClassId || activeClassId || availableClasses[0]?.id || ""}
+                onChange={(e) => setTargetClassId(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.65rem 0.85rem",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-input)",
+                  color: "var(--text-main)",
+                  fontSize: "0.9rem",
+                  outline: "none",
+                }}
+              >
+                {availableClasses.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && (
             <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>

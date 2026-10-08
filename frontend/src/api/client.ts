@@ -87,7 +87,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({ error: "Erro desconhecido." }));
-    throw new Error(errorBody.error ?? `Erro na requisição (${response.status})`);
+    let message = errorBody.error;
+    if (errorBody.details && Array.isArray(errorBody.details) && errorBody.details.length > 0) {
+      const detailsText = errorBody.details
+        .map((d: string) => d.replace(/^(body|query|params)\./, ""))
+        .join(". ");
+      if (!message || message === "Erro de validação nos dados enviados.") {
+        message = detailsText;
+      }
+    }
+    throw new Error(message ?? `Erro na requisição (${response.status})`);
   }
 
   if (response.status === 204) {

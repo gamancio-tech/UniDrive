@@ -3,6 +3,11 @@ import { apiRequest } from "./client";
 export interface Announcement {
   id: string;
   driverId: string;
+  classId?: string;
+  class?: {
+    id: string;
+    name: string;
+  };
   message: string;
   createdAt: string;
 }
@@ -10,16 +15,17 @@ export interface Announcement {
 /**
  * Busca a lista de anúncios recentes vinculados ao motorista (estudante ou motorista).
  */
-export async function getAnnouncements(): Promise<Announcement[]> {
-  return apiRequest<Announcement[]>("/announcements");
+export async function getAnnouncements(classId?: string): Promise<Announcement[]> {
+  const query = classId ? `?classId=${encodeURIComponent(classId)}` : "";
+  return apiRequest<Announcement[]>(`/announcements${query}`);
 }
 
 /**
- * Publica um novo comunicado da van (apenas motorista).
+ * Publica um novo comunicado da van para uma ou mais turmas (apenas motorista).
  */
-export async function publishAnnouncement(message: string): Promise<Announcement> {
-  return apiRequest<Announcement>("/announcements", {
+export async function publishAnnouncement(message: string, classIds: string[]): Promise<Announcement[]> {
+  return apiRequest<Announcement[]>("/announcements", {
     method: "POST",
-    body: { message },
+    body: { message, classIds },
   });
 }

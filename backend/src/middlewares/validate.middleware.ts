@@ -37,8 +37,9 @@ export const validate = (schema: ZodType) => {
     } catch (error) {
       if (error instanceof ZodError) {
         const details = error.issues.map((e) => `${e.path.join(".")}: ${e.message}`);
+        const firstMessage = error.issues[0]?.message || "Erro de validação nos dados enviados.";
         return res.status(StatusCodeHttp.BAD_REQUEST).json({
-          error: "Erro de validação nos dados enviados.",
+          error: firstMessage,
           details,
         });
       }

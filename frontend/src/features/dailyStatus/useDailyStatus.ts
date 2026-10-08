@@ -16,7 +16,7 @@ interface MissingCountResponse {
   tripStep?: TripStep;
 }
 
-export function useDailyStatus(trip?: "ida" | "volta") {
+export function useDailyStatus(trip?: "ida" | "volta", classId?: string) {
   const [missingCount, setMissingCount] = useState<number | null>(null);
   const [cancelled, setCancelled] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,12 @@ export function useDailyStatus(trip?: "ida" | "volta") {
 
   const fetchMissingCount = useCallback(async () => {
     try {
-      const url = trip ? `/daily-status/missing-count?trip=${trip}` : "/daily-status/missing-count";
+      const params = new URLSearchParams();
+      if (trip) params.set("trip", trip);
+      if (classId) params.set("classId", classId);
+      const query = params.toString() ? `?${params.toString()}` : "";
+      const url = `/daily-status/missing-count${query}`;
+
       const data = await apiRequest<MissingCountResponse>(url);
       setMissingCount(data.missingCount);
       setCancelled(data.cancelled);
@@ -50,7 +55,7 @@ export function useDailyStatus(trip?: "ida" | "volta") {
     } finally {
       setLoading(false);
     }
-  }, [trip]);
+  }, [trip, classId]);
 
   useEffect(() => {
     fetchMissingCount();
@@ -80,19 +85,42 @@ export function useDailyStatus(trip?: "ida" | "volta") {
   }, [fetchMissingCount]);
 
   const cancelTrip = useCallback(
-    async (reason = "Cancelado pelo motorista") => {
+    async (reason = "Cancelado pelo motorista", customClassIds?: string[]) => {
+      const targetClassIds =
+        customClassIds && customClassIds.length > 0
+          ? customClassIds
+          : classId
+          ? [classId]
+          : [];
+
       setCancelled(true);
-      await apiRequest("/trip-cancellations", { method: "POST", body: { reason } });
+      await apiRequest("/trip-cancellations", {
+        method: "POST",
+        body: { reason, classIds: targetClassIds },
+      });
       await fetchMissingCount();
     },
-    [fetchMissingCount],
+    [fetchMissingCount, classId],
   );
 
-  const uncancelTrip = useCallback(async () => {
-    setCancelled(false);
-    await apiRequest("/trip-cancellations", { method: "DELETE" });
-    await fetchMissingCount();
-  }, [fetchMissingCount]);
+  const uncancelTrip = useCallback(
+    async (customClassIds?: string[]) => {
+      const targetClassIds =
+        customClassIds && customClassIds.length > 0
+          ? customClassIds
+          : classId
+          ? [classId]
+          : [];
+
+      setCancelled(false);
+      await apiRequest("/trip-cancellations", {
+        method: "DELETE",
+        body: { classIds: targetClassIds },
+      });
+      await fetchMissingCount();
+    },
+    [fetchMissingCount, classId],
+  );
 
   const updateTripState = useCallback(
     async (newTrip: TripType, newStep: TripStep) => {
@@ -100,11 +128,11 @@ export function useDailyStatus(trip?: "ida" | "volta") {
       setTripStep(newStep);
       await apiRequest("/daily-status/trip-state", {
         method: "POST",
-        body: { trip: newTrip, step: newStep },
+        body: { trip: newTrip, step: newStep, classId },
       });
       await fetchMissingCount();
     },
-    [fetchMissingCount],
+    [fetchMissingCount, classId],
   );
 
   return {

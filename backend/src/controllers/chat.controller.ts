@@ -89,7 +89,8 @@ export const chatController = {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem acessar a lista de conversas." });
       }
 
-      const conversations = await chatService.getDriverConversations(req.user.id);
+      const classId = req.query.classId as string | undefined;
+      const conversations = await chatService.getDriverConversations(req.user.id, classId);
       return res.json(conversations);
     } catch (err) {
       next(err);

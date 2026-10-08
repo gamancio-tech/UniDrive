@@ -42,6 +42,7 @@ model Driver {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
+  classes           Class[]
   students          Student[]
   tripCancellations TripCancellation[]
   announcements     Announcement[]
@@ -49,10 +50,26 @@ model Driver {
   chatMessages      ChatMessage[]
 }
 
+model Class {
+  id        String   @id @default(uuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+
+  students          Student[]
+  tripCancellations TripCancellation[]
+  announcements     Announcement[]
+
+  @@index([driverId])
+}
+
 model Student {
   id            String   @id @default(uuid())
   driverId      String
   driver        Driver   @relation(fields: [driverId], references: [id])
+  classId       String
+  class         Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   name          String
   email         String   @unique
   passwordHash  String
@@ -68,6 +85,7 @@ model Student {
   chatMessages      ChatMessage[]
 
   @@index([driverId])
+  @@index([classId])
 }
 
 model ChatMessage {
@@ -126,21 +144,28 @@ model TripCancellation {
   id        String   @id @default(uuid())
   driverId  String
   driver    Driver   @relation(fields: [driverId], references: [id])
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   date      DateTime @db.Date
   reason    String?
   createdAt DateTime @default(now())
 
-  @@unique([driverId, date])
+  @@unique([classId, date])
+  @@index([driverId])
+  @@index([classId])
 }
 
 model Announcement {
   id        String   @id @default(uuid())
   driverId  String
   driver    Driver   @relation(fields: [driverId], references: [id])
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   message   String
   createdAt DateTime @default(now())
 
   @@index([driverId, createdAt])
+  @@index([classId, createdAt])
 }
 
 model PaymentCycle {

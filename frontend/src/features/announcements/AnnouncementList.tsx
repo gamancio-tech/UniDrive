@@ -3,9 +3,11 @@ import { Announcement, getAnnouncements } from "../../api/announcements";
 import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBullhorn, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faBullhorn, faClock, faGraduationCap } from "@fortawesome/free-solid-svg-icons";
 
 interface AnnouncementListProps {
+  /** Filtrar avisos por turma específica */
+  classId?: string;
   /** Gatilho para forçar recarregamento imediato (ex.: após nova publicação) */
   refreshTrigger?: number;
   /** Título customizado do Card */
@@ -17,6 +19,7 @@ interface AnnouncementListProps {
 const POLL_INTERVAL_MS = 30_000;
 
 export const AnnouncementList: React.FC<AnnouncementListProps> = ({
+  classId,
   refreshTrigger = 0,
   title = "Comunicados do Motorista",
   subtitle = "Avisos importantes em tempo real sobre viagens e horários",
@@ -27,14 +30,14 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
   const fetchAnnouncements = useCallback(async (isInitial = false) => {
     try {
       if (isInitial) setLoading(true);
-      const data = await getAnnouncements();
+      const data = await getAnnouncements(classId);
       setAnnouncements(data);
     } catch (err: unknown) {
       console.error("Erro ao carregar comunicados:", err);
     } finally {
       if (isInitial) setLoading(false);
     }
-  }, []);
+  }, [classId]);
 
   useEffect(() => {
     fetchAnnouncements(true);
@@ -102,9 +105,17 @@ export const AnnouncementList: React.FC<AnnouncementListProps> = ({
                 gap: "0.4rem",
               }}
             >
-              <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <FontAwesomeIcon icon={faClock} />
-                <span>{formatAnnouncementTime(item.createdAt)}</span>
+              <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <FontAwesomeIcon icon={faClock} />
+                  <span>{formatAnnouncementTime(item.createdAt)}</span>
+                </div>
+                {item.class?.name && (
+                  <span className="class-tag-badge" style={{ fontSize: "0.68rem", padding: "0.1rem 0.45rem" }}>
+                    <FontAwesomeIcon icon={faGraduationCap} />
+                    {item.class.name}
+                  </span>
+                )}
               </div>
               <p
                 style={{

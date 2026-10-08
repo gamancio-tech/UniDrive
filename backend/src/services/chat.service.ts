@@ -314,8 +314,8 @@ export const chatService = {
     return { success: true };
   },
 
-  async getDriverConversations(driverId: string) {
-    const students = await studentService.list(driverId);
+  async getDriverConversations(driverId: string, classId?: string) {
+    const students = await studentService.list(driverId, classId);
     if (!students || students.length === 0) return [];
 
     const [latestMessagesMap, unreadCountsMap] = await Promise.all([
@@ -332,6 +332,8 @@ export const chatService = {
         studentName: student.name,
         studentPhone: student.phone,
         studentPhotoUrl: student.photoUrl,
+        classId: student.classId,
+        className: student.className,
         todayStatus: student.todayStatus,
         isBoarded: student.isBoarded,
         latestMessage: latestMessage

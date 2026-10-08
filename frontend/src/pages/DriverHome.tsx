@@ -17,6 +17,8 @@ import { AppSettings } from "../features/settings/AppSettings";
 import { resetAllDailyBoarded } from "../api/students";
 import { DriverChatConversationList } from "../features/chat/DriverChatConversationList";
 import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
+import { ClassSelectionScreen } from "../features/driver/ClassSelectionScreen";
+import { DriverClass, getDriverClasses } from "../api/classes";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faRightFromBracket,
@@ -27,6 +29,8 @@ import {
   faFlagCheckered,
   faRotateLeft,
   faBullhorn,
+  faSchool,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 
 type DriverTab = "operations" | "students" | "chat" | "announcements" | "settings";
@@ -43,6 +47,51 @@ export function DriverHome() {
     return "operations";
   });
   const [visitedTabs, setVisitedTabs] = useState<Set<DriverTab>>(() => new Set([activeTab]));
+
+  // Gerenciamento de Turma Ativa
+  const [activeClassId, setActiveClassId] = useState<string | null>(() => {
+    return localStorage.getItem("unidrive_active_class_id");
+  });
+  const [activeClassName, setActiveClassName] = useState<string>(() => {
+    return localStorage.getItem("unidrive_active_class_name") || "";
+  });
+  const [isGeneralChatActive, setIsGeneralChatActive] = useState(false);
+  const [driverClasses, setDriverClasses] = useState<DriverClass[]>([]);
+
+  // Estados de seleção multi-turmas nos modais
+  const [selectedCancelClassIds, setSelectedCancelClassIds] = useState<string[]>([]);
+  const [selectedAnnouncementClassIds, setSelectedAnnouncementClassIds] = useState<string[]>([]);
+  const [isAnnouncementClassPickerOpen, setIsAnnouncementClassPickerOpen] = useState(false);
+
+  const loadDriverClasses = useCallback(async () => {
+    try {
+      const data = await getDriverClasses();
+      setDriverClasses(data);
+      if (activeClassId) {
+        const found = data.find((c) => c.id === activeClassId);
+        if (found) {
+          setActiveClassName(found.name);
+          localStorage.setItem("unidrive_active_class_name", found.name);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar turmas:", err);
+    }
+  }, [activeClassId]);
+
+  useEffect(() => {
+    loadDriverClasses();
+  }, [loadDriverClasses]);
+
+  useEffect(() => {
+    if (activeClassId) {
+      setSelectedCancelClassIds([activeClassId]);
+      setSelectedAnnouncementClassIds([activeClassId]);
+    } else if (driverClasses.length > 0) {
+      setSelectedCancelClassIds(driverClasses.map((c) => c.id));
+      setSelectedAnnouncementClassIds(driverClasses.map((c) => c.id));
+    }
+  }, [activeClassId, driverClasses]);
 
   useEffect(() => {
     setVisitedTabs((prev) => {
@@ -71,7 +120,7 @@ export function DriverHome() {
     currentTrip,
     tripStep,
     updateTripState,
-  } = useDailyStatus(tripType);
+  } = useDailyStatus(tripType, activeClassId || undefined);
 
   const [message, setMessage] = useState("");
   const [publishing, setPublishing] = useState(false);
@@ -84,10 +133,11 @@ export function DriverHome() {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const loadStudents = useCallback(() => {
-    apiRequest<{ id: string; todayStatus?: string }[]>("/students")
+    const url = activeClassId ? `/students?classId=${encodeURIComponent(activeClassId)}` : "/students";
+    apiRequest<{ id: string; todayStatus?: string }[]>(url)
       .then((data) => setStudents(data))
       .catch((err) => console.error("Erro ao carregar alunos:", err));
-  }, []);
+  }, [activeClassId]);
 
   useEffect(() => {
     loadStudents();
@@ -112,10 +162,16 @@ export function DriverHome() {
     if (!message.trim()) return;
     setPublishing(true);
     try {
-      await apiPublishAnnouncement(message);
+      const targetClassIds =
+        selectedAnnouncementClassIds.length > 0
+          ? selectedAnnouncementClassIds
+          : activeClassId
+          ? [activeClassId]
+          : [];
+      await apiPublishAnnouncement(message, targetClassIds);
       setMessage("");
       setAnnouncementRefreshKey((prev) => prev + 1);
-      showToast("Aviso publicado para todos os alunos!", "success");
+      showToast("Aviso publicado com sucesso!", "success");
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Erro ao publicar aviso.", "error");
     } finally {
@@ -125,7 +181,13 @@ export function DriverHome() {
 
   async function handleConfirmCancelTrip() {
     try {
-      await cancelTrip();
+      const targetClassIds =
+        selectedCancelClassIds.length > 0
+          ? selectedCancelClassIds
+          : activeClassId
+          ? [activeClassId]
+          : [];
+      await cancelTrip("Cancelado pelo motorista", targetClassIds);
       setIsCancelModalOpen(false);
       showToast("Viagem de hoje cancelada.", "info");
     } catch (err: unknown) {
@@ -135,7 +197,8 @@ export function DriverHome() {
 
   async function handleUncancelTrip() {
     try {
-      await uncancelTrip();
+      const targetClassIds = activeClassId ? [activeClassId] : [];
+      await uncancelTrip(targetClassIds);
       showToast("Cancelamento desfeito com sucesso!", "success");
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Erro ao reativar viagem.", "error");
@@ -165,7 +228,7 @@ export function DriverHome() {
         showToast("Viagem de volta iniciada! A contagem de alunos foi encerrada para os passageiros.", "success");
       } else if (tripType === "volta" && tripStep === "em_viagem") {
         // Motorista encerra a viagem de volta -> reseta para a ida do próximo dia
-        await resetAllDailyBoarded();
+        await resetAllDailyBoarded(activeClassId || undefined);
         await updateTripState("ida", "aguardando");
         handleTripChange("ida");
         setIsActionModalOpen(false);
@@ -217,10 +280,82 @@ export function DriverHome() {
   const isVoltaAguardando = tripType === "volta" && tripStep === "aguardando";
   const isVoltaEmViagem = tripType === "volta" && tripStep === "em_viagem";
 
+  if (!activeClassId && !isGeneralChatActive) {
+    return (
+      <main>
+        <ClassSelectionScreen
+          onSelectClass={(cls) => {
+            setActiveClassId(cls.id);
+            setActiveClassName(cls.name);
+            localStorage.setItem("unidrive_active_class_id", cls.id);
+            localStorage.setItem("unidrive_active_class_name", cls.name);
+            setIsGeneralChatActive(false);
+          }}
+          onOpenGeneralChat={() => {
+            setIsGeneralChatActive(true);
+            setActiveTab("chat");
+          }}
+          onLogout={handleLogout}
+        />
+      </main>
+    );
+  }
+
+  if (!activeClassId && isGeneralChatActive) {
+    return (
+      <main className="main-chat-layout">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0.75rem 1rem",
+            background: "var(--bg-card)",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setIsGeneralChatActive(false);
+              setActiveTab("operations");
+            }}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--primary)",
+              fontWeight: 700,
+              fontSize: "0.88rem",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.45rem",
+              padding: "0.2rem",
+            }}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} />
+            <span>Voltar às Turmas</span>
+          </button>
+          <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-main)" }}>
+            Chat Geral — Todos os Alunos
+          </span>
+          <div style={{ width: "80px" }} />
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DriverChatConversationList
+            tripType={tripType}
+            initialIsGeneralChat={true}
+            onOpenConversation={setIsDriverChatOpen}
+          />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <>
       <main className={activeTab === "chat" ? "main-chat-layout" : undefined}>
-        {/* Cabeçalho Minimalista com Botão Sair em pílula (ocultado durante o chat para aproveitamento de tela) */}
+        {/* Cabeçalho Minimalista com Botão Sair e Pílula de Troca de Turma */}
         {activeTab !== "chat" && (
           <div className="header-row">
             <div className="brand-header">
@@ -230,16 +365,31 @@ export function DriverHome() {
                 <p className="list-item-sub">Painel do Motorista</p>
               </div>
             </div>
-            <button
-              type="button"
-              className="btn-logout-pill"
-              onClick={handleLogout}
-              title="Sair do sistema"
-              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-            >
-              <span>Sair</span>
-              <FontAwesomeIcon icon={faRightFromBracket} />
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.55rem" }}>
+              <button
+                type="button"
+                className="active-class-pill-btn"
+                onClick={() => {
+                  setActiveClassId(null);
+                  localStorage.removeItem("unidrive_active_class_id");
+                }}
+                title="Clique para alternar ou gerenciar turmas"
+              >
+                <FontAwesomeIcon icon={faSchool} />
+                <span>{activeClassName || "Turma"}</span>
+                <span className="switch-tag">Trocar</span>
+              </button>
+              <button
+                type="button"
+                className="btn-logout-pill"
+                onClick={handleLogout}
+                title="Sair do sistema"
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+              >
+                <span>Sair</span>
+                <FontAwesomeIcon icon={faRightFromBracket} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -435,6 +585,8 @@ export function DriverHome() {
           <div style={{ display: activeTab === "students" ? "block" : "none" }}>
             <DriverStudentList
               tripType={tripType}
+              activeClassId={activeClassId || undefined}
+              activeClassName={activeClassName}
               onTripChange={handleTripChange}
               onTripFinished={() => {
                 refresh();
@@ -447,7 +599,13 @@ export function DriverHome() {
         {/* Aba: Chat — Conversas 1:1 com os alunos */}
         {visitedTabs.has("chat") && (
           <div style={{ display: activeTab === "chat" ? "block" : "none", height: "100%" }}>
-            <DriverChatConversationList tripType={tripType} onOpenConversation={setIsDriverChatOpen} />
+            <DriverChatConversationList
+              tripType={tripType}
+              activeClassId={activeClassId || undefined}
+              activeClassName={activeClassName}
+              initialIsGeneralChat={false}
+              onOpenConversation={setIsDriverChatOpen}
+            />
           </div>
         )}
 
@@ -468,6 +626,80 @@ export function DriverHome() {
                   style={{ minHeight: "95px" }}
                 />
 
+                {/* Seletor multi-turmas discreto para destinatários */}
+                {driverClasses.length > 1 && (
+                  <div style={{ margin: "0.4rem 0 0.6rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                        Destinatários:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsAnnouncementClassPickerOpen((prev) => !prev)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "var(--primary)",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          padding: 0,
+                          textDecoration: "underline",
+                        }}
+                      >
+                        {isAnnouncementClassPickerOpen ? "Recolher seleção" : "Enviar para mais turmas"}
+                      </button>
+                    </div>
+
+                    {isAnnouncementClassPickerOpen ? (
+                      <div className="multi-class-selector" style={{ margin: "0.4rem 0" }}>
+                        <label className="multi-class-select-all">
+                          <span>Selecionar todas as turmas</span>
+                          <input
+                            type="checkbox"
+                            className="multi-class-checkbox-input"
+                            checked={selectedAnnouncementClassIds.length === driverClasses.length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedAnnouncementClassIds(driverClasses.map((c) => c.id));
+                              } else {
+                                setSelectedAnnouncementClassIds(activeClassId ? [activeClassId] : []);
+                              }
+                            }}
+                          />
+                        </label>
+                        {driverClasses.map((cls) => {
+                          const isSelected = selectedAnnouncementClassIds.includes(cls.id);
+                          return (
+                            <label key={cls.id} className={`multi-class-checkbox-item ${isSelected ? "selected" : ""}`}>
+                              <input
+                                type="checkbox"
+                                className="multi-class-checkbox-input"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedAnnouncementClassIds((prev) => [...prev, cls.id]);
+                                  } else {
+                                    setSelectedAnnouncementClassIds((prev) => prev.filter((id) => id !== cls.id));
+                                  }
+                                }}
+                              />
+                              <span className="multi-class-checkbox-label">
+                                <span>{cls.name}</span>
+                                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{cls.studentCount || 0} alunos</span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                        Enviando para: <strong>{selectedAnnouncementClassIds.length === driverClasses.length ? "Todas as turmas" : activeClassName || "Turma ativa"}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Chips de mensagens rápidas clicáveis */}
                 <QuickMessageChips
                   onSelectMessage={(chipText) => {
@@ -479,7 +711,7 @@ export function DriverHome() {
                   variant="primary"
                   onClick={publishAnnouncement}
                   isLoading={publishing}
-                  disabled={!message.trim()}
+                  disabled={!message.trim() || (driverClasses.length > 1 && selectedAnnouncementClassIds.length === 0)}
                   style={{ minHeight: "50px", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.45rem" }}
                 >
                   <FontAwesomeIcon icon={faBullhorn} />
@@ -490,6 +722,7 @@ export function DriverHome() {
 
             <AnnouncementList
               refreshTrigger={announcementRefreshKey}
+              classId={activeClassId || undefined}
               title="Histórico de Avisos Enviados"
               subtitle="Todos os comunicados disparados para os passageiros"
             />
@@ -514,11 +747,62 @@ export function DriverHome() {
           <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
             Tem certeza de que deseja cancelar a viagem de hoje?
           </p>
+
+          {driverClasses.length > 1 && (
+            <div className="multi-class-selector">
+              <label className="multi-class-select-all">
+                <span>Selecionar todas as turmas</span>
+                <input
+                  type="checkbox"
+                  className="multi-class-checkbox-input"
+                  checked={selectedCancelClassIds.length === driverClasses.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedCancelClassIds(driverClasses.map((c) => c.id));
+                    } else {
+                      setSelectedCancelClassIds([]);
+                    }
+                  }}
+                />
+              </label>
+
+              {driverClasses.map((cls) => {
+                const isSelected = selectedCancelClassIds.includes(cls.id);
+                return (
+                  <label key={cls.id} className={`multi-class-checkbox-item ${isSelected ? "selected" : ""}`}>
+                    <input
+                      type="checkbox"
+                      className="multi-class-checkbox-input"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCancelClassIds((prev) => [...prev, cls.id]);
+                        } else {
+                          setSelectedCancelClassIds((prev) => prev.filter((id) => id !== cls.id));
+                        }
+                      }}
+                    />
+                    <span className="multi-class-checkbox-label">
+                      <span>{cls.name}</span>
+                      <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                        {cls.studentCount || 0} alunos
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
           <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.85rem" }}>
-            Todos os alunos serão avisados imediatamente por notificação push no celular.
+            Os alunos das turmas selecionadas serão avisados imediatamente por notificação push no celular.
           </p>
           <div className="button-group" style={{ margin: "0.5rem 0 0" }}>
-            <Button variant="danger" onClick={handleConfirmCancelTrip}>
+            <Button
+              variant="danger"
+              onClick={handleConfirmCancelTrip}
+              disabled={driverClasses.length > 1 && selectedCancelClassIds.length === 0}
+            >
               Sim, Cancelar Viagem
             </Button>
             <Button variant="ghost" onClick={() => setIsCancelModalOpen(false)}>

@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { studentRepository } from "../repositories/student.repository";
+import { classRepository } from "../repositories/class.repository";
 import { dailyStatusRepository } from "../repositories/dailyStatus.repository";
 import { AppError } from "../middlewares/errorHandler.middleware";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
@@ -25,10 +26,21 @@ function hasValidImageSignature(mime: string, base64: string): boolean {
 
 export const studentService = {
   /**
-   * RF09: motorista cadastra um aluno diretamente com uma senha provisória.
-   * Simplificação para o MVP — um fluxo de convite por link/código pode substituir isso depois.
+   * RF09: motorista cadastra um aluno diretamente com uma senha provisória vinculado a uma turma.
    */
-  async create(driverId: string, name: string, email: string, temporaryPassword: string, phone?: string | null) {
+  async create(
+    driverId: string,
+    classId: string,
+    name: string,
+    email: string,
+    temporaryPassword: string,
+    phone?: string | null
+  ) {
+    const targetClass = await classRepository.findByIdAndDriver(classId, driverId);
+    if (!targetClass) {
+      throw new AppError("Turma não encontrada.", StatusCodeHttp.NOT_FOUND);
+    }
+
     const existing = await studentRepository.findByEmail(email);
     if (existing) {
       if (existing.active) {
@@ -39,7 +51,14 @@ export const studentService = {
     }
 
     const passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
-    return studentRepository.create({ driverId, name, email, passwordHash, phone: phone?.trim() || null });
+    return studentRepository.create({
+      driverId,
+      classId,
+      name,
+      email,
+      passwordHash,
+      phone: phone?.trim() || null,
+    });
   },
 
   /**
@@ -81,10 +100,17 @@ export const studentService = {
     return updated;
   },
 
-  async list(driverId: string) {
+  async list(driverId: string, classId?: string) {
+    if (classId) {
+      const targetClass = await classRepository.findByIdAndDriver(classId, driverId);
+      if (!targetClass) {
+        throw new AppError("Turma não encontrada.", StatusCodeHttp.NOT_FOUND);
+      }
+    }
+
     const today = toDateOnly(new Date());
     const dayOfWeek = today.getDay();
-    const students = await dailyStatusRepository.listStudentsWithStatusForDate(driverId, today);
+    const students = await dailyStatusRepository.listStudentsWithStatusForDate(driverId, today, classId);
     return students.map((student) => {
       const weeklyDefault = student.weeklySchedules.find((w) => w.dayOfWeek === dayOfWeek)?.status ?? "vai_normal";
       return {
@@ -93,25 +119,39 @@ export const studentService = {
         email: student.email,
         phone: student.phone,
         photoUrl: student.photoUrl,
+        classId: student.classId,
+        className: (student as any).class?.name ?? "",
         todayStatus: student.dailyStatuses[0]?.status ?? weeklyDefault,
         isBoarded: Boolean(student.dailyStatuses[0]?.boardedAt),
       };
     });
   },
 
-  async listActiveByDriver(driverId: string) {
-    const students = await studentRepository.listActiveByDriver(driverId);
+  async listActiveByDriver(driverId: string, classId?: string) {
+    if (classId) {
+      const targetClass = await classRepository.findByIdAndDriver(classId, driverId);
+      if (!targetClass) {
+        throw new AppError("Turma não encontrada.", StatusCodeHttp.NOT_FOUND);
+      }
+    }
+    const students = await studentRepository.listActiveByDriver(driverId, classId);
     return students.map(({ passwordHash, ...rest }) => rest);
   },
 
   /** Se driverId for informado, lista só os alunos daquela van; sem ele (admin), lista todos. */
-  async listByStatus(status: string, driverId?: string) {
+  async listByStatus(status: string, driverId?: string, classId?: string) {
     if (status !== "true" && status !== "false") {
       throw new AppError("Status inválido.", StatusCodeHttp.BAD_REQUEST);
     }
     const active = status === "true";
     if (driverId) {
-      return studentRepository.listByDriverAndActive(driverId, active);
+      if (classId) {
+        const targetClass = await classRepository.findByIdAndDriver(classId, driverId);
+        if (!targetClass) {
+          throw new AppError("Turma não encontrada.", StatusCodeHttp.NOT_FOUND);
+        }
+      }
+      return studentRepository.listByDriverAndActive(driverId, active, classId);
     }
     const students = active ? await studentRepository.listActiveAll() : await studentRepository.listDisableAll();
     return students.map(({ passwordHash, ...rest }) => rest);
@@ -137,6 +177,8 @@ export const studentService = {
       email: student.email,
       phone: student.phone,
       photoUrl: student.photoUrl,
+      classId: student.classId,
+      className: (student as any).class?.name ?? "",
       driverId: student.driverId,
       driverName: student.driver?.name ?? "Motorista",
       driverPhotoUrl: student.driver?.photoUrl ?? null,

@@ -4,6 +4,13 @@ import { prisma } from "../lib/prisma";
 export const studentSafeSelect = {
   id: true,
   driverId: true,
+  classId: true,
+  class: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   name: true,
   email: true,
   photoUrl: true,
@@ -20,14 +27,20 @@ export const studentRepository = {
   findById(id: string) {
     return prisma.student.findUnique({
       where: { id },
-      include: { driver: { select: { id: true, name: true, photoUrl: true, phone: true } } },
+      include: {
+        driver: { select: { id: true, name: true, photoUrl: true, phone: true } },
+        class: { select: { id: true, name: true } },
+      },
     });
   },
 
-  listActiveByDriver(driverId: string) {
+  listActiveByDriver(driverId: string, classId?: string) {
     return prisma.student.findMany({
-      where: { driverId, active: true },
+      where: { driverId, active: true, ...(classId ? { classId } : {}) },
       orderBy: { name: "asc" },
+      include: {
+        class: { select: { id: true, name: true } },
+      },
     });
   },
 
@@ -35,6 +48,9 @@ export const studentRepository = {
     return prisma.student.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
+      include: {
+        class: { select: { id: true, name: true } },
+      },
     });
   },
 
@@ -42,19 +58,22 @@ export const studentRepository = {
     return prisma.student.findMany({
       where: { active: false },
       orderBy: { name: "asc" },
+      include: {
+        class: { select: { id: true, name: true } },
+      },
     });
   },
 
   /** Lista alunos de UMA van filtrando por ativo/inativo (sem passwordHash). */
-  listByDriverAndActive(driverId: string, active: boolean) {
+  listByDriverAndActive(driverId: string, active: boolean, classId?: string) {
     return prisma.student.findMany({
-      where: { driverId, active },
+      where: { driverId, active, ...(classId ? { classId } : {}) },
       select: studentSafeSelect,
       orderBy: { name: "asc" },
     });
   },
 
-  create(data: { driverId: string; name: string; email: string; passwordHash: string; phone?: string | null }) {
+  create(data: { driverId: string; classId: string; name: string; email: string; passwordHash: string; phone?: string | null }) {
     return prisma.student.create({ data });
   },
 

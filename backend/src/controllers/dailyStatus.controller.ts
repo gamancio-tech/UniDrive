@@ -86,7 +86,8 @@ export const dailyStatusController = {
       if (!hasRole(req.user!, "driver")) {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
       }
-      await dailyStatusService.resetAllBoarded(req.user!.id, new Date());
+      const classId = (req.body?.classId || req.query?.classId) as string | undefined;
+      await dailyStatusService.resetAllBoarded(req.user!.id, new Date(), classId);
       res.status(StatusCodeHttp.OK).json({ message: "Check-ins resetados com sucesso" });
     } catch (err) {
       next(err);
@@ -102,10 +103,22 @@ export const dailyStatusController = {
       if (hasRole(req.user, "admin")) {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas e alunos podem realizar essa ação" });
       }
-      const driverId = req.user.role === "student" ? req.user.driverId : req.user.id;
-      const tripState = dailyStatusService.getTripState(driverId, new Date());
+
+      let driverId = "";
+      let classId: string | undefined = undefined;
+
+      if (req.user.role === "student") {
+        const student = await studentService.findById(req.user.id);
+        driverId = student.driverId;
+        classId = student.classId;
+      } else {
+        driverId = req.user.id;
+        classId = req.query.classId as string | undefined;
+      }
+
+      const tripState = dailyStatusService.getTripState(driverId, new Date(), classId);
       const trip = (req.query.trip as "ida" | "volta") || tripState.trip;
-      const result = await dailyStatusService.getMissingStudents(driverId, new Date(), trip);
+      const result = await dailyStatusService.getMissingStudents(driverId, new Date(), trip, classId);
 
       let isBoarded = false;
       let currentStatus = "vai_normal";
@@ -138,12 +151,13 @@ export const dailyStatusController = {
       if (!hasRole(req.user!, "driver")) {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem realizar essa ação" });
       }
-      const { trip, step } = req.body;
+      const { trip, step, classId } = req.body;
       const updated = dailyStatusService.setTripState(
         req.user!.id,
         new Date(),
         trip ?? "ida",
-        step ?? "aguardando"
+        step ?? "aguardando",
+        classId
       );
       res.status(StatusCodeHttp.OK).json(updated);
     } catch (err) {

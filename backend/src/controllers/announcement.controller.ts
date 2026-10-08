@@ -9,11 +9,11 @@ export const announcementController = {
     try {
       if (!hasRole(req.user!, "driver")) {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem publicar anúncios" });
-      } // Precisa de estar autenticado e com role driver, a partir daqui o código ja assume isso 
+      }
       const driverId = req.user.id;
-      const { message } = req.body;
-      const announcement = await announcementService.publish(driverId, message);
-      res.status(StatusCodeHttp.CREATED).json(announcement);
+      const { message, classIds } = req.body;
+      const announcements = await announcementService.publish(driverId, message, classIds);
+      res.status(StatusCodeHttp.CREATED).json(announcements);
     } catch (err) {
       next(err);
     }
@@ -28,12 +28,11 @@ export const announcementController = {
       if (hasRole(req.user, "admin")) {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Acesso não permitido para este perfil." });
       }
-      const driverId = req.user.role === "student" ? req.user.driverId : req.user.id;
-      const announcements = await announcementService.list(driverId);
+      const classIdQuery = req.query.classId as string | undefined;
+      const announcements = await announcementService.list(req.user, classIdQuery);
       res.json(announcements);
     } catch (err) {
       next(err);
     }
   },
 };
-

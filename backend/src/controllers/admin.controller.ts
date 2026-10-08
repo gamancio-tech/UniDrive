@@ -81,10 +81,16 @@ export const adminController = {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
       }
 
-      const { name, email, password, driverId } = req.body;
-      const student = await studentService.create(driverId, name, email, password);
+      const { name, email, password, driverId, classId } = req.body;
+      const student = await studentService.create(driverId, classId, name, email, password);
 
-      res.status(StatusCodeHttp.CREATED).json({ id: student.id, name: student.name, email: student.email, driverId: student.driverId });
+      res.status(StatusCodeHttp.CREATED).json({
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        driverId: student.driverId,
+        classId: student.classId,
+      });
     } catch (err) {
       next(err);
     }

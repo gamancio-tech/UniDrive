@@ -11,7 +11,7 @@ export const globalLimiter = rateLimit({
     }
     return req.ip || "unknown-ip";
   },
-  validate: { xForwardedForHeader: false, default: true },
+  validate: { xForwardedForHeader: false, default: false },
 });
 
 // Limita tentativas brutas por endereço IP (anti-spray)
@@ -20,7 +20,7 @@ const authIpLimiter = rateLimit({
   max: 30,
   message: { error: "Muitas tentativas a partir deste IP. Tente novamente após 15 minutos." },
   keyGenerator: (req: Request) => req.ip || "unknown-ip",
-  validate: { xForwardedForHeader: false, default: true },
+  validate: { xForwardedForHeader: false, default: false },
 });
 
 // Limita tentativas brutas por conta de e-mail (anti-brute-force distribuído)
@@ -33,7 +33,7 @@ const authEmailLimiter = rateLimit({
     const email = typeof raw === "string" ? raw.trim().toLowerCase() : "unknown-email";
     return `email_${email}`;
   },
-  validate: { xForwardedForHeader: false, default: true },
+  validate: { xForwardedForHeader: false, default: false },
 });
 
 export const authLimiter = [authIpLimiter, authEmailLimiter];
@@ -49,7 +49,7 @@ export const chatDeletionLimiter = rateLimit({
     }
     return req.ip || "unknown-ip";
   },
-  validate: { xForwardedForHeader: false, default: true },
+  validate: { xForwardedForHeader: false, default: false },
 });
 
 // Limita limpeza completa de histórico de conversa (máx. 5 por minuto por usuário)
@@ -63,5 +63,20 @@ export const chatClearLimiter = rateLimit({
     }
     return req.ip || "unknown-ip";
   },
-  validate: { xForwardedForHeader: false, default: true },
+  validate: { xForwardedForHeader: false, default: false },
 });
+
+// Limita mutações de turmas (máx. 30 criações/edições/exclusões por 15 minutos por motorista)
+export const classMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: "Muitas operações de turmas efetuadas em pouco tempo. Aguarde um instante." },
+  keyGenerator: (req: Request) => {
+    if (req.user && req.user.id) {
+      return `class_mut_${req.user.id}`;
+    }
+    return req.ip || "unknown-ip";
+  },
+  validate: { xForwardedForHeader: false, default: false },
+});
+

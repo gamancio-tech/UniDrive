@@ -34,11 +34,15 @@ export const dailyStatusRepository = {
     });
   },
   /** Reseta o embarque de todos os alunos ativos do motorista na data (ao finalizar trajeto). */
-  resetAllBoarded(driverId: string, date: Date) {
+  resetAllBoarded(driverId: string, date: Date, classId?: string) {
     return prisma.dailyStatus.updateMany({
       where: {
         date,
-        student: { driverId, active: true },
+        student: {
+          driverId,
+          active: true,
+          ...(classId ? { classId } : {}),
+        },
       },
       data: { boardedAt: null },
     });
@@ -48,11 +52,16 @@ export const dailyStatusRepository = {
    * Quando não existe registro para a data, o aluno não vem com dailyStatuses —
    * a camada de serviço aplica a regra do padrão "vai_normal" (ver docs/03-modelo-dados.md).
    */
-  listStudentsWithStatusForDate(driverId: string, date: Date) {
+  listStudentsWithStatusForDate(driverId: string, date: Date, classId?: string) {
     return prisma.student.findMany({
-      where: { driverId, active: true },
+      where: {
+        driverId,
+        active: true,
+        ...(classId ? { classId } : {}),
+      },
       orderBy: { name: "asc" },
       include: {
+        class: { select: { id: true, name: true } },
         dailyStatuses: { where: { date } },
         weeklySchedules: true,
       },

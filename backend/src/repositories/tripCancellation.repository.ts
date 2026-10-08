@@ -1,25 +1,42 @@
 import { prisma } from "../lib/prisma";
 
 export const tripCancellationRepository = {
-  findByDriverAndDate(driverId: string, date: Date) {
+  findByClassAndDate(classId: string, date: Date) {
     return prisma.tripCancellation.findUnique({
-      where: { driverId_date: { driverId, date } },
+      where: { classId_date: { classId, date } },
     });
   },
 
-  /** Cancela o dia inteiro para o motorista (RF06). */
-  create(driverId: string, date: Date, reason?: string) {
-    return prisma.tripCancellation.upsert({
-      where: { driverId_date: { driverId, date } },
-      update: { reason },
-      create: { driverId, date, reason },
-    });
-  },
-
-  /** Remove o cancelamento do dia para o motorista, reativando a viagem (RF06). */
-  delete(driverId: string, date: Date) {
-    return prisma.tripCancellation.deleteMany({
+  listByDriverAndDate(driverId: string, date: Date) {
+    return prisma.tripCancellation.findMany({
       where: { driverId, date },
+    });
+  },
+
+  /** Cancela o dia para a turma indicada (RF06). */
+  create(driverId: string, classId: string, date: Date, reason?: string) {
+    return prisma.tripCancellation.upsert({
+      where: { classId_date: { classId, date } },
+      update: { reason },
+      create: { driverId, classId, date, reason },
+    });
+  },
+
+  /** Remove o cancelamento do dia para uma turma (RF06). */
+  delete(classId: string, date: Date) {
+    return prisma.tripCancellation.deleteMany({
+      where: { classId, date },
+    });
+  },
+
+  /** Remove o cancelamento do dia para turmas específicas do motorista. */
+  deleteManyByClasses(driverId: string, classIds: string[], date: Date) {
+    return prisma.tripCancellation.deleteMany({
+      where: {
+        driverId,
+        date,
+        classId: { in: classIds },
+      },
     });
   },
 };

@@ -8,6 +8,7 @@ import { paymentRoutes } from "./payment.routes";
 import { pushRoutes } from "./push.routes";
 import { adminRoutes } from "./admin.routes";
 import { chatRoutes } from "./chat.routes";
+import { classRoutes } from "./class.routes";
 
 export const routes = Router();
 
@@ -20,4 +21,5 @@ routes.use("/students", studentRoutes);
 routes.use("/payments", paymentRoutes);
 routes.use("/push", pushRoutes);
 routes.use("/chat", chatRoutes);
+routes.use("/classes", classRoutes);
 

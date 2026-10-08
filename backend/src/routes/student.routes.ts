@@ -6,7 +6,7 @@ import { validate } from "../middlewares/validate.middleware";
 import {
   createStudentByDriverSchema,
   idParamSchema,
-  statusQuerySchema,
+  listStudentsQuerySchema,
   updatePhoneSchema,
   updatePhotoSchema,
   updateSchedulesSchema,
@@ -26,7 +26,7 @@ studentRoutes.put("/me/weekly-schedule", requireRole("student"), validate(update
 
 // Rotas de gestão de alunos (exclusivas do motorista)
 studentRoutes.post("/", requireRole("driver"), validate(createStudentByDriverSchema), studentController.create);
-studentRoutes.get("/", requireRole("driver"), validate(statusQuerySchema), studentController.list);
+studentRoutes.get("/", requireRole("driver"), validate(listStudentsQuerySchema), studentController.list);
 studentRoutes.patch("/:id/phone", requireRole("driver"), validate(idParamSchema), validate(updatePhoneSchema), studentController.updatePhone);
 studentRoutes.patch("/:id/reactivate", requireRole("driver"), validate(idParamSchema), studentController.reactivate);
 studentRoutes.delete("/:id", requireRole("driver"), validate(idParamSchema), studentController.deactivate);

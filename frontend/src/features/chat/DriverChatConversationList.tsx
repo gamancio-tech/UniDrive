@@ -17,25 +17,43 @@ import {
 
 interface DriverChatConversationListProps {
   tripType?: "ida" | "volta";
+  activeClassId?: string;
+  activeClassName?: string;
+  initialIsGeneralChat?: boolean;
   onOpenConversation?: (isOpen: boolean) => void;
 }
 
-export function DriverChatConversationList({ tripType = "ida", onOpenConversation }: DriverChatConversationListProps) {
+export function DriverChatConversationList({
+  tripType = "ida",
+  activeClassId,
+  activeClassName,
+  initialIsGeneralChat = false,
+  onOpenConversation,
+}: DriverChatConversationListProps) {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<ConversationSummary | null>(null);
+  const [isGeneral, setIsGeneral] = useState<boolean>(initialIsGeneralChat || !activeClassId);
+
+  useEffect(() => {
+    if (initialIsGeneralChat) {
+      setIsGeneral(true);
+    }
+  }, [initialIsGeneralChat]);
 
   const loadConversations = useCallback(async () => {
     try {
-      const data = await getDriverConversations();
+      setLoading(true);
+      const targetClassId = isGeneral ? undefined : activeClassId;
+      const data = await getDriverConversations(targetClassId);
       setConversations(data);
     } catch (err) {
       console.error("[DriverChat] Erro ao carregar conversas:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isGeneral, activeClassId]);
 
   useEffect(() => {
     return () => {
@@ -139,6 +157,27 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
               className="chat-sidebar-search-input"
             />
           </div>
+
+          {activeClassId && (
+            <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.65rem" }}>
+              <button
+                type="button"
+                className={`filter-pill ${!isGeneral ? "active" : ""}`}
+                style={{ flex: 1, fontSize: "0.76rem", padding: "0.22rem 0.5rem", minHeight: "28px", justifyContent: "center" }}
+                onClick={() => setIsGeneral(false)}
+              >
+                Turma ({activeClassName || "Atual"})
+              </button>
+              <button
+                type="button"
+                className={`filter-pill ${isGeneral ? "active" : ""}`}
+                style={{ flex: 1, fontSize: "0.76rem", padding: "0.22rem 0.5rem", minHeight: "28px", justifyContent: "center" }}
+                onClick={() => setIsGeneral(true)}
+              >
+                Chat Geral (Todas)
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Lista com scroll independente */}
@@ -187,7 +226,17 @@ export function DriverChatConversationList({ tripType = "ida", onOpenConversatio
 
                   <div className="chat-sidebar-item-info">
                     <div className="chat-sidebar-item-top">
-                      <h3 className="chat-sidebar-name">{conv.studentName}</h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", minWidth: 0, overflow: "hidden" }}>
+                        <h3 className="chat-sidebar-name">{conv.studentName}</h3>
+                        {(isGeneral || !activeClassId) && conv.className && (
+                          <span
+                            className="class-tag-badge"
+                            style={{ fontSize: "0.68rem", padding: "0.1rem 0.45rem", flexShrink: 0 }}
+                          >
+                            {conv.className}
+                          </span>
+                        )}
+                      </div>
                       {conv.latestMessage && (
                         <span className="chat-sidebar-time">
                           {formatTimeOrDate(conv.latestMessage.createdAt)}

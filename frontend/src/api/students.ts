@@ -4,6 +4,8 @@ export interface DriverStudent {
   id: string;
   name: string;
   email: string;
+  classId?: string;
+  className?: string;
   active?: boolean;
   todayStatus?: "vai_normal" | "so_ida" | "so_volta" | "nao_vai" | string;
   isBoarded?: boolean;
@@ -16,6 +18,7 @@ export interface CreateStudentPayload {
   email: string;
   temporaryPassword: string;
   phone?: string | null;
+  classId: string;
 }
 
 export interface CreatedStudentResponse {
@@ -23,12 +26,15 @@ export interface CreatedStudentResponse {
   name: string;
   email: string;
   phone?: string | null;
+  classId?: string;
 }
 
 export interface RegisteredStudent {
   id: string;
   name: string;
   email: string;
+  classId?: string;
+  class?: { id: string; name: string };
   active: boolean;
   photoUrl?: string | null;
   phone?: string | null;
@@ -38,6 +44,8 @@ export interface StudentProfile {
   id: string;
   name: string;
   email: string;
+  classId?: string;
+  className?: string;
   photoUrl?: string | null;
   phone?: string | null;
   driverId: string;
@@ -47,18 +55,22 @@ export interface StudentProfile {
 }
 
 /**
- * Lista os alunos vinculados ao motorista autenticado com seus status do dia.
+ * Lista os alunos vinculados ao motorista autenticado com seus status do dia (opcionalmente filtrado por turma).
  */
-export async function getDriverStudents(): Promise<DriverStudent[]> {
-  return apiRequest<DriverStudent[]>("/students");
+export async function getDriverStudents(classId?: string): Promise<DriverStudent[]> {
+  const query = classId ? `?classId=${encodeURIComponent(classId)}` : "";
+  return apiRequest<DriverStudent[]>(`/students${query}`);
 }
 
 /**
  * Lista os alunos cadastrados no sistema filtrando por status ativo ou inativo.
  * Não contém status diário de viagem (RF09).
  */
-export async function getStudentsByStatus(active: boolean): Promise<RegisteredStudent[]> {
-  return apiRequest<RegisteredStudent[]>(`/students?status=${active}`);
+export async function getStudentsByStatus(active: boolean, classId?: string): Promise<RegisteredStudent[]> {
+  const query = classId
+    ? `?status=${active}&classId=${encodeURIComponent(classId)}`
+    : `?status=${active}`;
+  return apiRequest<RegisteredStudent[]>(`/students${query}`);
 }
 
 /**
@@ -90,11 +102,13 @@ export async function reactivateDriverStudent(studentId: string): Promise<void> 
 }
 
 /**
- * Reseta o status de embarque de todos os alunos do motorista no dia (ao finalizar trajeto).
+ * Reseta o status de embarque de todos os alunos do motorista no dia (ao finalizar trajeto, opcionalmente filtrado por turma).
  */
-export async function resetAllDailyBoarded(): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>("/daily-status/reset-all", {
+export async function resetAllDailyBoarded(classId?: string): Promise<{ message: string }> {
+  const query = classId ? `?classId=${encodeURIComponent(classId)}` : "";
+  return apiRequest<{ message: string }>(`/daily-status/reset-all${query}`, {
     method: "POST",
+    body: classId ? { classId } : undefined,
   });
 }
 

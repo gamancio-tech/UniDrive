@@ -11,9 +11,15 @@ export const studentController = {
         return res.status(StatusCodeHttp.UNAUTHORIZED).json({ error: "Não autorizado" });
       } else if (hasRole(req.user, "driver")) {
         const driverId = req.user.id;
-        const { name, email, temporaryPassword, phone } = req.body;
-        const student = await studentService.create(driverId, name, email, temporaryPassword, phone);
-        res.status(StatusCodeHttp.CREATED).json({ id: student.id, name: student.name, email: student.email, phone: student.phone });
+        const { name, email, temporaryPassword, phone, classId } = req.body;
+        const student = await studentService.create(driverId, classId, name, email, temporaryPassword, phone);
+        res.status(StatusCodeHttp.CREATED).json({
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          phone: student.phone,
+          classId: student.classId,
+        });
       } else {
         return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Não autorizado" });
       }
@@ -32,12 +38,13 @@ export const studentController = {
       if (hasRole(req.user, "driver")) {
         const driverId = req.user.id;
         const statusParam = req.query.status as string | undefined;
+        const classIdParam = req.query.classId as string | undefined;
         if (statusParam === "true" || statusParam === "false") {
           // Sempre filtrado pela van do motorista logado.
-          const students = await studentService.listByStatus(statusParam, driverId);
+          const students = await studentService.listByStatus(statusParam, driverId, classIdParam);
           return res.status(StatusCodeHttp.OK).json(students);
         }
-        const students = await studentService.list(driverId);
+        const students = await studentService.list(driverId, classIdParam);
         return res.status(StatusCodeHttp.OK).json(students);
       }
 

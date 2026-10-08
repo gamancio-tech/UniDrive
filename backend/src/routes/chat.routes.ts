@@ -2,7 +2,12 @@ import { Router } from "express";
 import { chatController } from "../controllers/chat.controller";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
-import { chatHistorySchema, chatPartnerParamSchema, deleteChatMessageSchema } from "../schemas";
+import {
+  chatHistorySchema,
+  chatPartnerParamSchema,
+  deleteChatMessageSchema,
+  classQuerySchema,
+} from "../schemas";
 import { chatDeletionLimiter, chatClearLimiter } from "../middlewares/rateLimiter.middleware";
 
 export const chatRoutes = Router();
@@ -28,8 +33,20 @@ chatRoutes.delete(
   chatController.clearConversation
 );
 
-// Lista de conversas com alunos e unread count (exclusivo motorista)
-chatRoutes.get("/conversations", requireRole("driver"), chatController.getConversations);
+// Lista de conversas / contatos com alunos e unread count (exclusivo motorista, com filtro opcional de classId)
+chatRoutes.get(
+  "/conversations",
+  requireRole("driver"),
+  validate(classQuerySchema),
+  chatController.getConversations
+);
+chatRoutes.get(
+  "/contacts",
+  requireRole("driver"),
+  validate(classQuerySchema),
+  chatController.getConversations
+);
 
 // Contador de mensagens pendentes (para aluno ou motorista exibir badge)
 chatRoutes.get("/unread-count", chatController.getUnreadCount);
+

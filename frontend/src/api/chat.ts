@@ -19,6 +19,8 @@ export interface ConversationSummary {
   studentName: string;
   studentPhotoUrl: string | null;
   studentPhone?: string | null;
+  classId?: string;
+  className?: string;
   todayStatus?: string;
   isBoarded?: boolean;
   latestMessage: {
@@ -83,10 +85,11 @@ export async function clearChatHistory(
 }
 
 /**
- * Retorna as conversas ativas do motorista com resumo e contador de não lidas
+ * Retorna as conversas ativas do motorista com resumo e contador de não lidas (opcionalmente filtrado por turma)
  */
-export async function getDriverConversations(): Promise<ConversationSummary[]> {
-  return apiRequest<ConversationSummary[]>("/chat/conversations");
+export async function getDriverConversations(classId?: string): Promise<ConversationSummary[]> {
+  const query = classId ? `?classId=${encodeURIComponent(classId)}` : "";
+  return apiRequest<ConversationSummary[]>(`/chat/conversations${query}`);
 }
 
 /**
