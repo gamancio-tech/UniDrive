@@ -1,121 +1,149 @@
-# 🚐 UniDrive API — Rotas
+# 🚐 UniDrive API — Rotas e Documentação de Endpoints
 
-> Documentação de referência dos endpoints disponíveis em `https://unidrive.onrender.com/api`
-
----
-
-## 🔐 Auth
-
-`/api/auth`
-
-| Método | Endpoint | Descrição |
-| --- | --- | --- |
-| `POST` | `/admins/login` | Login de administrador |
-| `POST` | `/drivers/login` | Login de motorista |
-| `POST` | `/students/login` | Login de estudante |
+> Documentação completa dos endpoints da API REST e WebSocket do UniDrive (`/api`).
+> Todas as rotas (exceto `/auth/*` e `/push/public-key`) exigem cabeçalho `Authorization: Bearer <token>`.
 
 ---
 
-## 📋 Daily Status
+## 🔐 Autenticação (`/api/auth`)
 
-`/api/daily-status`
+| Método | Endpoint | Autenticação | Rate Limit | Descrição |
+| --- | --- | --- | --- | --- |
+| `POST` | `/admins/login` | Pública | IP + Email | Login de administrador |
+| `POST` | `/drivers/login` | Pública | IP + Email | Login de motorista |
+| `POST` | `/drivers/register`| Pública | IP + Email | Cadastro inicial de motorista |
+| `POST` | `/students/login` | Pública | IP + Email | Login de estudante |
+
+---
+
+## 🏫 Turmas (`/api/classes`)
+
+> Gestão de múltiplas turmas por motorista (RF11). Protegido contra BOLA/IDOR.
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/` | `student` | Criar ou atualizar status diário de um estudante (`vai_normal`, `so_ida`, `so_volta`, `nao_vai`) |
-| `POST` | `/checkin` | `student` | Aluno registrar o próprio embarque |
-| `POST` | `/cancel-boarded` | `student` | Aluno cancelar o próprio embarque registrado |
-| `POST` | `/checkin/:studentId` | `driver` | Motorista registrar embarque de um estudante |
-| `POST` | `/cancel-boarded/:studentId` | `driver` | Motorista cancelar o embarque de um estudante |
-| `GET` | `/missing-count` | `student` / `driver` | Obter contagem de faltantes e status contextual do aluno |
+| `GET` | `/` | `driver` | Listar todas as turmas do motorista com contagem de alunos ativos |
+| `POST` | `/` | `driver` | Criar nova turma (`name`) — sujeito a rate limit dedicado |
+| `PUT` | `/:id` | `driver` | Atualizar nome da turma |
+| `DELETE` | `/:id` | `driver` | Excluir turma (cascade nos alunos vinculados) |
 
 ---
 
-## 🚫 Trip Cancellations
+## 📋 Daily Status & Operação (`/api/daily-status`)
 
-`/api/trip-cancellations`
+> Controle diário de presença, embarques e contagem de faltantes (RF01, RF02, RF04).
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/` | `driver` | Cancelar viagem do dia |
-| `DELETE` | `/` | `driver` | Desfazer cancelamento do dia |
+| `POST` | `/` | `student` | Definir status diário pontual (`vai_normal`, `so_ida`, `so_volta`, `nao_vai` e `date`) |
+| `POST` | `/checkin` | `student` | Aluno realiza o próprio check-in de embarque |
+| `POST` | `/cancel-boarded` | `student` | Aluno desfaz o próprio check-in |
+| `POST` | `/checkin/:studentId` | `driver` | Motorista confirma embarque do passageiro |
+| `POST` | `/cancel-boarded/:studentId` | `driver` | Motorista desfaz embarque do passageiro |
+| `POST` | `/reset-all` | `driver` | Finaliza trajeto e reseta embarques do dia (suporta `?classId=` opcional) |
+| `POST` | `/trip-state` | `driver` | Atualiza o estado da viagem (`trip`: "ida"/"volta", `step`: "aguardando"/"em_viagem") |
+| `GET` | `/missing-count` | `student` / `driver` | Retorna faltantes da viagem atual, status contextual e se a viagem foi cancelada (suporta `?trip=` e `?classId=`) |
 
 ---
 
-## 📢 Announcements
+## 💬 Chat em Tempo Real (`/api/chat` e `/ws/chat`)
 
-`/api/announcements`
+> Chat individual 1:1 entre motorista e alunos (RF10).
+
+### Endpoints REST
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `GET` | `/` | `student` / `driver` | Listar anúncios do mural da van vinculada |
-| `POST` | `/` | `driver` | Publicar anúncio no mural (somente motorista) |
+| `GET` | `/history/:partnerId` | `student` / `driver` | Histórico paginado da conversa (`?limit=50&beforeId=<uuid>`) |
+| `DELETE`| `/messages/:id` | `student` / `driver` | Apagar mensagem pontual (`body: { scope: "me" \| "everyone" }`) com rate limit |
+| `DELETE`| `/history/:partnerId` | `student` / `driver` | Limpar todo o histórico da conversa para o usuário logado com rate limit |
+| `GET` | `/conversations` | `driver` | Lista de contatos/conversas com última mensagem e badges de não lidas (suporta `?classId=`) |
+| `GET` | `/unread-count` | `student` / `driver` | Total de mensagens não lidas para o usuário autenticado |
+
+### WebSocket (`ws://<host>/ws/chat?token=<jwt>`)
+
+Eventos JSON bidirecionais suportados:
+- **`send_message`**: Envia mensagem 1:1 para o destinatário (`{ partnerId, content }`).
+- **`receive_message`**: Notificação push em tempo real de nova mensagem entregue.
+- **`mark_as_read`**: Marca mensagens recebidas como lidas (`{ partnerId }`).
+- **`message_read`**: Confirmação de leitura enviada ao remetente.
+- **`delete_message`**: Apaga mensagem para si ou para todos (`{ messageId, scope }`).
+- **`clear_conversation`**: Notifica a limpeza de histórico da conversa.
 
 ---
 
-## 🛠️ Admin
-
-`/api/admin`
+## 🎓 Alunos (`/api/students`)
 
 | Método | Endpoint | Autenticação | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/admin` | `super_admin` | Criar administrador (exclusivo Super Admin) |
-| `GET` | `/list/admins` | `super_admin` | Listar administradores (exclusivo Super Admin) |
-| `DELETE` | `/admin/:id` | `super_admin` | Remover administrador (exclusivo Super Admin) |
-| `POST` | `/driver` | `admin` | Criar motorista |
-| `POST` | `/student` | `admin` | Criar estudante |
-| `GET` | `/list/drivers` | `admin` | Listar motoristas |
-| `GET` | `/list/drivers/:id` | `admin` | Obter motorista por ID |
-| `GET` | `/list/students` | `admin` | Listar estudantes |
-| `GET` | `/list/students/:id` | `admin` | Obter estudante por ID |
-| `DELETE` | `/student/:id` | `admin` | Desativar estudante |
+| `GET` | `/me/profile` | `student` | Retorna o perfil completo do aluno e dados de contato do motorista |
+| `PATCH` | `/me/photo` | `student` | Atualiza foto de perfil (base64 com verificação de magic bytes) |
+| `PATCH` | `/me/phone` | `student` | Atualiza telefone para contato |
+| `GET` | `/me/weekly-schedule` | `student` | Consulta a rotina semanal padrão de presença (segunda a sábado) |
+| `PUT` | `/me/weekly-schedule` | `student` | Atualiza a rotina semanal padrão |
+| `POST` | `/` | `driver` | Motorista cadastra aluno com senha provisória e turma vinculada |
+| `GET` | `/` | `driver` | Lista alunos com status do dia ou por status ativo/inativo (suporta `?status=` e `?classId=`) |
+| `PATCH` | `/:id/phone` | `driver` | Motorista atualiza o telefone de um aluno |
+| `PATCH` | `/:id/reactivate` | `driver` | Reativa aluno desativado na van |
+| `DELETE` | `/:id` | `driver` | Desativa aluno da van |
+
+---
+
+## 🚫 Cancelamentos de Viagem (`/api/trip-cancellations`)
+
+| Método | Endpoint | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| `POST` | `/` | `driver` | Cancela a operação do dia para uma ou mais turmas (`body: { date, reason, classIds: string[] }`) |
+| `DELETE` | `/` | `driver` | Desfaz o cancelamento da data para as turmas especificadas |
+
+---
+
+## 📢 Mural de Avisos (`/api/announcements`)
+
+| Método | Endpoint | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| `GET` | `/` | `student` / `driver` | Lista avisos recentes (filtrado por `?classId=` ou da turma do aluno) |
+| `POST` | `/` | `driver` | Publica aviso no mural para uma ou várias turmas (`body: { message, classIds: string[] }`) |
+
+---
+
+## 💳 Pagamentos (`/api/payments`)
+
+| Método | Endpoint | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| `GET` | `/me` | `student` | Retorna ciclo de pagamento do mês atual e dados da chave Pix do motorista |
+| `GET` | `/me/history` | `student` | Histórico dos últimos ciclos de pagamento |
+| `POST` | `/me/pay` | `student` | Aluno solicita confirmação de pagamento ao motorista |
+| `PATCH` | `/me/reminder` | `student` | Configura dias de antecedência do lembrete de pagamento |
+| `POST` | `/:studentId/pay` | `driver` | Motorista dá baixa manual confirmando o recebimento do mês |
+| `POST` | `/:studentId/reject`| `driver` | Motorista recusa a solicitação de baixa de pagamento |
+| `GET` | `/student/:studentId`| `driver` | Consulta status financeiro detalhado de um aluno |
+
+---
+
+## 🔔 Notificações Web Push (`/api/push`)
+
+| Método | Endpoint | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| `GET` | `/public-key` | Pública | Retorna a chave pública VAPID para registro do Service Worker |
+| `POST` | `/subscribe` | Autenticado | Salva a inscrição PushSubscription no banco |
+| `POST` | `/unsubscribe` | Autenticado | Remove a inscrição do dispositivo durante o logout |
+| `POST` | `/test` | Autenticado | Dispara push de teste para o dispositivo atual |
+
+---
+
+## 🛠️ Painel Administrativo (`/api/admin`)
+
+| Método | Endpoint | Autenticação | Descrição |
+| --- | --- | --- | --- |
+| `POST` | `/admin` | `super_admin` | Cadastrar novo administrador |
+| `GET` | `/list/admins` | `super_admin` | Listar administradores |
+| `DELETE` | `/admin/:id` | `super_admin` | Remover administrador |
+| `POST` | `/driver` | `admin` | Cadastrar novo motorista no sistema |
+| `GET` | `/list/drivers` | `admin` | Listar motoristas com contadores de alunos |
+| `GET` | `/list/drivers/:id` | `admin` | Detalhes do motorista |
 | `DELETE` | `/driver/:id` | `admin` | Desativar motorista |
-| `PATCH` | `/student/reactivate/:id` | `admin` | Reativar estudante |
 | `PATCH` | `/driver/reactivate/:id` | `admin` | Reativar motorista |
-
----
-
-## 🎓 Students
-
-`/api/students` (Gestão de Passageiros pelo Motorista — RF09)
-
-| Método | Endpoint | Autenticação | Descrição |
-| --- | --- | --- | --- |
-| `POST` | `/` | `driver` | Cadastrar estudante vinculado à van do motorista |
-| `GET` | `/` | `driver` | Listar estudantes vinculados à van do motorista |
-| `DELETE` | `/:id` | `driver` | Desativar estudante da van |
-
----
-
-## 💳 Payments
-
-`/api/payments`
-
-| Método | Endpoint | Autenticação | Descrição |
-| --- | --- | --- | --- |
-| `GET` | `/me` | `student` | Obter ciclo de pagamento atual |
-| `GET` | `/me/history` | `student` | Histórico de pagamentos |
-| `POST` | `/me/pay` | `student` | Aluno marcar ciclo como pago |
-| `PATCH` | `/me/reminder` | `student` | Atualizar dias de antecedência dos lembretes |
-| `POST` | `/:studentId/pay` | `driver` | Motorista registrar/confirmar pagamento de um estudante |
-| `GET` | `/student/:studentId` | `driver` | Status de pagamento de um estudante específico |
-
----
-
-## 🔔 Push Notifications
-
-`/api/push`
-
-| Método | Endpoint | Autenticação | Descrição |
-| --- | --- | --- | --- |
-| `GET` | `/public-key` | — | Obter chave pública VAPID |
-| `POST` | `/subscribe` | `student` / `driver` / `admin` | Inscrever-se para receber notificações push |
-| `POST` | `/test` | `student` / `driver` / `admin` | Enviar notificação push de teste para o usuário autenticado |
-
----
-
-### Legendas
-
-- `student` / `driver` / `admin` → tipo de usuário exigido para autenticação
-- `student` / `driver` → acessível tanto para estudantes quanto motoristas autenticados
-- `—` → rota pública, sem necessidade de autenticação
+| `GET` | `/list/students` | `admin` | Listar todos os estudantes da plataforma |
+| `DELETE` | `/student/:id` | `admin` | Desativar estudante |
+| `PATCH` | `/student/reactivate/:id` | `admin` | Reativar estudante |

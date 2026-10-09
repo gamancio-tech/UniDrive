@@ -39,24 +39,28 @@ Cada pasta (`frontend/`, `backend/`) tem seu próprio `package.json` e é tratad
 - TypeScript em modo `strict`.
 - Commits em português, formato `tipo: descrição curta` (ex.: `feat: adiciona check-in de embarque do aluno`).
 
-## Escopo atual (MVP) — o que construir
+## Escopo atual — funcionalidades implementadas
 
 - RF01: status diário do aluno por exceção (`vai_normal` padrão / `so_ida` / `so_volta` / `nao_vai`)
-- RF02: contador de faltantes em tempo real (via polling)
+- RF02: contador de faltantes em tempo real (via polling) isolado por turma
 - RF03: notificação push individual quando poucos faltam
-- RF04: check-in de embarque (aluno ou motorista marca)
-- RF05: mural de avisos do motorista (via única)
-- RF06: cancelamento do dia inteiro pelo motorista
+- RF04: check-in de embarque (aluno ou motorista marca nas abas "A Embarcar" e "Embarcados")
+- RF05: mural de avisos do motorista (envio por turma ou geral)
+- RF06: cancelamento do dia pelo motorista (por turma ou geral)
 - RF07/RF08: lembrete de pagamento configurável + aluno informa pagamento e motorista confirma a baixa manual
-- RF09: cadastro/gestão de alunos pelo motorista
+- RF09: cadastro/gestão de alunos pelo motorista com vinculação de turma
+- RF10: chat individual (1:1) motorista ↔ aluno em tempo real via WebSocket nativo (`ws`), com histórico, confirmação de leitura e exclusão
+- RF11: múltiplas turmas por motorista com seleção, alternância rápida e filtros
+- RF12: perfil do usuário com foto sanitizada, telefone e rotina semanal padrão
+- RF13: painel administrativo com controle RBAC (`/admin`)
 
 Lista completa e critérios em `docs/02-requisitos.md`.
 
 ## Fora de escopo — não adicionar sem confirmar com o autor
 
-- Chat bidirecional (individual com o motorista ou geral entre alunos)
-- Gateway de pagamento integrado (Pix API, cartão)
-- Rastreamento por GPS em tempo real
+- Chat em grupo aberto com alunos conversando entre si (o chat existente é estritamente 1:1 aluno-motorista)
+- Gateway de pagamento integrado (Pix API bancária automática, cartão de crédito)
+- Rastreamento contínuo por GPS em tempo real da van
 - WebSocket fora do chat e Socket.io (status/contador continuam via polling, ver `docs/04-stack-decisoes.md`)
 
 Se uma tarefa parecer exigir um desses itens, avise o autor em vez de implementar — são decisões deliberadas de escopo, não lacunas a preencher.

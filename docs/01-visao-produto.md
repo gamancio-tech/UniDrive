@@ -48,13 +48,12 @@ Substituir a coordenação por grupo de chat por um app onde:
 
 Detalhamento completo em [`02-requisitos.md`](02-requisitos.md).
 
-## Fora de escopo (por ora — candidatos a fase 2)
+## Fora de escopo (deliberados)
 
-- Chat bidirecional (individual com o motorista ou geral entre alunos).
-- Pagamento integrado via gateway (Pix API, cartão de crédito).
-- Rastreamento por GPS em tempo real da van no mapa.
-- Suporte completo a múltiplos motoristas/multi-tenant (a modelagem de dados já prevê isso, mas a interface do MVP atende só um motorista).
+- Chat em grupo aberto onde alunos conversam entre si (o app possui canal 1:1 direto aluno ↔ motorista).
+- Pagamento integrado via gateway bancário automático (Pix API bancária, cartão de crédito — o controle é feito via solicitação e confirmação manual).
+- Rastreamento contínuo por GPS da van em mapa ao vivo (alto consumo de bateria e complexidade desnecessária para o problema).
 
 ## Visão de crescimento
 
-O produto é pensado para um motorista, mas a modelagem de dados desde o início inclui `driverId` em todas as entidades relevantes, para que ampliar para vários motoristas no futuro seja uma questão de interface e regras de acesso, não uma reescrita do banco de dados.
+O produto atende motoristas e suas respectivas turmas de alunos. Toda a modelagem de dados e regras de negócio contêm isolamento por `driverId` e `classId`, garantindo segurança e escalabilidade para que a plataforma atenda múltiplos motoristas de forma robusta e independente.
