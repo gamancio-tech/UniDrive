@@ -1,4 +1,5 @@
 import { classRepository } from "../repositories/class.repository";
+import { studentRepository } from "../repositories/student.repository";
 import { AppError } from "../middlewares/errorHandler.middleware";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
 
@@ -60,9 +61,14 @@ export const classService = {
     const activeStudents = await classRepository.countActiveStudents(id);
     if (activeStudents > 0) {
       throw new AppError(
-        "Esta turma possui alunos cadastrados. Mova os alunos para outra turma antes de excluí-la.",
+        "Esta turma possui alunos ativos cadastrados. Mova ou exclua os alunos antes de excluir a turma.",
         StatusCodeHttp.BAD_REQUEST
       );
+    }
+
+    const otherClass = await classRepository.findFirstOtherClass(id, driverId);
+    if (otherClass) {
+      await studentRepository.moveAllStudentsClass(id, otherClass.id);
     }
 
     return classRepository.delete(id);

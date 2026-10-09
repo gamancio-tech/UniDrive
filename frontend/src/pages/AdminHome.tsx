@@ -328,7 +328,7 @@ export function AdminHome() {
             <Input
               label="Senha"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
               required

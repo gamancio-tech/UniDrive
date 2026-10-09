@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { driverRepository } from "../repositories/driver.repository";
 import { studentRepository } from "../repositories/student.repository";
 import { env } from "../config/env";
@@ -7,6 +8,8 @@ import { AppError } from "../middlewares/errorHandler.middleware";
 import { AuthenticatedUser } from "../types/express";
 import { StatusCodeHttp } from "../utils/statusCodeHttp";
 import { adminRepository } from "../repositories/admin.repository";
+import { prisma } from "../lib/prisma";
+import { emailService } from "../utils/emailService";
 
 const SALT_ROUNDS = 10;
 
@@ -51,5 +54,51 @@ export const authService = {
 
     const token = signToken({ id: student!.id, role: "student", driverId: student!.driverId });
     return { student: student!, token };
+  },
+
+  async forgotPassword(email: string) {
+    const [admin, driver, student] = await Promise.all([
+      adminRepository.findByEmail(email),
+      driverRepository.findByEmail(email),
+      studentRepository.findByEmail(email),
+    ]);
+
+    const userExists = admin || driver || student;
+    if (!userExists) {
+      return; 
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); 
+
+    await prisma.passwordReset.upsert({
+      where: { email },
+      update: { token, expiresAt },
+      create: { email, token, expiresAt },
+    });
+
+    await emailService.sendMagicLink(email, token);
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    const resetRecord = await prisma.passwordReset.findUnique({ where: { token } });
+    if (!resetRecord || resetRecord.expiresAt < new Date()) {
+      throw new AppError("Token inválido ou expirado.", StatusCodeHttp.BAD_REQUEST);
+    }
+
+    const { email } = resetRecord;
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    const [admin, driver, student] = await Promise.all([
+      adminRepository.findByEmail(email),
+      driverRepository.findByEmail(email),
+      studentRepository.findByEmail(email),
+    ]);
+
+    if (admin) await prisma.admin.update({ where: { email }, data: { passwordHash } });
+    else if (driver) await prisma.driver.update({ where: { email }, data: { passwordHash } });
+    else if (student) await prisma.student.update({ where: { email }, data: { passwordHash } });
+
+    await prisma.passwordReset.delete({ where: { id: resetRecord.id } });
   },
 };

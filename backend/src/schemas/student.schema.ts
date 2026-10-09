@@ -51,3 +51,9 @@ export const listStudentsQuerySchema = z.object({
   }),
 });
 
+export const updateStudentClassSchema = z.object({
+  body: z.object({
+    classId: z.uuid("ID da turma inválido"),
+  }),
+});
+

@@ -26,6 +26,7 @@ import {
   faTrash,
   faChevronDown,
   faBan,
+  faSchool,
   IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -37,6 +38,7 @@ interface ChatWindowProps {
   partnerPhone?: string | null;
   partnerTodayStatus?: string;
   partnerIsBoarded?: boolean;
+  partnerClassName?: string | null;
   tripTitle?: string;
   onBack?: () => void;
   hideBackOnDesktop?: boolean;
@@ -51,6 +53,7 @@ export function ChatWindow({
   partnerPhone,
   partnerTodayStatus,
   partnerIsBoarded,
+  partnerClassName,
   tripTitle,
   onBack,
   hideBackOnDesktop = false,
@@ -433,6 +436,13 @@ export function ChatWindow({
                 )}
               </span>
 
+              {partnerClassName && (
+                <span className="chat-class-badge-pill" title={`Turma: ${partnerClassName}`}>
+                  <FontAwesomeIcon icon={faSchool} style={{ marginRight: "0.3rem" }} />
+                  {partnerClassName}
+                </span>
+              )}
+
               {partnerRole === "student" && partnerIsBoarded && (
                 <span className="chat-trip-badge boarded">
                   <FontAwesomeIcon icon={faCircleCheck} style={{ marginRight: "0.3rem" }} />
@@ -576,7 +586,23 @@ export function ChatWindow({
                       title="Opções da mensagem"
                       aria-label="Opções da mensagem"
                     >
-                      <FontAwesomeIcon icon={faChevronDown} />
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="chat-bubble-chevron-svg"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M3 5.25L7 9.25L11 5.25"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
                     </button>
                   )}
 

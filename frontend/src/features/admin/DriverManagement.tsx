@@ -283,7 +283,7 @@ export const DriverManagement: React.FC = () => {
           <Input
             label="Senha de Acesso"
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 8 caracteres"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

@@ -92,4 +92,15 @@ export const studentRepository = {
   updatePhone(id: string, phone: string | null) {
     return prisma.student.update({ where: { id }, data: { phone } });
   },
+
+  updateClass(id: string, classId: string) {
+    return prisma.student.update({ where: { id }, data: { classId }, select: studentSafeSelect });
+  },
+
+  moveAllStudentsClass(oldClassId: string, newClassId: string) {
+    return prisma.student.updateMany({
+      where: { classId: oldClassId },
+      data: { classId: newClassId },
+    });
+  },
 };

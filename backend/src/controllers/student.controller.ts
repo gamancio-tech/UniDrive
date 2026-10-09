@@ -145,4 +145,20 @@ export const studentController = {
       next(err);
     }
   },
+
+  /** PATCH /api/students/:id/class (somente motorista atualiza turma do aluno) */
+  async updateClass(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user || !hasRole(req.user, "driver")) {
+        return res.status(StatusCodeHttp.FORBIDDEN).json({ error: "Apenas motoristas podem alterar a turma do aluno." });
+      }
+      const driverId = req.user.id;
+      const { id } = req.params;
+      const { classId } = req.body;
+      const updated = await studentService.updateClass(id, classId, driverId);
+      res.status(StatusCodeHttp.OK).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
 };

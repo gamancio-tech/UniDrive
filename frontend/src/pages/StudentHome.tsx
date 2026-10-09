@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
 import { DailyStatusCard } from "../features/dailyStatus/DailyStatusCard";
 import { BottomNavigation } from "../components/BottomNavigation";
-import { logout } from "../api/client";
 import { NotificationBanner } from "../components/NotificationBanner";
 import { StudentPaymentsCard } from "../features/payments/StudentPaymentsCard";
 import { AnnouncementList } from "../features/announcements/AnnouncementList";
@@ -11,7 +10,7 @@ import { getStudentProfile, StudentProfile } from "../api/students";
 import { StudentChatPage } from "../features/chat/StudentChatPage";
 import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightFromBracket, faComments } from "@fortawesome/free-solid-svg-icons";
+import { faComments } from "@fortawesome/free-solid-svg-icons";
 
 type StudentTab = "home" | "chat" | "payments" | "settings";
 
@@ -57,9 +56,6 @@ export function StudentHome() {
       .catch(() => {});
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
 
   const computedTripTitle = cancelled
     ? "Viagem Cancelada"
@@ -101,16 +97,6 @@ export function StudentHome() {
                 <p className="list-item-sub">Área do Aluno</p>
               </div>
             </div>
-            <button
-              type="button"
-              className="btn-logout-pill"
-              onClick={handleLogout}
-              title="Sair do aplicativo"
-              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-            >
-              <span>Sair</span>
-              <FontAwesomeIcon icon={faRightFromBracket} />
-            </button>
           </div>
         )}
 

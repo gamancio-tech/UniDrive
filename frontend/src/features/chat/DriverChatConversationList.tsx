@@ -297,6 +297,7 @@ export function DriverChatConversationList({
           partnerPhone={selectedStudent.studentPhone}
           partnerTodayStatus={selectedStudent.todayStatus}
           partnerIsBoarded={selectedStudent.isBoarded}
+          partnerClassName={selectedStudent.className}
           tripTitle={tripType === "volta" ? "Volta Faculdade" : "Ida Faculdade"}
           onBack={handleBackToList}
           hideBackOnDesktop={true}

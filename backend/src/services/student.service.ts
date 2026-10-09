@@ -221,4 +221,13 @@ export const studentService = {
       phone: updated.phone,
     };
   },
+
+  async updateClass(id: string, classId: string, driverId: string) {
+    await this.assertBelongsToDriver(id, driverId);
+    const targetClass = await classRepository.findByIdAndDriver(classId, driverId);
+    if (!targetClass) {
+      throw new AppError("Turma de destino não encontrada.", StatusCodeHttp.NOT_FOUND);
+    }
+    return studentRepository.updateClass(id, classId);
+  },
 };

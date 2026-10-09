@@ -55,6 +55,13 @@ export const classRepository = {
     });
   },
 
+  findFirstOtherClass(id: string, driverId: string) {
+    return prisma.class.findFirst({
+      where: { driverId, id: { not: id } },
+      select: { id: true },
+    });
+  },
+
   update(id: string, name: string) {
     return prisma.class.update({
       where: { id },

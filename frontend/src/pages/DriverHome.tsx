@@ -16,6 +16,7 @@ import { publishAnnouncement as apiPublishAnnouncement } from "../api/announceme
 import { AppSettings } from "../features/settings/AppSettings";
 import { resetAllDailyBoarded } from "../api/students";
 import { DriverChatConversationList } from "../features/chat/DriverChatConversationList";
+import { DriverGeneralChat } from "../features/chat/DriverGeneralChat";
 import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
 import { ClassSelectionScreen } from "../features/driver/ClassSelectionScreen";
 import { DriverClass, getDriverClasses } from "../api/classes";
@@ -303,52 +304,15 @@ export function DriverHome() {
 
   if (!activeClassId && isGeneralChatActive) {
     return (
-      <main className="main-chat-layout">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0.75rem 1rem",
-            background: "var(--bg-card)",
-            borderBottom: "1px solid var(--border-subtle)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setIsGeneralChatActive(false);
-              setActiveTab("operations");
-            }}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--primary)",
-              fontWeight: 700,
-              fontSize: "0.88rem",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.45rem",
-              padding: "0.2rem",
-            }}
-          >
-            <FontAwesomeIcon icon={faArrowLeft} />
-            <span>Voltar às Turmas</span>
-          </button>
-          <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-main)" }}>
-            Chat Geral — Todos os Alunos
-          </span>
-          <div style={{ width: "80px" }} />
-        </div>
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <DriverChatConversationList
-            tripType={tripType}
-            initialIsGeneralChat={true}
-            onOpenConversation={setIsDriverChatOpen}
-          />
-        </div>
-      </main>
+      <DriverGeneralChat
+        tripType={tripType}
+        driverClasses={driverClasses}
+        onBackToClasses={() => {
+          setIsGeneralChatActive(false);
+          setActiveTab("operations");
+        }}
+        onOpenConversation={setIsDriverChatOpen}
+      />
     );
   }
 
@@ -379,16 +343,18 @@ export function DriverHome() {
                 <span>{activeClassName || "Turma"}</span>
                 <span className="switch-tag">Trocar</span>
               </button>
-              <button
-                type="button"
-                className="btn-logout-pill"
-                onClick={handleLogout}
-                title="Sair do sistema"
-                style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-              >
-                <span>Sair</span>
-                <FontAwesomeIcon icon={faRightFromBracket} />
-              </button>
+              {activeTab === "settings" && (
+                <button
+                  type="button"
+                  className="btn-logout-pill"
+                  onClick={handleLogout}
+                  title="Sair do sistema"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+                >
+                  <span>Sair</span>
+                  <FontAwesomeIcon icon={faRightFromBracket} />
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -10,6 +10,7 @@ import {
   updatePhoneSchema,
   updatePhotoSchema,
   updateSchedulesSchema,
+  updateStudentClassSchema,
 } from "../schemas";
 
 export const studentRoutes = Router();
@@ -29,4 +30,5 @@ studentRoutes.post("/", requireRole("driver"), validate(createStudentByDriverSch
 studentRoutes.get("/", requireRole("driver"), validate(listStudentsQuerySchema), studentController.list);
 studentRoutes.patch("/:id/phone", requireRole("driver"), validate(idParamSchema), validate(updatePhoneSchema), studentController.updatePhone);
 studentRoutes.patch("/:id/reactivate", requireRole("driver"), validate(idParamSchema), studentController.reactivate);
+studentRoutes.patch("/:id/class", requireRole("driver"), validate(idParamSchema), validate(updateStudentClassSchema), studentController.updateClass);
 studentRoutes.delete("/:id", requireRole("driver"), validate(idParamSchema), studentController.deactivate);
