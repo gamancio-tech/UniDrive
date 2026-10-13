@@ -8,14 +8,15 @@ import { Badge } from "../../components/Badge";
 import { Avatar } from "../../components/Avatar";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
-import { deactivateAdminDriver, reactivateAdminDriver, getDriverById, DriverAdmin } from "../../api/admin";
+import { deactivateAdminDriver, reactivateAdminDriver, getDriverById, createDriver, DriverAdmin } from "../../api/admin";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUsers, faShieldHalved, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faShieldHalved, faEye, faPhone } from "@fortawesome/free-solid-svg-icons";
 
 export interface Driver {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   pixKey?: string | null;
   active: boolean;
   createdAt?: string;
@@ -38,7 +39,30 @@ export const DriverManagement: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [pixKey, setPixKey] = useState("");
+
+  const formatPhoneInput = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 2) return digits.length > 0 ? `(${digits}` : "";
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setPhone("");
+    setPixKey("");
+    setError(null);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    resetForm();
+  };
 
   const loadDrivers = async () => {
     try {
@@ -91,17 +115,23 @@ export const DriverManagement: React.FC = () => {
   const handleCreateDriver = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const cleanDigits = phone.replace(/\D/g, "");
+    if (cleanDigits.length < 10) {
+      setError("Por favor, informe um telefone válido com DDD (mínimo 10 dígitos).");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await apiRequest("/admin/driver", {
-        method: "POST",
-        body: { name, email, password, pixKey: pixKey || undefined },
+      await createDriver({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        phone: phone.trim(),
+        pixKey: pixKey.trim() || undefined,
       });
-      setIsModalOpen(false);
-      setName("");
-      setEmail("");
-      setPassword("");
-      setPixKey("");
+      handleCloseModal();
       await loadDrivers();
       showToast("Motorista cadastrado com sucesso!", "success");
     } catch (err: unknown) {
@@ -202,6 +232,12 @@ export const DriverManagement: React.FC = () => {
                           <div style={{ fontSize: "0.85rem", color: "var(--text-main)" }}>
                             {driver.email}
                           </div>
+                          {driver.phone && (
+                            <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.15rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                              <FontAwesomeIcon icon={faPhone} style={{ fontSize: "0.68rem" }} />
+                              <span>{driver.phone}</span>
+                            </div>
+                          )}
                           {driver.pixKey ? (
                             <div style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600, marginTop: "0.15rem" }}>
                               Pix: {driver.pixKey}
@@ -261,7 +297,7 @@ export const DriverManagement: React.FC = () => {
       {/* Modal de Cadastro de Motorista */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         title="Cadastrar Novo Motorista"
       >
         <form onSubmit={handleCreateDriver}>
@@ -278,6 +314,14 @@ export const DriverManagement: React.FC = () => {
             placeholder="carlos@exemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            label="Telefone (com DDD)"
+            type="tel"
+            placeholder="(11) 99999-9999"
+            value={phone}
+            onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
             required
           />
           <Input
@@ -305,7 +349,7 @@ export const DriverManagement: React.FC = () => {
             <Button type="submit" variant="primary" isLoading={submitting}>
               Salvar Motorista
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
+            <Button type="button" variant="ghost" onClick={handleCloseModal}>
               Cancelar
             </Button>
           </div>
@@ -341,6 +385,13 @@ export const DriverManagement: React.FC = () => {
                 <Badge variant={driverDetails.active ? "success" : "neutral"}>
                   {driverDetails.active ? "Ativo" : "Inativo / Desativado"}
                 </Badge>
+              </div>
+            </div>
+
+            <div className="input-wrapper" style={{ margin: 0 }}>
+              <span className="input-label">Telefone de Contato</span>
+              <div style={{ fontSize: "0.95rem", color: driverDetails.phone ? "var(--text-main)" : "var(--text-muted)", fontWeight: 500 }}>
+                {driverDetails.phone || "Não informado"}
               </div>
             </div>
 

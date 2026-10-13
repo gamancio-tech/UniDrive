@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailSchema, passwordSchema } from "./common.schema";
+import { emailSchema, passwordSchema, phone } from "./common.schema";
 
 export const createAdminSchema = z.object({
   body: z.object({
@@ -15,7 +15,7 @@ export const createDriverSchema = z.object({
     email: emailSchema,
     password: passwordSchema,
     pixKey: z.string().max(100, "Chave Pix muito longa").optional().nullable(),
-    phone: z.string().min(11, "Telefone inválido").max(12, "Telefone muito longo").optional().nullable(),
+    phone,
   }),
 });
 
