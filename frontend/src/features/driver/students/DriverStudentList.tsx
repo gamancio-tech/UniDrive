@@ -12,10 +12,6 @@ import { ConfirmModal } from "../../../components/ConfirmModal";
 import { FilterPills } from "../../../components/FilterPills";
 import { Tabs } from "../../../components/Tabs";
 import {
-  markStudentPaidByDriver,
-  rejectStudentPaymentByDriver,
-} from "../../../api/payments";
-import {
   deactivateDriverStudent,
   reactivateDriverStudent,
   resetAllDailyBoarded,
@@ -32,7 +28,6 @@ import {
   faCheck,
   faUsers,
   faShieldHalved,
-  faHourglassHalf,
   faTrashCan,
   faRotateRight,
   faGraduationCap,
@@ -41,6 +36,8 @@ import {
 import { filterStudentsForTrip, parseTripType, TripType } from "../../../utils/trip";
 import { STORAGE_KEYS, getStorage, setStorage } from "../../../utils/storage";
 import { useDriverStudents } from "./hooks/useDriverStudents";
+import { useStudentPayments } from "./hooks/useStudentPayments";
+import { PaymentBadge } from "./components/PaymentBadge";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 type StudentStatusSubTab = "active" | "inactive";
@@ -71,13 +68,19 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     inactiveStudents,
     availableClasses,
     loading,
-    paymentStatuses,
     loadStudents,
     setDailyStudents,
     setActiveStudents,
     setInactiveStudents,
-    setPaymentStatuses,
   } = useDriverStudents(activeClassId);
+
+  const {
+    paymentStatuses,
+    markingPaidId,
+    rejectingPaymentId,
+    handleConfirmPayment,
+    handleRejectPayment,
+  } = useStudentPayments(activeStudents);
 
   const [activeTab, setActiveTab] = useState<StudentTab>("a_embarcar");
   const [allStudentsSubTab, setAllStudentsSubTab] = useState<StudentStatusSubTab>("active");
@@ -93,8 +96,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const [finishingTrip, setFinishingTrip] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
-  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
-  const [rejectingPaymentId, setRejectingPaymentId] = useState<string | null>(null);
   const [studentToDeactivate, setStudentToDeactivate] = useState<RegisteredStudent | null>(null);
   const [deactivating, setDeactivating] = useState(false);
   const [reactivatingId, setReactivatingId] = useState<string | null>(null);
@@ -295,31 +296,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     }
   };
 
-  const handleConfirmPayment = async (studentId: string) => {
-    try {
-      setMarkingPaidId(studentId);
-      const updated = await markStudentPaidByDriver(studentId);
-      setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
-      showToast("Pagamento confirmado com sucesso!", "success");
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao confirmar pagamento.", "error");
-    } finally {
-      setMarkingPaidId(null);
-    }
-  };
-
-  const handleRejectPayment = async (studentId: string) => {
-    try {
-      setRejectingPaymentId(studentId);
-      const updated = await rejectStudentPaymentByDriver(studentId);
-      setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
-      showToast("Solicitação de pagamento recusada.", "info");
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao recusar pagamento.", "error");
-    } finally {
-      setRejectingPaymentId(null);
-    }
-  };
 
   const handleConfirmDeactivate = async () => {
     if (!studentToDeactivate) return;
@@ -640,10 +616,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                     ) : (
                       <div className="item-list">
                         {filteredActiveStudents.map((student) => {
-                          const payment = paymentStatuses[student.id];
-                          const isPaid = payment ? Boolean(payment.paidAt) : null;
-                          const isAwaitingConfirmation = payment ? (!isPaid && Boolean(payment.paymentRequestedAt)) : false;
-
                           return (
                             <div key={student.id} className="list-item">
                               <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
@@ -662,92 +634,13 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                                   )}
 
                                   {/* Status de Mensalidade */}
-                                  {payment && (
-                                    isPaid ? (
-                                      <Badge variant="success" style={{ fontSize: "0.68rem" }}>
-                                        Pago
-                                      </Badge>
-                                    ) : isAwaitingConfirmation ? (
-                                      <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" }}>
-                                        <Badge variant="warning" style={{ fontSize: "0.68rem" }}>
-                                          <FontAwesomeIcon icon={faHourglassHalf} style={{ marginRight: "0.25rem" }} />
-                                          Confirmar Pgto
-                                        </Badge>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleConfirmPayment(student.id)}
-                                          disabled={markingPaidId === student.id || rejectingPaymentId === student.id}
-                                          style={{
-                                            background: "var(--success, #22c55e)",
-                                            border: "none",
-                                            color: "#fff",
-                                            fontSize: "0.72rem",
-                                            fontWeight: 700,
-                                            cursor: "pointer",
-                                            padding: "0.18rem 0.45rem",
-                                            borderRadius: "4px",
-                                            minHeight: "auto",
-                                            width: "auto",
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: "0.25rem",
-                                          }}
-                                        >
-                                          {markingPaidId === student.id ? "..." : (
-                                            <>
-                                              <FontAwesomeIcon icon={faCheck} />
-                                              <span>Confirmar</span>
-                                            </>
-                                          )}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleRejectPayment(student.id)}
-                                          disabled={markingPaidId === student.id || rejectingPaymentId === student.id}
-                                          style={{
-                                            background: "transparent",
-                                            border: "none",
-                                            color: "var(--danger, #ef4444)",
-                                            fontSize: "0.72rem",
-                                            fontWeight: 600,
-                                            cursor: "pointer",
-                                            padding: 0,
-                                            minHeight: "auto",
-                                            width: "auto",
-                                            textDecoration: "underline",
-                                          }}
-                                          title="Recusar confirmação"
-                                        >
-                                          {rejectingPaymentId === student.id ? "..." : "Recusar"}
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
-                                        <Badge variant="danger" style={{ fontSize: "0.68rem" }}>
-                                          Pendente
-                                        </Badge>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleConfirmPayment(student.id)}
-                                          disabled={markingPaidId === student.id}
-                                          style={{
-                                            background: "transparent",
-                                            border: "none",
-                                            color: "var(--primary)",
-                                            fontSize: "0.75rem",
-                                            fontWeight: 600,
-                                            cursor: "pointer",
-                                            padding: 0,
-                                            minHeight: "auto",
-                                            width: "auto",
-                                            textDecoration: "underline",
-                                          }}
-                                        >
-                                          {markingPaidId === student.id ? "..." : "Dar Baixa"}
-                                        </button>
-                                      </div>
-                                    )
-                                  )}
+                                  <PaymentBadge
+                                    payment={paymentStatuses[student.id]}
+                                    isMarkingPaid={markingPaidId === student.id}
+                                    isRejectingPayment={rejectingPaymentId === student.id}
+                                    onConfirm={() => handleConfirmPayment(student.id)}
+                                    onReject={() => handleRejectPayment(student.id)}
+                                  />
                                 </div>
                               </div>
 
