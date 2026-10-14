@@ -7,6 +7,7 @@ import {
 } from "../../../../api/payments";
 import { RegisteredStudent } from "../../../../api/students";
 import { useToast } from "../../../../components/Toast";
+import { UseRowActionReturn, useRowAction } from "./useRowAction";
 
 const POLL_INTERVAL_MS = 15_000;
 
@@ -18,11 +19,17 @@ export interface UseStudentPaymentsReturn {
   handleRejectPayment: (studentId: string) => Promise<void>;
 }
 
-export function useStudentPayments(students: RegisteredStudent[]): UseStudentPaymentsReturn {
+export function useStudentPayments(
+  students: RegisteredStudent[],
+  externalRowAction?: UseRowActionReturn
+): UseStudentPaymentsReturn {
   const { showToast } = useToast();
+  const internalRowAction = useRowAction();
+  const rowAction = externalRowAction ?? internalRowAction;
   const [paymentStatuses, setPaymentStatuses] = useState<Record<string, PaymentCycle>>({});
-  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
-  const [rejectingPaymentId, setRejectingPaymentId] = useState<string | null>(null);
+
+  const markingPaidId = rowAction.activeAction === "markPaid" ? rowAction.activeId : null;
+  const rejectingPaymentId = rowAction.activeAction === "rejectPayment" ? rowAction.activeId : null;
 
   const loadPayments = useCallback(async () => {
     if (!students.length) {
@@ -56,34 +63,32 @@ export function useStudentPayments(students: RegisteredStudent[]): UseStudentPay
 
   const handleConfirmPayment = useCallback(
     async (studentId: string) => {
-      try {
-        setMarkingPaidId(studentId);
-        const updated = await markStudentPaidByDriver(studentId);
-        setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
-        showToast("Pagamento confirmado com sucesso!", "success");
-      } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : "Erro ao confirmar pagamento.", "error");
-      } finally {
-        setMarkingPaidId(null);
-      }
+      await rowAction.run(studentId, "markPaid", async () => {
+        try {
+          const updated = await markStudentPaidByDriver(studentId);
+          setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
+          showToast("Pagamento confirmado com sucesso!", "success");
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Erro ao confirmar pagamento.", "error");
+        }
+      });
     },
-    [showToast]
+    [rowAction, showToast]
   );
 
   const handleRejectPayment = useCallback(
     async (studentId: string) => {
-      try {
-        setRejectingPaymentId(studentId);
-        const updated = await rejectStudentPaymentByDriver(studentId);
-        setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
-        showToast("Solicitação de pagamento recusada.", "info");
-      } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : "Erro ao recusar pagamento.", "error");
-      } finally {
-        setRejectingPaymentId(null);
-      }
+      await rowAction.run(studentId, "rejectPayment", async () => {
+        try {
+          const updated = await rejectStudentPaymentByDriver(studentId);
+          setPaymentStatuses((prev) => ({ ...prev, [studentId]: updated }));
+          showToast("Solicitação de pagamento recusada.", "info");
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Erro ao recusar pagamento.", "error");
+        }
+      });
     },
-    [showToast]
+    [rowAction, showToast]
   );
 
   return {

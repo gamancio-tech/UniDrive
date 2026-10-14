@@ -32,6 +32,16 @@ export interface RegisteredStudentsPanelProps {
   onReactivateStudent: (student: RegisteredStudent) => void;
 }
 
+const trashBtnStyle: React.CSSProperties = {
+  background: "transparent",
+  border: "none",
+  color: "var(--text-light)",
+  cursor: "pointer",
+  fontSize: "1rem",
+  padding: "0.3rem",
+  borderRadius: "6px",
+};
+
 export const RegisteredStudentsPanel: React.FC<RegisteredStudentsPanelProps> = ({
   activeStudents,
   inactiveStudents,
@@ -80,18 +90,14 @@ export const RegisteredStudentsPanel: React.FC<RegisteredStudentsPanelProps> = (
 
                   <div className="list-item-info">
                     <span className="list-item-title">{student.name}</span>
-
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
                       <span className="list-item-sub">{student.email}</span>
-
                       {student.class?.name && (
                         <span className="class-tag-badge">
                           <FontAwesomeIcon icon={faGraduationCap} />
                           {student.class.name}
                         </span>
                       )}
-
-                      {/* Status de Mensalidade */}
                       <PaymentBadge
                         payment={paymentStatuses[student.id]}
                         isMarkingPaid={markingPaidId === student.id}
@@ -107,17 +113,7 @@ export const RegisteredStudentsPanel: React.FC<RegisteredStudentsPanelProps> = (
                       type="button"
                       onClick={() => onSelectStudentToDeactivate(student)}
                       title="Desativar aluno da van"
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--text-light)",
-                        cursor: "pointer",
-                        fontSize: "1rem",
-                        padding: "0.3rem",
-                        minHeight: "auto",
-                        width: "auto",
-                        borderRadius: "6px",
-                      }}
+                      style={trashBtnStyle}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-light)")}
                     >
@@ -145,28 +141,14 @@ export const RegisteredStudentsPanel: React.FC<RegisteredStudentsPanelProps> = (
               {inactiveStudents.map((student) => {
                 const isReactivatingThis = reactivatingId === student.id;
                 return (
-                  <div
-                    key={student.id}
-                    className="list-item"
-                    style={{
-                      background: "var(--bg-input)",
-                      opacity: 0.92,
-                    }}
-                  >
+                  <div key={student.id} className="list-item" style={{ background: "var(--bg-input)", opacity: 0.92 }}>
                     <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
-
                     <div className="list-item-info">
                       <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
-                        <span className="list-item-title" style={{ color: "var(--text-muted)" }}>
-                          {student.name}
-                        </span>
-                        <Badge variant="neutral" style={{ fontSize: "0.68rem" }}>
-                          Inativo
-                        </Badge>
+                        <span className="list-item-title" style={{ color: "var(--text-muted)" }}>{student.name}</span>
+                        <Badge variant="neutral" style={{ fontSize: "0.68rem" }}>Inativo</Badge>
                       </div>
-                      <span className="list-item-sub" style={{ marginTop: "0.2rem" }}>
-                        {student.email}
-                      </span>
+                      <span className="list-item-sub" style={{ marginTop: "0.2rem" }}>{student.email}</span>
                     </div>
 
                     <div className="list-item-actions">
@@ -174,16 +156,7 @@ export const RegisteredStudentsPanel: React.FC<RegisteredStudentsPanelProps> = (
                         variant="secondary"
                         onClick={() => onReactivateStudent(student)}
                         disabled={isReactivatingThis}
-                        style={{
-                          width: "auto",
-                          minHeight: "34px",
-                          padding: "0.3rem 0.85rem",
-                          fontSize: "0.8rem",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.35rem",
-                          fontWeight: 600,
-                        }}
+                        className="btn-compact"
                       >
                         {isReactivatingThis ? (
                           "Reativando..."
