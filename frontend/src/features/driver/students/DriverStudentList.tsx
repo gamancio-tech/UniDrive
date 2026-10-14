@@ -3,7 +3,6 @@ import { apiRequest } from "../../../api/client";
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
-import { ConfirmModal } from "../../../components/ConfirmModal";
 import { Tabs } from "../../../components/Tabs";
 import {
   deactivateDriverStudent,
@@ -20,6 +19,8 @@ import { BoardingList } from "./components/BoardingList";
 import { TripControlBar } from "./components/TripControlBar";
 import { RegisteredStudentsPanel } from "./components/RegisteredStudentsPanel";
 import { AddStudentModal } from "./components/AddStudentModal";
+import { FinishTripModal } from "./components/FinishTripModal";
+import { DeactivateStudentModal } from "./components/DeactivateStudentModal";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 
@@ -314,34 +315,13 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       </Card>
 
       {/* Modal de Finalizar Viagem */}
-      <ConfirmModal
+      <FinishTripModal
         isOpen={isFinishTripModalOpen}
         onClose={() => setIsFinishTripModalOpen(false)}
-        title={`Finalizar Viagem de ${tripType === "ida" ? "Ida" : "Volta"}`}
-        message={
-          <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
-            Deseja finalizar a viagem de <strong>{tripType === "ida" ? "Ida" : "Volta"}</strong>?
-          </p>
-        }
-        confirmLabel={`Sim, Finalizar e Iniciar ${tripType === "ida" ? "Volta" : "Ida"}`}
+        tripType={tripType}
         loading={finishingTrip}
         onConfirm={handleConfirmFinishTrip}
-      >
-        <div
-          style={{
-            background: "var(--bg-input)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "var(--radius-md)",
-            padding: "0.75rem",
-            fontSize: "0.85rem",
-            color: "var(--text-muted)",
-            lineHeight: 1.5,
-          }}
-        >
-          • A lista alternará automaticamente para o trajeto de <strong>{tripType === "ida" ? "Volta" : "Ida"}</strong>.<br />
-          • A lista de embarcados será esvaziada e todos os alunos ativos ficarão prontos para o novo embarque.
-        </div>
-      </ConfirmModal>
+      />
 
       {/* Modal de Cadastro de Aluno */}
       <AddStudentModal
@@ -353,22 +333,9 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       />
 
       {/* Modal de Confirmação de Desativação */}
-      <ConfirmModal
-        isOpen={Boolean(studentToDeactivate)}
+      <DeactivateStudentModal
+        student={studentToDeactivate}
         onClose={() => setStudentToDeactivate(null)}
-        title="Desativar Aluno da Van"
-        message={
-          <>
-            <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
-              Deseja realmente desativar <strong>{studentToDeactivate?.name}</strong> da sua van?
-            </p>
-            <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.85rem" }}>
-              O aluno será movido para a lista de <strong>Inativos</strong> e deixará de constar nas listas de presença diária e contagem de faltantes. Você poderá reativá-lo a qualquer momento.
-            </p>
-          </>
-        }
-        confirmLabel="Confirmar Desativação"
-        variant="danger"
         loading={deactivating}
         onConfirm={handleConfirmDeactivate}
       />
