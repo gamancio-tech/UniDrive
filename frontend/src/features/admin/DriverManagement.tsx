@@ -11,6 +11,7 @@ import { useToast } from "../../components/Toast";
 import { deactivateAdminDriver, reactivateAdminDriver, getDriverById, createDriver, DriverAdmin } from "../../api/admin";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers, faShieldHalved, faEye, faPhone } from "@fortawesome/free-solid-svg-icons";
+import { formatPhoneInput, getPhoneDigits } from "../../utils/phone";
 
 export interface Driver {
   id: string;
@@ -41,14 +42,6 @@ export const DriverManagement: React.FC = () => {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [pixKey, setPixKey] = useState("");
-
-  const formatPhoneInput = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 2) return digits.length > 0 ? `(${digits}` : "";
-    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
 
   const resetForm = () => {
     setName("");
@@ -116,7 +109,7 @@ export const DriverManagement: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    const cleanDigits = phone.replace(/\D/g, "");
+    const cleanDigits = getPhoneDigits(phone);
     if (cleanDigits.length < 10) {
       setError("Por favor, informe um telefone válido com DDD (mínimo 10 dígitos).");
       return;

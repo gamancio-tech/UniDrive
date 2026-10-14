@@ -41,8 +41,9 @@ import {
   faGraduationCap,
   faRocket,
 } from "@fortawesome/free-solid-svg-icons";
+import { filterStudentsForTrip, parseTripType, TripType } from "../../utils/trip";
+import { STORAGE_KEYS, getStorage, setStorage } from "../../utils/storage";
 
-export type TripType = "ida" | "volta";
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 type StudentStatusSubTab = "active" | "inactive";
 
@@ -78,10 +79,9 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const [activeTab, setActiveTab] = useState<StudentTab>("a_embarcar");
   const [allStudentsSubTab, setAllStudentsSubTab] = useState<StudentStatusSubTab>("active");
 
-  const [internalTripType, setInternalTripType] = useState<TripType>(() => {
-    const saved = localStorage.getItem("unidrive_driver_trip_type");
-    return saved === "volta" ? "volta" : "ida";
-  });
+  const [internalTripType, setInternalTripType] = useState<TripType>(() =>
+    parseTripType(getStorage(STORAGE_KEYS.driverTripType))
+  );
 
   const tripType = controlledTripType ?? internalTripType;
 
@@ -153,18 +153,10 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   }, [isModalOpen, activeClassId, availableClasses]);
 
   // Alunos que participam do trajeto atual (apenas ativos, filtrados pela turma ativa se selecionada)
-  const tripFilteredStudents = useMemo(() => {
-    return dailyStudents
-      .filter((s) => !activeClassId || !s.classId || s.classId === activeClassId)
-      .filter((s) => {
-        const status = s.todayStatus || "vai_normal";
-        if (tripType === "ida") {
-          return status === "vai_normal" || status === "so_ida";
-        } else {
-          return status === "vai_normal" || status === "so_volta";
-        }
-      });
-  }, [dailyStudents, tripType, activeClassId]);
+  const tripFilteredStudents = useMemo(
+    () => filterStudentsForTrip(dailyStudents, tripType, activeClassId),
+    [dailyStudents, tripType, activeClassId]
+  );
 
   // Lista 1: Alunos que vão mas ainda não embarcaram
   const pendingStudents = useMemo(() => {
@@ -192,7 +184,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       onTripChange(type);
     } else {
       setInternalTripType(type);
-      localStorage.setItem("unidrive_driver_trip_type", type);
+      setStorage(STORAGE_KEYS.driverTripType, type);
     }
   };
 

@@ -11,6 +11,7 @@ import { StudentChatPage } from "../features/chat/StudentChatPage";
 import { useUnreadChatCount } from "../features/chat/useUnreadChatCount";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faComments } from "@fortawesome/free-solid-svg-icons";
+import { firstName } from "../utils/text";
 
 type StudentTab = "home" | "chat" | "payments" | "settings";
 
@@ -93,7 +94,7 @@ export function StudentHome() {
                 <img src="/icons/icon.png" alt="UniDrive" className="brand-logo" />
               )}
               <div>
-                <h1>{profile?.name ? profile.name.split(" ")[0] : "UniDrive"}</h1>
+                <h1>{profile?.name ? firstName(profile.name) : "UniDrive"}</h1>
                 <p className="list-item-sub">Área do Aluno</p>
               </div>
             </div>

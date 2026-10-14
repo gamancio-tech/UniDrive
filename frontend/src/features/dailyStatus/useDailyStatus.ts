@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import type { TripType } from "../../utils/trip";
 
 const POLL_INTERVAL_MS = 15_000; // RF02/RNF04: até ~15s de defasagem é aceitável para este caso de uso
 
 export type DailyStatusValue = "vai_normal" | "so_ida" | "so_volta" | "nao_vai";
-export type TripType = "ida" | "volta";
 export type TripStep = "aguardando" | "em_viagem" | "finalizada";
 
 interface MissingCountResponse {

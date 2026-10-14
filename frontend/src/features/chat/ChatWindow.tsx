@@ -4,6 +4,10 @@ import { ChatMessage } from "../../api/chat";
 import { getDecodedToken } from "../../api/client";
 import { updateStudentPhone } from "../../api/students";
 import { Modal } from "../../components/Modal";
+import { formatPhoneInput, getPhoneDigits, toTelHref } from "../../utils/phone";
+import { formatMessageDate, formatMessageTime } from "../../utils/date";
+import { firstName, getInitials } from "../../utils/text";
+import { DRIVER_QUICK_REPLIES, STUDENT_QUICK_REPLIES } from "./constants/quickReplies";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faVanShuttle,
@@ -14,20 +18,14 @@ import {
   faMoon,
   faComments,
   faPhone,
-  faLocationDot,
   faClock,
   faTriangleExclamation,
   faCheck,
   faCheckDouble,
-  faPersonRunning,
-  faHand,
-  faThumbsUp,
-  faFlagCheckered,
   faTrash,
   faChevronDown,
   faBan,
   faSchool,
-  IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface ChatWindowProps {
@@ -263,18 +261,9 @@ export function ChatWindow({
     setCurrentPhone(partnerPhone || "");
   }, [partnerPhone]);
 
-  const formatPhoneInput = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 2) return digits.length > 0 ? `(${digits}` : "";
-    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
-
   const handleCallPartner = () => {
     if (currentPhone && currentPhone.trim()) {
-      const cleanDigits = currentPhone.replace(/[^\d+]/g, "");
-      window.location.href = `tel:${cleanDigits}`;
+      window.location.href = toTelHref(currentPhone);
     } else {
       if (partnerRole === "student") {
         setInputPhone("");
@@ -288,7 +277,7 @@ export function ChatWindow({
 
   const handleSavePhoneAndCall = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const cleanDigits = inputPhone.replace(/\D/g, "");
+    const cleanDigits = getPhoneDigits(inputPhone);
     if (cleanDigits.length < 10) {
       setPhoneError("Por favor, digite um telefone válido com DDD (mínimo 10 dígitos).");
       return;
@@ -301,7 +290,7 @@ export function ChatWindow({
       setCurrentPhone(inputPhone.trim());
       onPartnerPhoneUpdated?.(inputPhone.trim());
       setIsPhoneModalOpen(false);
-      window.location.href = `tel:${cleanDigits}`;
+      window.location.href = toTelHref(cleanDigits);
     } catch (err: unknown) {
       setPhoneError(err instanceof Error ? err.message : "Erro ao salvar telefone.");
     } finally {
@@ -309,62 +298,10 @@ export function ChatWindow({
     }
   };
 
-  // Respostas rápidas pré-definidas
-  const quickReplies: { icon: IconDefinition; text: string }[] =
-    currentRole === "student"
-      ? [
-        { icon: faLocationDot, text: "Estou no Ponto" },
-        { icon: faClock, text: "Atraso (5 min)" },
-        { icon: faPersonRunning, text: "Estou descendo!" },
-        { icon: faVanShuttle, text: "Já estou na van" },
-        { icon: faHand, text: "Pode ir sem mim" },
-        { icon: faThumbsUp, text: "Tudo certo!" },
-      ]
-      : [
-        { icon: faVanShuttle, text: "Já estou saindo!" },
-        { icon: faLocationDot, text: "Cheguei no ponto" },
-        { icon: faClock, text: "Aguardando no portão" },
-        { icon: faThumbsUp, text: "Pode vir com calma!" },
-        { icon: faFlagCheckered, text: "Viagem encerrada" },
-        { icon: faHand, text: "Até mais!" },
-      ];
+  // Respostas rápidas pré-definidas (constantes em ./constants/quickReplies)
+  const quickReplies = currentRole === "student" ? STUDENT_QUICK_REPLIES : DRIVER_QUICK_REPLIES;
 
-  const formatMessageTime = (dateIso: string) => {
-    try {
-      const date = new Date(dateIso);
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    } catch {
-      return "";
-    }
-  };
-
-  const formatMessageDate = (dateIso: string) => {
-    try {
-      const date = new Date(dateIso);
-      const today = new Date();
-      if (date.toDateString() === today.toDateString()) return "Hoje";
-
-      const yesterday = new Date();
-      yesterday.setDate(today.getDate() - 1);
-      if (date.toDateString() === yesterday.toDateString()) return "Ontem";
-
-      return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-    } catch {
-      return "";
-    }
-  };
-
-  const getInitials = (name: string) => {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-  };
-
-  const partnerFirstName = partnerName ? partnerName.split(" ")[0] : "";
+  const partnerFirstName = firstName(partnerName);
 
   const [showQuickReplies, setShowQuickReplies] = useState(false);
 

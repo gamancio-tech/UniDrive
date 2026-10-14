@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { apiRequest, logout } from "../api/client";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
-import { DriverStudentList, TripType } from "../features/driver/DriverStudentList";
+import { DriverStudentList } from "../features/driver/DriverStudentList";
+import { filterStudentsForTrip, parseTripType, TripType } from "../utils/trip";
+import { STORAGE_KEYS, getStorage, setStorage, removeStorage } from "../utils/storage";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { Card } from "../components/Card";
 import { Button } from "../components/Button";
@@ -51,10 +53,10 @@ export function DriverHome() {
 
   // Gerenciamento de Turma Ativa
   const [activeClassId, setActiveClassId] = useState<string | null>(() => {
-    return localStorage.getItem("unidrive_active_class_id");
+    return getStorage(STORAGE_KEYS.activeClassId);
   });
   const [activeClassName, setActiveClassName] = useState<string>(() => {
-    return localStorage.getItem("unidrive_active_class_name") || "";
+    return getStorage(STORAGE_KEYS.activeClassName) || "";
   });
   const [isGeneralChatActive, setIsGeneralChatActive] = useState(false);
   const [driverClasses, setDriverClasses] = useState<DriverClass[]>([]);
@@ -72,7 +74,7 @@ export function DriverHome() {
         const found = data.find((c) => c.id === activeClassId);
         if (found) {
           setActiveClassName(found.name);
-          localStorage.setItem("unidrive_active_class_name", found.name);
+          setStorage(STORAGE_KEYS.activeClassName, found.name);
         }
       }
     } catch (err) {
@@ -105,10 +107,9 @@ export function DriverHome() {
       setIsDriverChatOpen(false);
     }
   }, [activeTab]);
-  const [tripType, setTripType] = useState<TripType>(() => {
-    const saved = localStorage.getItem("unidrive_driver_trip_type");
-    return saved === "volta" ? "volta" : "ida";
-  });
+  const [tripType, setTripType] = useState<TripType>(() =>
+    parseTripType(getStorage(STORAGE_KEYS.driverTripType))
+  );
 
   const {
     missingCount,
@@ -147,7 +148,7 @@ export function DriverHome() {
   // Sincroniza o seletor com o estado global se o motorista estiver na mesma viagem
   useEffect(() => {
     if (currentTrip && (currentTrip === "ida" || currentTrip === "volta")) {
-      const saved = localStorage.getItem("unidrive_driver_trip_type");
+      const saved = getStorage(STORAGE_KEYS.driverTripType);
       if (!saved) {
         setTripType(currentTrip);
       }
@@ -156,7 +157,7 @@ export function DriverHome() {
 
   const handleTripChange = (newTrip: TripType) => {
     setTripType(newTrip);
-    localStorage.setItem("unidrive_driver_trip_type", newTrip);
+    setStorage(STORAGE_KEYS.driverTripType, newTrip);
   };
 
   async function publishAnnouncement() {
@@ -263,16 +264,10 @@ export function DriverHome() {
   };
 
   // Contagem de alunos previstos especificamente para o trajeto atual
-  const tripStudentsCount = useMemo(() => {
-    return students.filter((s) => {
-      const status = s.todayStatus || "vai_normal";
-      if (tripType === "ida") {
-        return status === "vai_normal" || status === "so_ida";
-      } else {
-        return status === "vai_normal" || status === "so_volta";
-      }
-    }).length;
-  }, [students, tripType]);
+  const tripStudentsCount = useMemo(
+    () => filterStudentsForTrip(students, tripType).length,
+    [students, tripType]
+  );
 
   const effectiveTotal = Math.max(tripStudentsCount, missingCount ?? 0, 1);
   const completedStudents = Math.max(0, effectiveTotal - (missingCount ?? 0));
@@ -288,8 +283,8 @@ export function DriverHome() {
           onSelectClass={(cls) => {
             setActiveClassId(cls.id);
             setActiveClassName(cls.name);
-            localStorage.setItem("unidrive_active_class_id", cls.id);
-            localStorage.setItem("unidrive_active_class_name", cls.name);
+            setStorage(STORAGE_KEYS.activeClassId, cls.id);
+            setStorage(STORAGE_KEYS.activeClassName, cls.name);
             setIsGeneralChatActive(false);
           }}
           onOpenGeneralChat={() => {
@@ -335,7 +330,7 @@ export function DriverHome() {
                 className="active-class-pill-btn"
                 onClick={() => {
                   setActiveClassId(null);
-                  localStorage.removeItem("unidrive_active_class_id");
+                  removeStorage(STORAGE_KEYS.activeClassId);
                 }}
                 title="Clique para alternar ou gerenciar turmas"
               >

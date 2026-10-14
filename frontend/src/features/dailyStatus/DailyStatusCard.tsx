@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { DailyStatusValue, TripType, TripStep } from "./useDailyStatus";
+import { DailyStatusValue, TripStep } from "./useDailyStatus";
+import { isStudentInTrip, type TripType } from "../../utils/trip";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
@@ -88,9 +89,7 @@ export function DailyStatusCard({
   const isReturnTripStarted = isVolta && tripStep === "em_viagem";
 
   // Determina se o aluno está previsto para o trajeto atual
-  const isScheduledForCurrentTrip = isIda
-    ? currentStatus === "vai_normal" || currentStatus === "so_ida"
-    : currentStatus === "vai_normal" || currentStatus === "so_volta";
+  const isScheduledForCurrentTrip = isStudentInTrip(currentStatus, isIda ? "ida" : "volta");
 
   // Título e subtítulo dinâmicos da viagem
   const tripTitle = isIda ? "Ida para a Faculdade" : "Volta da Faculdade";

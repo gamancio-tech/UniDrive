@@ -9,7 +9,7 @@
 ## 📊 Progresso Geral
 
 - [x] **Fase 0:** Rede de segurança (lint, testes de utilitários, checklist manual)
-- [ ] **Fase 1:** Utilitários e constantes compartilhados
+- [x] **Fase 1:** Utilitários e constantes compartilhados
 - [ ] **Fase 2:** Componentes de UI reutilizáveis + classes utilitárias de CSS
 - [ ] **Fase 3:** `DriverStudentList.tsx` (1047 linhas)
 - [ ] **Fase 4:** `ChatWindow.tsx` (835 linhas)
@@ -219,15 +219,32 @@ frontend/src/
 
 | Tarefa | Origem → Destino |
 |---|---|
-| **1.1** `utils/trip.ts` | Extrair `isStudentInTrip(status, tripType)` e `filterStudentsForTrip(students, tripType, classId)`. Hoje duplicado em `DriverHome.tsx` (`tripStudentsCount`) e `DriverStudentList.tsx` (`tripFilteredStudents`). Exportar o tipo `TripType` daqui (hoje é exportado de um componente). |
-| **1.2** `utils/phone.ts` | `formatPhoneInput` e a limpeza de dígitos para `tel:` (de `ChatWindow`). |
-| **1.3** `utils/date.ts` | `formatMessageTime`, `formatMessageDate` (de `ChatWindow`). |
-| **1.4** `utils/text.ts` | `getInitials` (de `ChatWindow`; avaliar reutilizar `Avatar`), `firstName`. |
-| **1.5** `utils/storage.ts` | Centralizar chaves `unidrive_driver_trip_type`, `unidrive_active_class_id`, `unidrive_active_class_name` em constantes + `getStorage/setStorage` tipados com `try/catch`. |
-| **1.6** `features/chat/constants/quickReplies.ts` | Mover as listas de respostas rápidas de aluno/motorista (hoje recriadas a cada render). |
-| **1.7** Testes Vitest | Casos de `filterStudentsForTrip` (todos os status × ida/volta × turma nula/definida), `formatPhoneInput` (0, 2, 6, 10, 11+ dígitos), `formatMessageDate` (hoje/ontem/outra data). |
+| **1.1** ✅ `utils/trip.ts` | Extrair `isStudentInTrip(status, tripType)` e `filterStudentsForTrip(students, tripType, classId)`. Hoje duplicado em `DriverHome.tsx` (`tripStudentsCount`) e `DriverStudentList.tsx` (`tripFilteredStudents`). Exportar o tipo `TripType` daqui (hoje é exportado de um componente). |
+| **1.2** ✅ `utils/phone.ts` | `formatPhoneInput` e a limpeza de dígitos para `tel:` (de `ChatWindow`). |
+| **1.3** ✅ `utils/date.ts` | `formatMessageTime`, `formatMessageDate` (de `ChatWindow`). |
+| **1.4** ✅ `utils/text.ts` | `getInitials` (de `ChatWindow`; avaliar reutilizar `Avatar`), `firstName`. |
+| **1.5** ✅ `utils/storage.ts` | Centralizar chaves `unidrive_driver_trip_type`, `unidrive_active_class_id`, `unidrive_active_class_name` em constantes + `getStorage/setStorage` tipados com `try/catch`. |
+| **1.6** ✅ `features/chat/constants/quickReplies.ts` | Mover as listas de respostas rápidas de aluno/motorista (hoje recriadas a cada render). |
+| **1.7** ✅ Testes Vitest | Casos de `filterStudentsForTrip` (todos os status × ida/volta × turma nula/definida), `formatPhoneInput` (0, 2, 6, 10, 11+ dígitos), `formatMessageDate` (hoje/ontem/outra data). |
 
-**Critério de aceite:** componentes passam a importar de `utils/`; nenhuma cópia local restante (`grep` por `vai_normal` só em `utils/trip.ts`); testes passam.
+**Critério de aceite:** componentes passam a importar de `utils/`; nenhuma cópia local restante (`grep` por `vai_normal` só em `utils/trip.ts`); testes passam. ✅
+
+#### 📌 Resultado da Fase 1
+
+| Item | Resultado |
+|---|---|
+| `npm run build` | ✅ OK — JS 453,57 kB (gzip 125,30 kB); CSS inalterado |
+| `npm run lint` | ✅ 0 erros · mesmos 14 avisos do baseline (nenhum novo) |
+| `npm run test` | ✅ 5 arquivos, 38 testes (`trip`, `phone`, `date`, `text`, `storage`) |
+
+**Decisões e observações (refatoração pura, sem mudança de comportamento):**
+
+- `TripType` agora vem de `utils/trip.ts`; foi removido de `DriverStudentList.tsx` e `useDailyStatus.ts`. `utils/trip.ts` também expõe `parseTripType` (substitui o `saved === "volta" ? "volta" : "ida"` repetido).
+- A regra "quem participa do trajeto" tinha **3** cópias (`DriverHome`, `DriverStudentList` e `DailyStatusCard`); as 3 usam `utils/trip.ts`. As demais ocorrências de `vai_normal` (`DailyStatusCard` opções/padrão, `useDailyStatus`, `StudentWeeklyScheduleCard`, `DriverStudentList` mapa de badge, tipo em `api/students.ts`) são catálogo de valores/rótulos, não a regra de filtro.
+- `formatPhoneInput` também estava duplicado em `DriverManagement.tsx` (admin); passou a usar `utils/phone.ts`.
+- `getInitials` **não** foi unificado com o do `Avatar`: o do chat usa as 2 primeiras palavras e o do `Avatar` usa primeira + última. Unificar mudaria o texto exibido; fica para a Fase 4 (decisão de UI).
+- `getStorage/setStorage/removeStorage` agora engolem erros do `localStorage` (antes lançavam em modo privado/bloqueado). A chave de tema (`utils/theme.ts`) e a do token (`api/client.ts`) não foram migradas (fora da lista da fase).
+- Outros formatadores de data com lógica diferente (`AnnouncementList`, `DriverChatConversationList`, `DriverGeneralChat`) foram mantidos; serão avaliados na Fase 6.
 
 ---
 
