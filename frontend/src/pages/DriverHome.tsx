@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { apiRequest, logout } from "../api/client";
 import { useDailyStatus } from "../features/dailyStatus/useDailyStatus";
-import { DriverStudentList } from "../features/driver/DriverStudentList";
+import { DriverStudentList } from "../features/driver/students/DriverStudentList";
 import { filterStudentsForTrip, parseTripType, TripType } from "../utils/trip";
 import { STORAGE_KEYS, getStorage, setStorage, removeStorage } from "../utils/storage";
 import { BottomNavigation } from "../components/BottomNavigation";
