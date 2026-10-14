@@ -279,24 +279,34 @@ frontend/src/
 
 ---
 
-### 🚌 Fase 3 — `DriverStudentList.tsx` (1047 → ~120 linhas)
+### 🚌 Fase 3 — `DriverStudentList.tsx` (1047 → 147 linhas)
 
 **Passo a passo (cada item = 1 commit, app funcionando ao final de cada um):**
 
-1. **3.1** Mover para `features/driver/students/` (somente move + ajustar imports).
-2. **3.2** `useDriverStudents(activeClassId)` — encapsula `loadStudents`, polling de 15 s (`POLL_INTERVAL_MS`), `dailyStudents/activeStudents/inactiveStudents/availableClasses/loading`.
-3. **3.3** `useStudentPayments(students)` — encapsula `paymentStatuses`, `markingPaidId`, `rejectingPaymentId` e as ações marcar/rejeitar. Cria `PaymentBadge.tsx`.
-4. **3.4** `useTripActions(...)` — `handleConfirmFinishTrip`, `handleDeclareDeparture`, `finishingTrip`. Passa a usar `TripContext` (Fase 5.1) ou, até lá, recebe `tripType/onUpdateTripState` por props como hoje.
-5. **3.5** `StudentRow.tsx` + `BoardingList.tsx` — unifica "A Embarcar" e "Embarcados" (diferem só em `variant`, badge e ação do botão). Elimina ~100 linhas duplicadas (P3).
-6. **3.6** `TripControlBar.tsx` — painel Ida/Volta + botões "Declarar Partida"/"Finalizar".
-7. **3.7** `RegisteredStudentsPanel.tsx` — aba "Todos" (sub-abas ativos/inativos, linha com turma, pagamento, desativar/reativar).
-8. **3.8** `AddStudentModal.tsx` + `useAddStudentForm.ts` — campos `name/email/temporaryPassword/targetClassId`, erro, `submitting`.
-9. **3.9** `DeactivateStudentModal.tsx` e `FinishTripModal.tsx` via `ConfirmModal`.
-10. **3.10** Consolidar loading por ID (P2): trocar `checkingInId/markingPaidId/rejectingPaymentId/reactivatingId` por um único hook `useRowAction()` que expõe `isBusy(id, action)` e `run(id, action, fn)`.
+1. **3.1** ✅ Mover para `features/driver/students/` (somente move + re-export para compatibilidade reversa).
+2. **3.2** ✅ `useDriverStudents(activeClassId)` — encapsula `loadStudents`, polling de 15 s (`POLL_INTERVAL_MS`), `dailyStudents/activeStudents/inactiveStudents/availableClasses/loading`.
+3. **3.3** ✅ `useStudentPayments(students)` — encapsula `paymentStatuses`, `markingPaidId`, `rejectingPaymentId` e as ações marcar/rejeitar. Cria `PaymentBadge.tsx`.
+4. **3.4** ✅ `useTripActions(...)` — `handleConfirmFinishTrip`, `handleDeclareDeparture`, `finishingTrip`.
+5. **3.5** ✅ `StudentRow.tsx` + `BoardingList.tsx` — unifica "A Embarcar" e "Embarcados" (diferem só em `variant`, badge e ação do botão). Elimina ~120 linhas duplicadas (P3).
+6. **3.6** ✅ `TripControlBar.tsx` — painel Ida/Volta + botões "Declarar Partida"/"Finalizar".
+7. **3.7** ✅ `RegisteredStudentsPanel.tsx` — aba "Todos" (sub-abas ativos/inativos, linha com turma, pagamento, desativar/reativar).
+8. **3.8** ✅ `AddStudentModal.tsx` + `useAddStudentForm.ts` — campos `name/email/temporaryPassword/targetClassId`, erro, `submitting`.
+9. **3.9** ✅ `DeactivateStudentModal.tsx` e `FinishTripModal.tsx` via `ConfirmModal`.
+10. **3.10** ✅ Consolidar loading por ID (P2): criação de `useRowAction()` consolidando `checkingInId/markingPaidId/rejectingPaymentId/reactivatingId/deactivating`, e extração dos hooks orquestradores `useBoardingActions`, `useStudentLifecycle`, `useTripStudents` e `useDriverStudentList`.
 
 **Observação de performance a registrar (não alterar agora):** `loadStudents` dispara 1 request de pagamento **por aluno ativo a cada 15 s** (N+1). Ver B3.
 
-**Critério de aceite:** `DriverStudentList.tsx` ≤ 150 linhas; nenhum arquivo novo > 200; checklist manual da seção "motorista" ok; testes de `utils/trip.ts` passando.
+**Critério de aceite:** `DriverStudentList.tsx` ≤ 150 linhas; nenhum arquivo novo > 200; checklist manual da seção "motorista" ok; testes de `utils/trip.ts` passando. ✅
+
+#### 📌 Resultado da Fase 3
+
+| Item | Resultado |
+|---|---|
+| `npm run build` | ✅ OK — JS 455,44 kB (gzip 127,25 kB); CSS 60,37 kB (gzip 10,68 kB) |
+| `npm run lint` | ✅ 0 erros · 13 avisos (1 aviso a menos que os 14 do baseline) |
+| `npm run test` | ✅ 5 arquivos, 38 testes passando |
+| Linhas de `DriverStudentList.tsx` | ✅ **147 linhas** (meta ≤ 150 linhas; redução de 86% das 1047 linhas originais) |
+| Linhas dos novos arquivos | ✅ **Todos ≤ 180 linhas** (meta ≤ 200 linhas) |
 
 ---
 
