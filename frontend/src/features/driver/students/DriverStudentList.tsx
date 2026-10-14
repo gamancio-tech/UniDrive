@@ -14,7 +14,6 @@ import { Tabs } from "../../../components/Tabs";
 import {
   deactivateDriverStudent,
   reactivateDriverStudent,
-  resetAllDailyBoarded,
   RegisteredStudent,
 } from "../../../api/students";
 import { TripStep } from "../../dailyStatus/useDailyStatus";
@@ -37,6 +36,7 @@ import { filterStudentsForTrip, parseTripType, TripType } from "../../../utils/t
 import { STORAGE_KEYS, getStorage, setStorage } from "../../../utils/storage";
 import { useDriverStudents } from "./hooks/useDriverStudents";
 import { useStudentPayments } from "./hooks/useStudentPayments";
+import { useTripActions } from "./hooks/useTripActions";
 import { PaymentBadge } from "./components/PaymentBadge";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
@@ -93,7 +93,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFinishTripModalOpen, setIsFinishTripModalOpen] = useState(false);
-  const [finishingTrip, setFinishingTrip] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
   const [studentToDeactivate, setStudentToDeactivate] = useState<RegisteredStudent | null>(null);
@@ -151,64 +150,22 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     }
   };
 
-  const handleConfirmFinishTrip = async () => {
-    try {
-      setFinishingTrip(true);
-      await resetAllDailyBoarded(activeClassId);
-
-      // Alterna o trajeto entre Ida e Volta
-      const nextTrip: TripType = tripType === "ida" ? "volta" : "ida";
-
-      // Sincroniza o estado da viagem com o backend
-      if (onUpdateTripState) {
-        await onUpdateTripState(nextTrip, "aguardando");
-      } else {
-        await apiRequest("/daily-status/trip-state", {
-          method: "POST",
-          body: { trip: nextTrip, step: "aguardando", classId: activeClassId || undefined },
-        });
-      }
-
-      // Zera localmente o embarque de todos os alunos do trajeto diário
-      setDailyStudents((prev) => prev.map((s) => ({ ...s, isBoarded: false })));
-
-      handleSelectTrip(nextTrip);
-
-      // Redireciona para a lista "A Embarcar" do novo trajeto
+  const {
+    finishingTrip,
+    handleConfirmFinishTrip,
+    handleDeclareDeparture,
+  } = useTripActions({
+    tripType,
+    activeClassId,
+    onUpdateTripState,
+    onSelectTrip: handleSelectTrip,
+    onTripFinished,
+    setDailyStudents,
+    onSuccessFinish: () => {
       setActiveTab("a_embarcar");
       setIsFinishTripModalOpen(false);
-      onTripFinished?.();
-
-      showToast(
-        `Viagem de ${tripType === "ida" ? "Ida" : "Volta"} finalizada! Lista de ${nextTrip === "ida" ? "Ida" : "Volta"} iniciada.`,
-        "success"
-      );
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao finalizar viagem.", "error");
-    } finally {
-      setFinishingTrip(false);
-    }
-  };
-
-  const handleDeclareDeparture = async () => {
-    try {
-      setFinishingTrip(true);
-      if (onUpdateTripState) {
-        await onUpdateTripState("volta", "em_viagem");
-      } else {
-        await apiRequest("/daily-status/trip-state", {
-          method: "POST",
-          body: { trip: "volta", step: "em_viagem", classId: activeClassId || undefined },
-        });
-      }
-      onTripFinished?.();
-      showToast("Viagem de volta iniciada! A contagem de faltantes foi encerrada para os alunos.", "success");
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Erro ao declarar partida.", "error");
-    } finally {
-      setFinishingTrip(false);
-    }
-  };
+    },
+  });
 
   const getTodayStatusBadge = (status?: string) => {
     switch (status) {
