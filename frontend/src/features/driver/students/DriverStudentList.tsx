@@ -22,9 +22,6 @@ import {
   faSun,
   faMoon,
   faFlagCheckered,
-  faCircleCheck,
-  faVanShuttle,
-  faCheck,
   faUsers,
   faShieldHalved,
   faTrashCan,
@@ -38,6 +35,7 @@ import { useDriverStudents } from "./hooks/useDriverStudents";
 import { useStudentPayments } from "./hooks/useStudentPayments";
 import { useTripActions } from "./hooks/useTripActions";
 import { PaymentBadge } from "./components/PaymentBadge";
+import { BoardingList } from "./components/BoardingList";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 type StudentStatusSubTab = "active" | "inactive";
@@ -167,19 +165,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
     },
   });
 
-  const getTodayStatusBadge = (status?: string) => {
-    switch (status) {
-      case "so_ida":
-        return <Badge variant="neutral">Só ida</Badge>;
-      case "so_volta":
-        return <Badge variant="info">Só volta</Badge>;
-      case "nao_vai":
-        return <Badge variant="danger">Não vai</Badge>;
-      case "vai_normal":
-      default:
-        return <Badge variant="info">Vai normal</Badge>;
-    }
-  };
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -417,124 +402,30 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
           <>
             {/* 1. ABA: A EMBARCAR (Alunos ativos que vão no trajeto atual e ainda não entraram) */}
             {activeTab === "a_embarcar" && (
-              <>
-                {pendingStudents.length === 0 ? (
-                  <EmptyState
-                    icon={faCircleCheck}
-                    iconColor="var(--success, #22c55e)"
-                    title={`Todos os alunos da ${tripType === "ida" ? "Ida" : "Volta"} já embarcaram!`}
-                    description={
-                      boardedStudents.length > 0
-                        ? `Todos os ${boardedStudents.length} passageiro(s) previstos já estão a bordo.`
-                        : "Nenhum aluno previsto para este trajeto hoje."
-                    }
-                    action={
-                      boardedStudents.length > 0 ? (
-                        <Button
-                          variant="secondary"
-                          onClick={() => setIsFinishTripModalOpen(true)}
-                          className="btn-compact"
-                        >
-                          <FontAwesomeIcon icon={faFlagCheckered} />
-                          <span>Finalizar Viagem de {tripType === "ida" ? "Ida" : "Volta"}</span>
-                        </Button>
-                      ) : undefined
-                    }
-                  />
-                ) : (
-                  <div className="item-list">
-                    {pendingStudents.map((student) => {
-                      const isCheckingThis = checkingInId === student.id;
-                      return (
-                        <div key={student.id} className="list-item">
-                          <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
-
-                          <div className="list-item-info">
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
-                              <span className="list-item-title">{student.name}</span>
-                              {getTodayStatusBadge(student.todayStatus)}
-                            </div>
-                            <span className="list-item-sub" style={{ marginTop: "0.2rem" }}>
-                              {student.email}
-                            </span>
-                          </div>
-
-                          <div className="list-item-actions">
-                            <button
-                              type="button"
-                              className="btn-check-circle"
-                              onClick={() => handleManualCheckIn(student.id)}
-                              disabled={isCheckingThis}
-                              title="Clique para confirmar que o passageiro embarcou"
-                            >
-                              {isCheckingThis ? "..." : "○"}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
+              <BoardingList
+                variant="pending"
+                students={pendingStudents}
+                tripType={tripType}
+                boardedCount={boardedStudents.length}
+                checkingInId={checkingInId}
+                onToggleCheckIn={handleManualCheckIn}
+                onFinishTripModalOpen={() => setIsFinishTripModalOpen(true)}
+                onNavigateToPending={() => setActiveTab("a_embarcar")}
+              />
             )}
 
             {/* 2. ABA: EMBARCADOS (Alunos ativos do trajeto atual que já foram buscados) */}
             {activeTab === "embarcados" && (
-              <>
-                {boardedStudents.length === 0 ? (
-                  <EmptyState
-                    icon={faVanShuttle}
-                    iconColor="var(--primary)"
-                    title="Nenhum aluno embarcado ainda"
-                    description='Marque os alunos na aba "A Embarcar" conforme eles entrarem na van.'
-                    action={
-                      <Button
-                        variant="secondary"
-                        onClick={() => setActiveTab("a_embarcar")}
-                        className="btn-compact"
-                      >
-                        Ir para &quot;A Embarcar&quot;
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <div className="item-list">
-                    {boardedStudents.map((student) => {
-                      const isCheckingThis = checkingInId === student.id;
-                      return (
-                        <div key={student.id} className="list-item">
-                          <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
-
-                          <div className="list-item-info">
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
-                              <span className="list-item-title">{student.name}</span>
-                              <Badge variant="success" style={{ fontSize: "0.68rem" }}>
-                                <FontAwesomeIcon icon={faCheck} style={{ marginRight: "0.25rem" }} />
-                                A Bordo
-                              </Badge>
-                            </div>
-                            <span className="list-item-sub" style={{ marginTop: "0.2rem" }}>
-                              {student.email}
-                            </span>
-                          </div>
-
-                          <div className="list-item-actions">
-                            <button
-                              type="button"
-                              className="btn-check-circle checked"
-                              onClick={() => handleUndoCheckIn(student.id)}
-                              disabled={isCheckingThis}
-                              title="Embarcado! Clique para desfazer"
-                            >
-                              {isCheckingThis ? "..." : <FontAwesomeIcon icon={faCheck} />}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
+              <BoardingList
+                variant="boarded"
+                students={boardedStudents}
+                tripType={tripType}
+                boardedCount={boardedStudents.length}
+                checkingInId={checkingInId}
+                onToggleCheckIn={handleUndoCheckIn}
+                onFinishTripModalOpen={() => setIsFinishTripModalOpen(true)}
+                onNavigateToPending={() => setActiveTab("a_embarcar")}
+              />
             )}
 
             {/* 3. ABA: TODOS OS ALUNOS (Cadastro geral: ativos e inativos, sem verificação de viagem do dia) */}
