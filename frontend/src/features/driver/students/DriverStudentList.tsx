@@ -4,12 +4,8 @@ import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
 import { Input } from "../../../components/Input";
 import { Modal } from "../../../components/Modal";
-import { Badge } from "../../../components/Badge";
-import { Avatar } from "../../../components/Avatar";
 import { useToast } from "../../../components/Toast";
-import { EmptyState } from "../../../components/EmptyState";
 import { ConfirmModal } from "../../../components/ConfirmModal";
-import { FilterPills } from "../../../components/FilterPills";
 import { Tabs } from "../../../components/Tabs";
 import {
   deactivateDriverStudent,
@@ -17,25 +13,16 @@ import {
   RegisteredStudent,
 } from "../../../api/students";
 import { TripStep } from "../../dailyStatus/useDailyStatus";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUsers,
-  faShieldHalved,
-  faTrashCan,
-  faRotateRight,
-  faGraduationCap,
-} from "@fortawesome/free-solid-svg-icons";
 import { filterStudentsForTrip, parseTripType, TripType } from "../../../utils/trip";
 import { STORAGE_KEYS, getStorage, setStorage } from "../../../utils/storage";
 import { useDriverStudents } from "./hooks/useDriverStudents";
 import { useStudentPayments } from "./hooks/useStudentPayments";
 import { useTripActions } from "./hooks/useTripActions";
-import { PaymentBadge } from "./components/PaymentBadge";
 import { BoardingList } from "./components/BoardingList";
 import { TripControlBar } from "./components/TripControlBar";
+import { RegisteredStudentsPanel } from "./components/RegisteredStudentsPanel";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
-type StudentStatusSubTab = "active" | "inactive";
 
 export interface DriverStudentListProps {
   tripType?: TripType;
@@ -78,7 +65,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   } = useStudentPayments(activeStudents);
 
   const [activeTab, setActiveTab] = useState<StudentTab>("a_embarcar");
-  const [allStudentsSubTab, setAllStudentsSubTab] = useState<StudentStatusSubTab>("active");
 
   const [internalTripType, setInternalTripType] = useState<TripType>(() =>
     parseTripType(getStorage(STORAGE_KEYS.driverTripType))
@@ -366,170 +352,22 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
 
             {/* 3. ABA: TODOS OS ALUNOS (Cadastro geral: ativos e inativos, sem verificação de viagem do dia) */}
             {activeTab === "todos" && (
-              <>
-                {/* Pílulas de filtro Modernas Ativos / Inativos */}
-                <FilterPills
-                  options={[
-                    { value: "active", label: "Ativos", icon: faUsers, count: filteredActiveStudents.length, variant: "success" },
-                    { value: "inactive", label: "Inativos", icon: faShieldHalved, count: filteredInactiveStudents.length, variant: "danger" },
-                  ]}
-                  value={allStudentsSubTab}
-                  onChange={setAllStudentsSubTab}
-                  style={{ marginBottom: "1rem" }}
-                />
-
-                {/* Sub-Aba: ALUNOS ATIVOS */}
-                {allStudentsSubTab === "active" && (
-                  <>
-                    {filteredActiveStudents.length === 0 ? (
-                      <EmptyState
-                        title="Nenhum aluno ativo"
-                        description="Nenhum aluno ativo na sua van no momento."
-                        action={
-                          <Button
-                            variant="secondary"
-                            onClick={() => {
-                              setTargetClassId(activeClassId || availableClasses[0]?.id || "");
-                              setIsModalOpen(true);
-                            }}
-                          >
-                            Cadastrar Primeiro Aluno
-                          </Button>
-                        }
-                      />
-                    ) : (
-                      <div className="item-list">
-                        {filteredActiveStudents.map((student) => {
-                          return (
-                            <div key={student.id} className="list-item">
-                              <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
-
-                              <div className="list-item-info">
-                                <span className="list-item-title">{student.name}</span>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
-                                  <span className="list-item-sub">{student.email}</span>
-
-                                  {student.class?.name && (
-                                    <span className="class-tag-badge">
-                                      <FontAwesomeIcon icon={faGraduationCap} />
-                                      {student.class.name}
-                                    </span>
-                                  )}
-
-                                  {/* Status de Mensalidade */}
-                                  <PaymentBadge
-                                    payment={paymentStatuses[student.id]}
-                                    isMarkingPaid={markingPaidId === student.id}
-                                    isRejectingPayment={rejectingPaymentId === student.id}
-                                    onConfirm={() => handleConfirmPayment(student.id)}
-                                    onReject={() => handleRejectPayment(student.id)}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="list-item-actions">
-                                <button
-                                  type="button"
-                                  onClick={() => setStudentToDeactivate(student)}
-                                  title="Desativar aluno da van"
-                                  style={{
-                                    background: "transparent",
-                                    border: "none",
-                                    color: "var(--text-light)",
-                                    cursor: "pointer",
-                                    fontSize: "1rem",
-                                    padding: "0.3rem",
-                                    minHeight: "auto",
-                                    width: "auto",
-                                    borderRadius: "6px",
-                                  }}
-                                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
-                                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-light)")}
-                                >
-                                  <FontAwesomeIcon icon={faTrashCan} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Sub-Aba: ALUNOS INATIVOS (Com ação rápida de reativação) */}
-                {allStudentsSubTab === "inactive" && (
-                  <>
-                    {filteredInactiveStudents.length === 0 ? (
-                      <EmptyState
-                        icon={faShieldHalved}
-                        title="Nenhum aluno inativo"
-                        description="Todos os alunos cadastrados estão ativos e participando das viagens."
-                      />
-                    ) : (
-                      <div className="item-list">
-                        {filteredInactiveStudents.map((student) => {
-                          const isReactivatingThis = reactivatingId === student.id;
-                          return (
-                            <div
-                              key={student.id}
-                              className="list-item"
-                              style={{
-                                background: "var(--bg-input)",
-                                opacity: 0.92,
-                              }}
-                            >
-                              <Avatar name={student.name} photoUrl={student.photoUrl ?? undefined} />
-
-                              <div className="list-item-info">
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
-                                  <span className="list-item-title" style={{ color: "var(--text-muted)" }}>
-                                    {student.name}
-                                  </span>
-                                  <Badge variant="neutral" style={{ fontSize: "0.68rem" }}>
-                                    Inativo
-                                  </Badge>
-                                </div>
-                                <span className="list-item-sub" style={{ marginTop: "0.2rem" }}>
-                                  {student.email}
-                                </span>
-                              </div>
-
-                              <div className="list-item-actions">
-                                <Button
-                                  variant="secondary"
-                                  onClick={() => handleReactivateStudent(student)}
-                                  disabled={isReactivatingThis}
-                                  style={{
-                                    width: "auto",
-                                    minHeight: "34px",
-                                    padding: "0.3rem 0.85rem",
-                                    fontSize: "0.8rem",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "0.35rem",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {isReactivatingThis ? (
-                                    "Reativando..."
-                                  ) : (
-                                    <>
-                                      <FontAwesomeIcon icon={faRotateRight} />
-                                      <span>Reativar Aluno</span>
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
+              <RegisteredStudentsPanel
+                activeStudents={filteredActiveStudents}
+                inactiveStudents={filteredInactiveStudents}
+                paymentStatuses={paymentStatuses}
+                markingPaidId={markingPaidId}
+                rejectingPaymentId={rejectingPaymentId}
+                reactivatingId={reactivatingId}
+                onOpenAddModal={() => {
+                  setTargetClassId(activeClassId || availableClasses[0]?.id || "");
+                  setIsModalOpen(true);
+                }}
+                onConfirmPayment={handleConfirmPayment}
+                onRejectPayment={handleRejectPayment}
+                onSelectStudentToDeactivate={setStudentToDeactivate}
+                onReactivateStudent={handleReactivateStudent}
+              />
             )}
           </>
         )}
