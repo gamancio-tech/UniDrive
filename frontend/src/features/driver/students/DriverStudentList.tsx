@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { apiRequest } from "../../../api/client";
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
-import { Input } from "../../../components/Input";
-import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { ConfirmModal } from "../../../components/ConfirmModal";
 import { Tabs } from "../../../components/Tabs";
@@ -21,6 +19,7 @@ import { useTripActions } from "./hooks/useTripActions";
 import { BoardingList } from "./components/BoardingList";
 import { TripControlBar } from "./components/TripControlBar";
 import { RegisteredStudentsPanel } from "./components/RegisteredStudentsPanel";
+import { AddStudentModal } from "./components/AddStudentModal";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 
@@ -74,26 +73,10 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFinishTripModalOpen, setIsFinishTripModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
   const [studentToDeactivate, setStudentToDeactivate] = useState<RegisteredStudent | null>(null);
   const [deactivating, setDeactivating] = useState(false);
   const [reactivatingId, setReactivatingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Form states
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [temporaryPassword, setTemporaryPassword] = useState("");
-  const [targetClassId, setTargetClassId] = useState<string>("");
-
-  // Sincroniza a turma padrão quando o modal de cadastro é aberto
-  useEffect(() => {
-    if (isModalOpen) {
-      setError(null);
-      setTargetClassId((prev) => prev || activeClassId || availableClasses[0]?.id || "");
-    }
-  }, [isModalOpen, activeClassId, availableClasses]);
 
   // Alunos que participam do trajeto atual (apenas ativos, filtrados pela turma ativa se selecionada)
   const tripFilteredStudents = useMemo(
@@ -149,43 +132,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   });
 
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (temporaryPassword.length < 8) {
-      setError("A senha provisória deve ter no mínimo 8 caracteres.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const classToAssign = targetClassId || activeClassId || availableClasses[0]?.id;
-      if (!classToAssign) {
-        throw new Error("Selecione uma turma para vincular o aluno.");
-      }
-      await apiRequest("/students", {
-        method: "POST",
-        body: {
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          temporaryPassword,
-          classId: classToAssign,
-        },
-      });
-      setIsModalOpen(false);
-      setName("");
-      setEmail("");
-      setTemporaryPassword("");
-      setTargetClassId("");
-      await loadStudents();
-      showToast("Aluno cadastrado com sucesso!", "success");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao cadastrar aluno.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleManualCheckIn = async (studentId: string) => {
     try {
@@ -284,10 +230,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
           activeTab === "todos" ? (
             <Button
               variant="primary"
-              onClick={() => {
-                setTargetClassId(activeClassId || availableClasses[0]?.id || "");
-                setIsModalOpen(true);
-              }}
+              onClick={() => setIsModalOpen(true)}
               style={{ width: "auto", minHeight: "38px", padding: "0.4rem 0.95rem", fontSize: "0.85rem" }}
             >
               + Novo Aluno
@@ -359,10 +302,7 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                 markingPaidId={markingPaidId}
                 rejectingPaymentId={rejectingPaymentId}
                 reactivatingId={reactivatingId}
-                onOpenAddModal={() => {
-                  setTargetClassId(activeClassId || availableClasses[0]?.id || "");
-                  setIsModalOpen(true);
-                }}
+                onOpenAddModal={() => setIsModalOpen(true)}
                 onConfirmPayment={handleConfirmPayment}
                 onRejectPayment={handleRejectPayment}
                 onSelectStudentToDeactivate={setStudentToDeactivate}
@@ -404,89 +344,13 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       </ConfirmModal>
 
       {/* Modal de Cadastro de Aluno */}
-      <Modal
+      <AddStudentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Cadastrar Novo Aluno"
-      >
-        <form onSubmit={handleCreateStudent}>
-          <Input
-            label="Nome Completo"
-            placeholder="Ex: João da Silva"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <Input
-            label="E-mail"
-            type="email"
-            placeholder="joao@faculdade.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Senha Provisória"
-            type="password"
-            placeholder="Mínimo 8 caracteres"
-            minLength={8}
-            value={temporaryPassword}
-            onChange={(e) => setTemporaryPassword(e.target.value)}
-            required
-          />
-
-          {availableClasses.length > 0 && (
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  color: "var(--text-main)",
-                  marginBottom: "0.35rem",
-                }}
-              >
-                Turma
-              </label>
-              <select
-                value={targetClassId || activeClassId || availableClasses[0]?.id || ""}
-                onChange={(e) => setTargetClassId(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "0.65rem 0.85rem",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--border-subtle)",
-                  background: "var(--bg-input)",
-                  color: "var(--text-main)",
-                  fontSize: "0.9rem",
-                  outline: "none",
-                }}
-              >
-                {availableClasses.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {error && (
-            <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
-              {error}
-            </div>
-          )}
-
-          <div className="button-group" style={{ margin: "1rem 0 0" }}>
-            <Button type="submit" variant="primary" isLoading={submitting}>
-              Cadastrar Aluno
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        activeClassId={activeClassId}
+        availableClasses={availableClasses}
+        onStudentCreated={loadStudents}
+      />
 
       {/* Modal de Confirmação de Desativação */}
       <ConfirmModal
