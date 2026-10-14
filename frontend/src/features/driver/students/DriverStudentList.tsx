@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { apiRequest } from "../../../api/client";
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
@@ -12,8 +12,6 @@ import { ConfirmModal } from "../../../components/ConfirmModal";
 import { FilterPills } from "../../../components/FilterPills";
 import { Tabs } from "../../../components/Tabs";
 import {
-  PaymentCycle,
-  getStudentPaymentStatus,
   markStudentPaidByDriver,
   rejectStudentPaymentByDriver,
 } from "../../../api/payments";
@@ -21,12 +19,8 @@ import {
   deactivateDriverStudent,
   reactivateDriverStudent,
   resetAllDailyBoarded,
-  getDriverStudents,
-  getStudentsByStatus,
-  DriverStudent,
   RegisteredStudent,
 } from "../../../api/students";
-import { DriverClass, getDriverClasses } from "../../../api/classes";
 import { TripStep } from "../../dailyStatus/useDailyStatus";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -34,7 +28,6 @@ import {
   faMoon,
   faFlagCheckered,
   faCircleCheck,
-  faCircleXmark,
   faVanShuttle,
   faCheck,
   faUsers,
@@ -47,6 +40,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { filterStudentsForTrip, parseTripType, TripType } from "../../../utils/trip";
 import { STORAGE_KEYS, getStorage, setStorage } from "../../../utils/storage";
+import { useDriverStudents } from "./hooks/useDriverStudents";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 type StudentStatusSubTab = "active" | "inactive";
@@ -61,8 +55,6 @@ export interface DriverStudentListProps {
   onUpdateTripState?: (trip: TripType, step: TripStep) => Promise<void>;
 }
 
-const POLL_INTERVAL_MS = 15_000;
-
 export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   tripType: controlledTripType,
   tripStep,
@@ -73,13 +65,20 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   onUpdateTripState,
 }) => {
   const { showToast } = useToast();
-  // Alunos com status diário para os trajetos de Ida e Volta (RF01/RF04)
-  const [dailyStudents, setDailyStudents] = useState<DriverStudent[]>([]);
-  // Alunos cadastrados (sem status diário de viagem) (RF09)
-  const [activeStudents, setActiveStudents] = useState<RegisteredStudent[]>([]);
-  const [inactiveStudents, setInactiveStudents] = useState<RegisteredStudent[]>([]);
-  const [availableClasses, setAvailableClasses] = useState<DriverClass[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    dailyStudents,
+    activeStudents,
+    inactiveStudents,
+    availableClasses,
+    loading,
+    paymentStatuses,
+    loadStudents,
+    setDailyStudents,
+    setActiveStudents,
+    setInactiveStudents,
+    setPaymentStatuses,
+  } = useDriverStudents(activeClassId);
+
   const [activeTab, setActiveTab] = useState<StudentTab>("a_embarcar");
   const [allStudentsSubTab, setAllStudentsSubTab] = useState<StudentStatusSubTab>("active");
 
@@ -94,7 +93,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const [finishingTrip, setFinishingTrip] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
-  const [paymentStatuses, setPaymentStatuses] = useState<Record<string, PaymentCycle>>({});
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [rejectingPaymentId, setRejectingPaymentId] = useState<string | null>(null);
   const [studentToDeactivate, setStudentToDeactivate] = useState<RegisteredStudent | null>(null);
@@ -107,46 +105,6 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   const [email, setEmail] = useState("");
   const [temporaryPassword, setTemporaryPassword] = useState("");
   const [targetClassId, setTargetClassId] = useState<string>("");
-
-  const loadStudents = useCallback(async (isInitial = false) => {
-    try {
-      if (isInitial) setLoading(true);
-      const [dailyData, activeData, inactiveData, classesData] = await Promise.all([
-        getDriverStudents(activeClassId),
-        getStudentsByStatus(true, activeClassId),
-        getStudentsByStatus(false, activeClassId),
-        getDriverClasses().catch(() => []),
-      ]);
-      setDailyStudents(dailyData);
-      setActiveStudents(activeData);
-      setInactiveStudents(inactiveData);
-      setAvailableClasses(classesData);
-
-      const paymentEntries = await Promise.allSettled(
-        activeData.map(async (s) => {
-          const status = await getStudentPaymentStatus(s.id);
-          return { id: s.id, status };
-        })
-      );
-      const paymentMap: Record<string, PaymentCycle> = {};
-      paymentEntries.forEach((entry) => {
-        if (entry.status === "fulfilled") {
-          paymentMap[entry.value.id] = entry.value.status;
-        }
-      });
-      setPaymentStatuses(paymentMap);
-    } catch (err: unknown) {
-      console.error("Erro ao carregar alunos:", err);
-    } finally {
-      if (isInitial) setLoading(false);
-    }
-  }, [activeClassId]);
-
-  useEffect(() => {
-    loadStudents(true);
-    const interval = setInterval(() => loadStudents(false), POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [loadStudents]);
 
   // Sincroniza a turma padrão quando o modal de cadastro é aberto
   useEffect(() => {
