@@ -4,6 +4,7 @@ import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Modal } from "../components/Modal";
+import { Tabs } from "../components/Tabs";
 import { useToast } from "../components/Toast";
 import { createAdmin } from "../api/admin";
 import { DriverManagement, Driver } from "../features/admin/DriverManagement";
@@ -123,60 +124,18 @@ export function AdminHome() {
       </div>
 
       {/* Tabs Superiores Padronizadas e Responsivas para Mobile */}
-      <div className="tabs-container" role="tablist" aria-label="Navegação do Painel">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "overview"}
-          className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
-          onClick={() => setActiveTab("overview")}
-        >
-          <FontAwesomeIcon icon={faChartPie} />
-          <span>Visão Geral</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "drivers"}
-          className={`tab-btn ${activeTab === "drivers" ? "active" : ""}`}
-          onClick={() => setActiveTab("drivers")}
-        >
-          <FontAwesomeIcon icon={faVanShuttle} />
-          <span>Motoristas</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "students"}
-          className={`tab-btn ${activeTab === "students" ? "active" : ""}`}
-          onClick={() => setActiveTab("students")}
-        >
-          <FontAwesomeIcon icon={faGraduationCap} />
-          <span>Alunos</span>
-        </button>
-        {isSuperAdmin && (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "admins"}
-            className={`tab-btn ${activeTab === "admins" ? "active" : ""}`}
-            onClick={() => setActiveTab("admins")}
-          >
-            <FontAwesomeIcon icon={faUserShield} />
-            <span>Admins</span>
-          </button>
-        )}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "settings"}
-          className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
-          onClick={() => setActiveTab("settings")}
-        >
-          <FontAwesomeIcon icon={faGear} />
-          <span>Configurações</span>
-        </button>
-      </div>
+      <Tabs
+        tabs={[
+          { id: "overview", label: "Visão Geral", icon: faChartPie },
+          { id: "drivers", label: "Motoristas", icon: faVanShuttle },
+          { id: "students", label: "Alunos", icon: faGraduationCap },
+          ...(isSuperAdmin ? [{ id: "admins" as const, label: "Admins", icon: faUserShield }] : []),
+          { id: "settings", label: "Configurações", icon: faGear },
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        ariaLabel="Navegação do Painel"
+      />
 
       {/* Aba 1: Visão Geral — Mockup telas_admin.jfif */}
       {activeTab === "overview" && (

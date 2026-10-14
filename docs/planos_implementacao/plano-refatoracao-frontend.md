@@ -10,7 +10,7 @@
 
 - [x] **Fase 0:** Rede de segurança (lint, testes de utilitários, checklist manual)
 - [x] **Fase 1:** Utilitários e constantes compartilhados
-- [ ] **Fase 2:** Componentes de UI reutilizáveis + classes utilitárias de CSS
+- [x] **Fase 2:** Componentes de UI reutilizáveis + classes utilitárias de CSS
 - [ ] **Fase 3:** `DriverStudentList.tsx` (1047 linhas)
 - [ ] **Fase 4:** `ChatWindow.tsx` (835 linhas)
 - [ ] **Fase 5:** `DriverHome.tsx` (859 linhas)
@@ -254,13 +254,28 @@ frontend/src/
 
 | Tarefa | Detalhe |
 |---|---|
-| **2.1** `styles/utilities.css` | Classes pequenas que substituem os `style={{…}}` mais repetidos: `.row` (flex + gap + align center), `.row-wrap`, `.stack`, `.text-muted`, `.text-center`, `.icon-gap-sm`, `.btn-compact` (os `width:auto; minHeight:34px; padding…` repetidos em ~10 botões). Usar os tokens existentes (`var(--text-muted)`, `var(--radius-md)`…). **Sem Tailwind.** |
-| **2.2** `EmptyState.tsx` | Props: `icon`, `title`, `description`, `action`. Substitui os 4+ blocos "centralizado + ícone grande + h3 + p" de `DriverStudentList`. |
-| **2.3** `ConfirmModal.tsx` | Props: `isOpen`, `title`, `message`, `confirmLabel`, `variant`, `loading`, `onConfirm`, `onClose`. Substitui modais de confirmação de finalizar viagem, desativar aluno, limpar chat, apagar mensagem, cancelar viagem. Baseado no `Modal` existente. |
-| **2.4** `FilterPills.tsx` e `Tabs.tsx` | Encapsulam `.filter-pills`/`.filter-pill` e `.tabs-container`/`.tab-btn` (tipados com genérico `<T extends string>`). |
-| **2.5** Migração de `alert()` | Trocar `alert(...)` por `useToast` (P9). |
+| **2.1** ✅ `styles/utilities.css` | Classes pequenas que substituem os `style={{…}}` mais repetidos: `.row` (flex + gap + align center), `.row-wrap`, `.stack`, `.text-muted`, `.text-center`, `.icon-gap-sm`, `.btn-compact` (os `width:auto; minHeight:34px; padding…` repetidos em ~10 botões). Usar os tokens existentes (`var(--text-muted)`, `var(--radius-md)`…). **Sem Tailwind.** |
+| **2.2** ✅ `EmptyState.tsx` | Props: `icon`, `title`, `description`, `action`. Substitui os 4+ blocos "centralizado + ícone grande + h3 + p" de `DriverStudentList` e `DriverManagement`. |
+| **2.3** ✅ `ConfirmModal.tsx` | Props: `isOpen`, `title`, `message`, `confirmLabel`, `variant`, `loading`, `onConfirm`, `onClose`. Substitui modais de confirmação de finalizar viagem, desativar aluno (`DriverStudentList`), limpar chat, apagar mensagem (`ChatWindow`). Baseado no `Modal` existente. |
+| **2.4** ✅ `FilterPills.tsx` e `Tabs.tsx` | Encapsulam `.filter-pills`/`.filter-pill` e `.tabs-container`/`.tab-btn` (tipados com genérico `<T extends string>`). Usados em `DriverStudentList`, `DriverHome`, `DriverManagement` e `AdminHome`. |
+| **2.5** ✅ Migração de `alert()` | Trocar `alert(...)` por `useToast` (P9) em `ChatWindow.tsx`. |
 
-**Critério de aceite:** componentes novos usados em ≥ 2 lugares cada; sem mudança visual (comparar prints antes/depois nas telas do checklist).
+**Critério de aceite:** componentes novos usados em ≥ 2 lugares cada; sem mudança visual (comparar prints antes/depois nas telas do checklist). ✅
+
+#### 📌 Resultado da Fase 2
+
+| Item | Resultado |
+|---|---|
+| `npm run build` | ✅ OK — JS 450,10 kB (gzip 125,57 kB); CSS 60,37 kB (gzip 10,68 kB) |
+| `npm run lint` | ✅ 0 erros · mesmos 14 avisos do baseline (nenhum novo) |
+| `npm run test` | ✅ 5 arquivos, 38 testes passando |
+
+**Adoção dos componentes nesta fase (≥ 2 usos cada):**
+- `EmptyState`: adotado em `DriverStudentList.tsx` (4 estados vazios) e `DriverManagement.tsx`.
+- `ConfirmModal`: adotado em `DriverStudentList.tsx` (finalizar viagem e desativar aluno) e `ChatWindow.tsx` (exclusão de mensagem e limpeza de conversa).
+- `FilterPills`: adotado em `DriverStudentList.tsx` (trajeto e ativos/inativos), `DriverHome.tsx` (trajeto) e `DriverManagement.tsx` (ativos/desativados).
+- `Tabs`: adotado em `DriverStudentList.tsx` (abas principais) e `AdminHome.tsx` (painel administrativo).
+- `useToast`: 3 ocorrências de `alert()` eliminadas do `ChatWindow.tsx`.
 
 ---
 

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import "./styles/index.css";
+import "./styles/utilities.css";
 import "./styles/components.css";
 import "./styles/layout.css";
 

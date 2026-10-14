@@ -8,6 +8,8 @@ import { Badge } from "../../components/Badge";
 import { Avatar } from "../../components/Avatar";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useToast } from "../../components/Toast";
+import { FilterPills } from "../../components/FilterPills";
+import { EmptyState } from "../../components/EmptyState";
 import { deactivateAdminDriver, reactivateAdminDriver, getDriverById, createDriver, DriverAdmin } from "../../api/admin";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers, faShieldHalved, faEye, faPhone } from "@fortawesome/free-solid-svg-icons";
@@ -156,40 +158,30 @@ export const DriverManagement: React.FC = () => {
         }
       >
         {/* Pílulas de Filtro Modernas conforme mockup telas_admin.jfif */}
-        <div className="filter-pills">
-          <button
-            type="button"
-            className={`filter-pill ${statusFilter === "active" ? "active-success" : ""}`}
-            onClick={() => setStatusFilter("active")}
-          >
-            <span><FontAwesomeIcon icon={faUsers} style={{ marginRight: "0.4rem" }} />Ativos</span>
-            <span style={{ fontSize: "0.75rem", opacity: 0.85 }}>({activeCount})</span>
-          </button>
-          <button
-            type="button"
-            className={`filter-pill ${statusFilter === "inactive" ? "active-danger" : ""}`}
-            onClick={() => setStatusFilter("inactive")}
-          >
-            <span><FontAwesomeIcon icon={faShieldHalved} style={{ marginRight: "0.4rem" }} />Desativados</span>
-            <span style={{ fontSize: "0.75rem", opacity: 0.85 }}>({inactiveCount})</span>
-          </button>
-        </div>
+        <FilterPills
+          options={[
+            { value: "active", label: "Ativos", icon: faUsers, count: activeCount, variant: "success" },
+            { value: "inactive", label: "Desativados", icon: faShieldHalved, count: inactiveCount, variant: "danger" },
+          ]}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
 
         {loading ? (
           <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>
             Carregando motoristas...
           </p>
         ) : filteredDrivers.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-            <p style={{ marginBottom: "1rem" }}>
-              Nenhum motorista {statusFilter === "active" ? "ativo" : "desativado"} encontrado.
-            </p>
-            {statusFilter === "active" && (
-              <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
-                Cadastrar Primeiro Motorista
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            title={`Nenhum motorista ${statusFilter === "active" ? "ativo" : "desativado"} encontrado.`}
+            action={
+              statusFilter === "active" ? (
+                <Button variant="secondary" onClick={() => setIsModalOpen(true)}>
+                  Cadastrar Primeiro Motorista
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="table-card">
             <div className="table-responsive">

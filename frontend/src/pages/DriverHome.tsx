@@ -9,6 +9,7 @@ import { Card } from "../components/Card";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
 import { Modal } from "../components/Modal";
+import { FilterPills } from "../components/FilterPills";
 import { useToast } from "../components/Toast";
 import { NotificationBanner } from "../components/NotificationBanner";
 import { DonutProgressChart } from "../components/DonutProgressChart";
@@ -417,26 +418,15 @@ export function DriverHome() {
                 </div>
 
                 {/* Seletor rápido de trajeto ativo */}
-                <div style={{ display: "flex", gap: "0.45rem", margin: "0.35rem 0 0.85rem" }}>
-                  <button
-                    type="button"
-                    onClick={() => handleTripChange("ida")}
-                    className={`filter-pill ${tripType === "ida" ? "active" : ""}`}
-                    style={{ minHeight: "30px", padding: "0.18rem 0.75rem", fontSize: "0.78rem" }}
-                  >
-                    <FontAwesomeIcon icon={faSun} style={{ marginRight: "0.35rem" }} />
-                    Ida
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleTripChange("volta")}
-                    className={`filter-pill ${tripType === "volta" ? "active" : ""}`}
-                    style={{ minHeight: "30px", padding: "0.18rem 0.75rem", fontSize: "0.78rem" }}
-                  >
-                    <FontAwesomeIcon icon={faMoon} style={{ marginRight: "0.35rem" }} />
-                    Volta
-                  </button>
-                </div>
+                <FilterPills
+                  options={[
+                    { value: "ida", label: "Ida", icon: faSun },
+                    { value: "volta", label: "Volta", icon: faMoon },
+                  ]}
+                  value={tripType}
+                  onChange={handleTripChange}
+                  style={{ margin: "0.35rem 0 0.85rem" }}
+                />
 
                 {/* Gráfico Donut SVG Circular */}
                 <DonutProgressChart

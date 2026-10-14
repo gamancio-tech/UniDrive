@@ -1,0 +1,64 @@
+/* ============================================
+   CLASSES UTILITÁRIAS COMPARTILHADAS (Fase 2)
+   Tokens e layouts flexíveis reutilizáveis.
+   ============================================ */
+
+/* Layout Flex / Alinhamentos */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tipografia & Cores de Texto */
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-main {
+  color: var(--text-main);
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Espaçamentos & Ícones */
+.icon-gap-sm {
+  margin-right: 0.35rem;
+}
+
+.icon-gap-xs {
+  margin-right: 0.25rem;
+}
+
+/* Botões Compactos (substitui style={{ width: "auto", minHeight: "34px", ... }}) */
+.btn-compact {
+  width: auto !important;
+  min-height: 34px !important;
+  padding: 0.4rem 0.8rem !important;
+  font-size: 0.85rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+}

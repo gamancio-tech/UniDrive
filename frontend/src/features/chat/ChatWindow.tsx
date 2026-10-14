@@ -4,6 +4,8 @@ import { ChatMessage } from "../../api/chat";
 import { getDecodedToken } from "../../api/client";
 import { updateStudentPhone } from "../../api/students";
 import { Modal } from "../../components/Modal";
+import { ConfirmModal } from "../../components/ConfirmModal";
+import { useToast } from "../../components/Toast";
 import { formatPhoneInput, getPhoneDigits, toTelHref } from "../../utils/phone";
 import { formatMessageDate, formatMessageTime } from "../../utils/date";
 import { firstName, getInitials } from "../../utils/text";
@@ -57,6 +59,7 @@ export function ChatWindow({
   hideBackOnDesktop = false,
   onPartnerPhoneUpdated,
 }: ChatWindowProps) {
+  const { showToast } = useToast();
   const {
     messages,
     loading,
@@ -239,7 +242,7 @@ export function ChatWindow({
       await deleteMessage(deleteConfirmModal.message.id, deleteConfirmModal.scope);
       setDeleteConfirmModal({ isOpen: false, message: null, scope: "me" });
     } catch {
-      alert("Não foi possível excluir a mensagem.");
+      showToast("Não foi possível excluir a mensagem.", "error");
     } finally {
       setIsDeleting(false);
     }
@@ -251,7 +254,7 @@ export function ChatWindow({
       await clearConversation();
       setIsClearModalOpen(false);
     } catch {
-      alert("Não foi possível limpar a conversa.");
+      showToast("Não foi possível limpar a conversa.", "error");
     } finally {
       setClearingChat(false);
     }
@@ -270,7 +273,7 @@ export function ChatWindow({
         setPhoneError("");
         setIsPhoneModalOpen(true);
       } else {
-        alert("O motorista ainda não possui telefone cadastrado.");
+        showToast("O motorista ainda não possui telefone cadastrado.", "info");
       }
     }
   };
@@ -694,7 +697,7 @@ export function ChatWindow({
       </div>
 
       {/* Modal para confirmação de exclusão da mensagem */}
-      <Modal
+      <ConfirmModal
         isOpen={deleteConfirmModal.isOpen}
         onClose={() => setDeleteConfirmModal({ isOpen: false, message: null, scope: "me" })}
         title={
@@ -702,89 +705,37 @@ export function ChatWindow({
             ? "Excluir mensagem para todos?"
             : "Excluir mensagem só para você?"
         }
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <p style={{ margin: 0, fontSize: "0.92rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-            {deleteConfirmModal.scope === "everyone"
-              ? "Esta mensagem será apagada para todos os participantes da conversa."
-              : "Esta mensagem será removida apenas do seu histórico de visualização."}
-          </p>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setDeleteConfirmModal({ isOpen: false, message: null, scope: "me" })}
-              disabled={isDeleting}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={handleExecuteDelete}
-              disabled={isDeleting}
-              style={{
-                background: "var(--danger, #ef4444)",
-                color: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.4rem",
-              }}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-              <span>
-                {isDeleting
-                  ? "Excluindo..."
-                  : deleteConfirmModal.scope === "everyone"
-                  ? "Excluir para todos"
-                  : "Excluir só para mim"}
-              </span>
-            </button>
-          </div>
-        </div>
-      </Modal>
+        message={
+          deleteConfirmModal.scope === "everyone"
+            ? "Esta mensagem será apagada para todos os participantes da conversa."
+            : "Esta mensagem será removida apenas do seu histórico de visualização."
+        }
+        confirmLabel={
+          deleteConfirmModal.scope === "everyone"
+            ? "Excluir para todos"
+            : "Excluir só para mim"
+        }
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleExecuteDelete}
+      />
 
       {/* Modal de confirmação para limpar toda a conversa */}
-      <Modal
+      <ConfirmModal
         isOpen={isClearModalOpen}
         onClose={() => setIsClearModalOpen(false)}
         title="Limpar toda a conversa?"
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <p style={{ margin: 0, fontSize: "0.92rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+        message={
+          <span>
             Tem certeza de que deseja limpar todas as mensagens desta conversa? As mensagens serão apagadas{" "}
             <strong>somente para você</strong>. O outro participante ainda continuará vendo o histórico dele.
-          </p>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setIsClearModalOpen(false)}
-              disabled={clearingChat}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={handleConfirmClearChat}
-              disabled={clearingChat}
-              style={{
-                background: "var(--danger, #ef4444)",
-                color: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.4rem",
-              }}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-              <span>{clearingChat ? "Limpando..." : "Limpar conversa"}</span>
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </span>
+        }
+        confirmLabel="Limpar conversa"
+        variant="danger"
+        loading={clearingChat}
+        onConfirm={handleConfirmClearChat}
+      />
 
       {/* Modal para cadastrar telefone do aluno antes de ligar */}
       <Modal

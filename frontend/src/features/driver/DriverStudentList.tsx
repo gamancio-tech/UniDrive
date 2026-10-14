@@ -7,6 +7,10 @@ import { Modal } from "../../components/Modal";
 import { Badge } from "../../components/Badge";
 import { Avatar } from "../../components/Avatar";
 import { useToast } from "../../components/Toast";
+import { EmptyState } from "../../components/EmptyState";
+import { ConfirmModal } from "../../components/ConfirmModal";
+import { FilterPills } from "../../components/FilterPills";
+import { Tabs } from "../../components/Tabs";
 import {
   PaymentCycle,
   getStudentPaymentStatus,
@@ -447,28 +451,19 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
             marginBottom: "1rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" }}>
+          <div className="row-wrap" style={{ gap: "0.45rem" }}>
             <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600 }}>
               Trajeto:
             </span>
-            <button
-              type="button"
-              onClick={() => handleSelectTrip("ida")}
-              className={`filter-pill ${tripType === "ida" ? "active" : ""}`}
-              style={{ minHeight: "32px", padding: "0.2rem 0.75rem", fontSize: "0.8rem" }}
-            >
-              <FontAwesomeIcon icon={faSun} style={{ marginRight: "0.35rem" }} />
-              Ida
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectTrip("volta")}
-              className={`filter-pill ${tripType === "volta" ? "active" : ""}`}
-              style={{ minHeight: "32px", padding: "0.2rem 0.75rem", fontSize: "0.8rem" }}
-            >
-              <FontAwesomeIcon icon={faMoon} style={{ marginRight: "0.35rem" }} />
-              Volta
-            </button>
+            <FilterPills
+              options={[
+                { value: "ida", label: "Ida", icon: faSun },
+                { value: "volta", label: "Volta", icon: faMoon },
+              ]}
+              value={tripType}
+              onChange={handleSelectTrip}
+              style={{ marginBottom: 0 }}
+            />
           </div>
 
           <div style={{ display: "flex", gap: "0.45rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -513,29 +508,15 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
         </div>
 
         {/* Abas de Navegação entre as 3 Listas */}
-        <div className="tabs-container">
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === "a_embarcar" ? "active" : ""}`}
-            onClick={() => setActiveTab("a_embarcar")}
-          >
-            A Embarcar ({pendingStudents.length})
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === "embarcados" ? "active" : ""}`}
-            onClick={() => setActiveTab("embarcados")}
-          >
-            Embarcados ({boardedStudents.length})
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === "todos" ? "active" : ""}`}
-            onClick={() => setActiveTab("todos")}
-          >
-            Todos ({activeStudents.length + inactiveStudents.length})
-          </button>
-        </div>
+        <Tabs
+          tabs={[
+            { id: "a_embarcar", label: "A Embarcar", count: pendingStudents.length },
+            { id: "embarcados", label: "Embarcados", count: boardedStudents.length },
+            { id: "todos", label: "Todos", count: activeStudents.length + inactiveStudents.length },
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
 
         {loading ? (
           <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "1.5rem 0" }}>
@@ -547,29 +528,28 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
             {activeTab === "a_embarcar" && (
               <>
                 {pendingStudents.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                    <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--success, #22c55e)" }}>
-                      <FontAwesomeIcon icon={faCircleCheck} />
-                    </div>
-                    <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", margin: "0 0 0.35rem" }}>
-                      Todos os alunos da {tripType === "ida" ? "Ida" : "Volta"} já embarcaram!
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", margin: "0 0 1.25rem" }}>
-                      {boardedStudents.length > 0
+                  <EmptyState
+                    icon={faCircleCheck}
+                    iconColor="var(--success, #22c55e)"
+                    title={`Todos os alunos da ${tripType === "ida" ? "Ida" : "Volta"} já embarcaram!`}
+                    description={
+                      boardedStudents.length > 0
                         ? `Todos os ${boardedStudents.length} passageiro(s) previstos já estão a bordo.`
-                        : "Nenhum aluno previsto para este trajeto hoje."}
-                    </p>
-                    {boardedStudents.length > 0 && (
-                      <Button
-                        variant="secondary"
-                        onClick={() => setIsFinishTripModalOpen(true)}
-                        style={{ width: "auto", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
-                      >
-                        <FontAwesomeIcon icon={faFlagCheckered} />
-                        <span>Finalizar Viagem de {tripType === "ida" ? "Ida" : "Volta"}</span>
-                      </Button>
-                    )}
-                  </div>
+                        : "Nenhum aluno previsto para este trajeto hoje."
+                    }
+                    action={
+                      boardedStudents.length > 0 ? (
+                        <Button
+                          variant="secondary"
+                          onClick={() => setIsFinishTripModalOpen(true)}
+                          className="btn-compact"
+                        >
+                          <FontAwesomeIcon icon={faFlagCheckered} />
+                          <span>Finalizar Viagem de {tripType === "ida" ? "Ida" : "Volta"}</span>
+                        </Button>
+                      ) : undefined
+                    }
+                  />
                 ) : (
                   <div className="item-list">
                     {pendingStudents.map((student) => {
@@ -611,24 +591,21 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
             {activeTab === "embarcados" && (
               <>
                 {boardedStudents.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                    <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--primary)" }}>
-                      <FontAwesomeIcon icon={faVanShuttle} />
-                    </div>
-                    <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", margin: "0 0 0.35rem" }}>
-                      Nenhum aluno embarcado ainda
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", margin: "0 0 1.25rem" }}>
-                      Marque os alunos na aba &quot;A Embarcar&quot; conforme eles entrarem na van.
-                    </p>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setActiveTab("a_embarcar")}
-                      style={{ width: "auto", display: "inline-flex" }}
-                    >
-                      Ir para &quot;A Embarcar&quot;
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={faVanShuttle}
+                    iconColor="var(--primary)"
+                    title="Nenhum aluno embarcado ainda"
+                    description='Marque os alunos na aba "A Embarcar" conforme eles entrarem na van.'
+                    action={
+                      <Button
+                        variant="secondary"
+                        onClick={() => setActiveTab("a_embarcar")}
+                        className="btn-compact"
+                      >
+                        Ir para &quot;A Embarcar&quot;
+                      </Button>
+                    }
+                  />
                 ) : (
                   <div className="item-list">
                     {boardedStudents.map((student) => {
@@ -673,45 +650,35 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
             {activeTab === "todos" && (
               <>
                 {/* Pílulas de filtro Modernas Ativos / Inativos */}
-                <div className="filter-pills" style={{ marginBottom: "1rem" }}>
-                  <button
-                    type="button"
-                    className={`filter-pill ${allStudentsSubTab === "active" ? "active-success" : ""}`}
-                    onClick={() => setAllStudentsSubTab("active")}
-                  >
-                    <span>
-                      <FontAwesomeIcon icon={faUsers} style={{ marginRight: "0.35rem" }} />
-                      Ativos ({filteredActiveStudents.length})
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`filter-pill ${allStudentsSubTab === "inactive" ? "active-danger" : ""}`}
-                    onClick={() => setAllStudentsSubTab("inactive")}
-                  >
-                    <span>
-                      <FontAwesomeIcon icon={faShieldHalved} style={{ marginRight: "0.35rem" }} />
-                      Inativos ({filteredInactiveStudents.length})
-                    </span>
-                  </button>
-                </div>
+                <FilterPills
+                  options={[
+                    { value: "active", label: "Ativos", icon: faUsers, count: filteredActiveStudents.length, variant: "success" },
+                    { value: "inactive", label: "Inativos", icon: faShieldHalved, count: filteredInactiveStudents.length, variant: "danger" },
+                  ]}
+                  value={allStudentsSubTab}
+                  onChange={setAllStudentsSubTab}
+                  style={{ marginBottom: "1rem" }}
+                />
 
                 {/* Sub-Aba: ALUNOS ATIVOS */}
                 {allStudentsSubTab === "active" && (
                   <>
                     {filteredActiveStudents.length === 0 ? (
-                      <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--text-muted)" }}>
-                        <p style={{ marginBottom: "1rem" }}>Nenhum aluno ativo na sua van no momento.</p>
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            setTargetClassId(activeClassId || availableClasses[0]?.id || "");
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          Cadastrar Primeiro Aluno
-                        </Button>
-                      </div>
+                      <EmptyState
+                        title="Nenhum aluno ativo"
+                        description="Nenhum aluno ativo na sua van no momento."
+                        action={
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              setTargetClassId(activeClassId || availableClasses[0]?.id || "");
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            Cadastrar Primeiro Aluno
+                          </Button>
+                        }
+                      />
                     ) : (
                       <div className="item-list">
                         {filteredActiveStudents.map((student) => {
@@ -860,17 +827,11 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
                 {allStudentsSubTab === "inactive" && (
                   <>
                     {filteredInactiveStudents.length === 0 ? (
-                      <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-muted)" }}>
-                        <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem", color: "var(--text-muted)" }}>
-                          <FontAwesomeIcon icon={faShieldHalved} />
-                        </div>
-                        <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", margin: "0 0 0.35rem" }}>
-                          Nenhum aluno inativo
-                        </h3>
-                        <p style={{ fontSize: "0.85rem", margin: 0 }}>
-                          Todos os alunos cadastrados estão ativos e participando das viagens.
-                        </p>
-                      </div>
+                      <EmptyState
+                        icon={faShieldHalved}
+                        title="Nenhum aluno inativo"
+                        description="Todos os alunos cadastrados estão ativos e participando das viagens."
+                      />
                     ) : (
                       <div className="item-list">
                         {filteredInactiveStudents.map((student) => {
@@ -940,49 +901,34 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       </Card>
 
       {/* Modal de Finalizar Viagem */}
-      <Modal
+      <ConfirmModal
         isOpen={isFinishTripModalOpen}
         onClose={() => setIsFinishTripModalOpen(false)}
         title={`Finalizar Viagem de ${tripType === "ida" ? "Ida" : "Volta"}`}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        message={
           <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
             Deseja finalizar a viagem de <strong>{tripType === "ida" ? "Ida" : "Volta"}</strong>?
           </p>
-
-          <div
-            style={{
-              background: "var(--bg-input)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "var(--radius-md)",
-              padding: "0.75rem",
-              fontSize: "0.85rem",
-              color: "var(--text-muted)",
-              lineHeight: 1.5,
-            }}
-          >
-            • A lista alternará automaticamente para o trajeto de <strong>{tripType === "ida" ? "Volta" : "Ida"}</strong>.<br />
-            • A lista de embarcados será esvaziada e todos os alunos ativos ficarão prontos para o novo embarque.
-          </div>
-
-          <div className="button-group" style={{ margin: "0.5rem 0 0" }}>
-            <Button
-              variant="primary"
-              onClick={handleConfirmFinishTrip}
-              isLoading={finishingTrip}
-            >
-              Sim, Finalizar e Iniciar {tripType === "ida" ? "Volta" : "Ida"}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setIsFinishTripModalOpen(false)}
-              disabled={finishingTrip}
-            >
-              Cancelar
-            </Button>
-          </div>
+        }
+        confirmLabel={`Sim, Finalizar e Iniciar ${tripType === "ida" ? "Volta" : "Ida"}`}
+        loading={finishingTrip}
+        onConfirm={handleConfirmFinishTrip}
+      >
+        <div
+          style={{
+            background: "var(--bg-input)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "var(--radius-md)",
+            padding: "0.75rem",
+            fontSize: "0.85rem",
+            color: "var(--text-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          • A lista alternará automaticamente para o trajeto de <strong>{tripType === "ida" ? "Volta" : "Ida"}</strong>.<br />
+          • A lista de embarcados será esvaziada e todos os alunos ativos ficarão prontos para o novo embarque.
         </div>
-      </Modal>
+      </ConfirmModal>
 
       {/* Modal de Cadastro de Aluno */}
       <Modal
@@ -1070,36 +1016,25 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       </Modal>
 
       {/* Modal de Confirmação de Desativação */}
-      <Modal
+      <ConfirmModal
         isOpen={Boolean(studentToDeactivate)}
         onClose={() => setStudentToDeactivate(null)}
         title="Desativar Aluno da Van"
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
-            Deseja realmente desativar <strong>{studentToDeactivate?.name}</strong> da sua van?
-          </p>
-          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.85rem" }}>
-            O aluno será movido para a lista de <strong>Inativos</strong> e deixará de constar nas listas de presença diária e contagem de faltantes. Você poderá reativá-lo a qualquer momento.
-          </p>
-          <div className="button-group" style={{ margin: "0.5rem 0 0" }}>
-            <Button
-              variant="danger"
-              onClick={handleConfirmDeactivate}
-              isLoading={deactivating}
-            >
-              Confirmar Desativação
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setStudentToDeactivate(null)}
-              disabled={deactivating}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={
+          <>
+            <p style={{ margin: 0, lineHeight: 1.5, color: "var(--text-main)" }}>
+              Deseja realmente desativar <strong>{studentToDeactivate?.name}</strong> da sua van?
+            </p>
+            <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.85rem" }}>
+              O aluno será movido para a lista de <strong>Inativos</strong> e deixará de constar nas listas de presença diária e contagem de faltantes. Você poderá reativá-lo a qualquer momento.
+            </p>
+          </>
+        }
+        confirmLabel="Confirmar Desativação"
+        variant="danger"
+        loading={deactivating}
+        onConfirm={handleConfirmDeactivate}
+      />
     </>
   );
 };
