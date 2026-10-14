@@ -551,9 +551,11 @@ export function DriverHome() {
           <div style={{ display: activeTab === "students" ? "block" : "none" }}>
             <DriverStudentList
               tripType={tripType}
+              tripStep={tripStep}
               activeClassId={activeClassId || undefined}
               activeClassName={activeClassName}
               onTripChange={handleTripChange}
+              onUpdateTripState={updateTripState}
               onTripFinished={() => {
                 refresh();
                 loadStudents();

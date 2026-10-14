@@ -6,7 +6,7 @@ export const updateDailyStatusSchema = z.object({
     status: z.enum(["vai_normal", "so_ida", "so_volta", "nao_vai"], {
       message: "Status inválido",
     }),
-    date: dateOnly,
+    date: dateOnly.optional(),
   }),
 });
 
@@ -14,6 +14,7 @@ export const setTripStateSchema = z.object({
   body: z.object({
     trip: z.enum(["ida", "volta"]).optional(),
     step: z.enum(["aguardando", "em_viagem", "finalizada"]).optional(),
+    classId: z.uuid("ID de turma inválido").optional(),
   }),
 });
 

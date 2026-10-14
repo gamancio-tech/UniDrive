@@ -32,7 +32,13 @@ function getTripKey(driverId: string, date: Date, classId?: string): string {
 export const dailyStatusService = {
   getTripState(driverId: string, date: Date, classId?: string): DriverTripState {
     const key = getTripKey(driverId, date, classId);
-    return driverTripStates.get(key) ?? { trip: "ida", step: "aguardando" };
+    const state = driverTripStates.get(key);
+    if (state) return state;
+    if (classId) {
+      const fallbackKey = getTripKey(driverId, date);
+      return driverTripStates.get(fallbackKey) ?? { trip: "ida", step: "aguardando" };
+    }
+    return { trip: "ida", step: "aguardando" };
   },
 
   setTripState(driverId: string, date: Date, trip: TripType, step: TripStep, classId?: string): DriverTripState {

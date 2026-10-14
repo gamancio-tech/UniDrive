@@ -23,6 +23,7 @@ import {
   RegisteredStudent,
 } from "../../api/students";
 import { DriverClass, getDriverClasses } from "../../api/classes";
+import { TripStep } from "../dailyStatus/useDailyStatus";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSun,
@@ -38,6 +39,7 @@ import {
   faTrashCan,
   faRotateRight,
   faGraduationCap,
+  faRocket,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type TripType = "ida" | "volta";
@@ -46,20 +48,24 @@ type StudentStatusSubTab = "active" | "inactive";
 
 export interface DriverStudentListProps {
   tripType?: TripType;
+  tripStep?: TripStep;
   activeClassId?: string;
   activeClassName?: string;
   onTripChange?: (trip: TripType) => void;
   onTripFinished?: () => void;
+  onUpdateTripState?: (trip: TripType, step: TripStep) => Promise<void>;
 }
 
 const POLL_INTERVAL_MS = 15_000;
 
 export const DriverStudentList: React.FC<DriverStudentListProps> = ({
   tripType: controlledTripType,
+  tripStep,
   activeClassId,
   activeClassName,
   onTripChange,
   onTripFinished,
+  onUpdateTripState,
 }) => {
   const { showToast } = useToast();
   // Alunos com status diário para os trajetos de Ida e Volta (RF01/RF04)
@@ -195,11 +201,22 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       setFinishingTrip(true);
       await resetAllDailyBoarded(activeClassId);
 
+      // Alterna o trajeto entre Ida e Volta
+      const nextTrip: TripType = tripType === "ida" ? "volta" : "ida";
+
+      // Sincroniza o estado da viagem com o backend
+      if (onUpdateTripState) {
+        await onUpdateTripState(nextTrip, "aguardando");
+      } else {
+        await apiRequest("/daily-status/trip-state", {
+          method: "POST",
+          body: { trip: nextTrip, step: "aguardando", classId: activeClassId || undefined },
+        });
+      }
+
       // Zera localmente o embarque de todos os alunos do trajeto diário
       setDailyStudents((prev) => prev.map((s) => ({ ...s, isBoarded: false })));
 
-      // Alterna o trajeto entre Ida e Volta
-      const nextTrip: TripType = tripType === "ida" ? "volta" : "ida";
       handleSelectTrip(nextTrip);
 
       // Redireciona para a lista "A Embarcar" do novo trajeto
@@ -213,6 +230,26 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
       );
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Erro ao finalizar viagem.", "error");
+    } finally {
+      setFinishingTrip(false);
+    }
+  };
+
+  const handleDeclareDeparture = async () => {
+    try {
+      setFinishingTrip(true);
+      if (onUpdateTripState) {
+        await onUpdateTripState("volta", "em_viagem");
+      } else {
+        await apiRequest("/daily-status/trip-state", {
+          method: "POST",
+          body: { trip: "volta", step: "em_viagem", classId: activeClassId || undefined },
+        });
+      }
+      onTripFinished?.();
+      showToast("Viagem de volta iniciada! A contagem de faltantes foi encerrada para os alunos.", "success");
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Erro ao declarar partida.", "error");
     } finally {
       setFinishingTrip(false);
     }
@@ -442,22 +479,45 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
             </button>
           </div>
 
-          <Button
-            variant="primary"
-            onClick={() => setIsFinishTripModalOpen(true)}
-            style={{
-              width: "auto",
-              minHeight: "34px",
-              padding: "0.35rem 0.85rem",
-              fontSize: "0.82rem",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.4rem",
-            }}
-          >
-            <FontAwesomeIcon icon={faFlagCheckered} />
-            <span>Finalizar {tripType === "ida" ? "Ida" : "Volta"}</span>
-          </Button>
+          <div style={{ display: "flex", gap: "0.45rem", alignItems: "center", flexWrap: "wrap" }}>
+            {tripType === "volta" && tripStep === "aguardando" && (
+              <Button
+                variant="primary"
+                onClick={handleDeclareDeparture}
+                disabled={finishingTrip}
+                style={{
+                  width: "auto",
+                  minHeight: "34px",
+                  padding: "0.35rem 0.85rem",
+                  fontSize: "0.82rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                }}
+              >
+                <FontAwesomeIcon icon={faRocket} />
+                <span>Declarar Partida (Volta)</span>
+              </Button>
+            )}
+
+            <Button
+              variant={tripType === "volta" && tripStep === "aguardando" ? "ghost" : "primary"}
+              onClick={() => setIsFinishTripModalOpen(true)}
+              disabled={finishingTrip}
+              style={{
+                width: "auto",
+                minHeight: "34px",
+                padding: "0.35rem 0.85rem",
+                fontSize: "0.82rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.4rem",
+              }}
+            >
+              <FontAwesomeIcon icon={faFlagCheckered} />
+              <span>Finalizar {tripType === "ida" ? "Ida" : "Volta"}</span>
+            </Button>
+          </div>
         </div>
 
         {/* Abas de Navegação entre as 3 Listas */}
