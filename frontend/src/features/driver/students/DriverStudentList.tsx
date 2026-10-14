@@ -19,15 +19,11 @@ import {
 import { TripStep } from "../../dailyStatus/useDailyStatus";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSun,
-  faMoon,
-  faFlagCheckered,
   faUsers,
   faShieldHalved,
   faTrashCan,
   faRotateRight,
   faGraduationCap,
-  faRocket,
 } from "@fortawesome/free-solid-svg-icons";
 import { filterStudentsForTrip, parseTripType, TripType } from "../../../utils/trip";
 import { STORAGE_KEYS, getStorage, setStorage } from "../../../utils/storage";
@@ -36,6 +32,7 @@ import { useStudentPayments } from "./hooks/useStudentPayments";
 import { useTripActions } from "./hooks/useTripActions";
 import { PaymentBadge } from "./components/PaymentBadge";
 import { BoardingList } from "./components/BoardingList";
+import { TripControlBar } from "./components/TripControlBar";
 
 type StudentTab = "a_embarcar" | "embarcados" | "todos";
 type StudentStatusSubTab = "active" | "inactive";
@@ -313,75 +310,14 @@ export const DriverStudentList: React.FC<DriverStudentListProps> = ({
         }
       >
         {/* Painel de Controle de Trajeto (Ida / Volta / Finalizar Viagem) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-            background: "var(--bg-input)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "var(--radius-md)",
-            padding: "0.6rem 0.85rem",
-            marginBottom: "1rem",
-          }}
-        >
-          <div className="row-wrap" style={{ gap: "0.45rem" }}>
-            <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600 }}>
-              Trajeto:
-            </span>
-            <FilterPills
-              options={[
-                { value: "ida", label: "Ida", icon: faSun },
-                { value: "volta", label: "Volta", icon: faMoon },
-              ]}
-              value={tripType}
-              onChange={handleSelectTrip}
-              style={{ marginBottom: 0 }}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: "0.45rem", alignItems: "center", flexWrap: "wrap" }}>
-            {tripType === "volta" && tripStep === "aguardando" && (
-              <Button
-                variant="primary"
-                onClick={handleDeclareDeparture}
-                disabled={finishingTrip}
-                style={{
-                  width: "auto",
-                  minHeight: "34px",
-                  padding: "0.35rem 0.85rem",
-                  fontSize: "0.82rem",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                }}
-              >
-                <FontAwesomeIcon icon={faRocket} />
-                <span>Declarar Partida (Volta)</span>
-              </Button>
-            )}
-
-            <Button
-              variant={tripType === "volta" && tripStep === "aguardando" ? "ghost" : "primary"}
-              onClick={() => setIsFinishTripModalOpen(true)}
-              disabled={finishingTrip}
-              style={{
-                width: "auto",
-                minHeight: "34px",
-                padding: "0.35rem 0.85rem",
-                fontSize: "0.82rem",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.4rem",
-              }}
-            >
-              <FontAwesomeIcon icon={faFlagCheckered} />
-              <span>Finalizar {tripType === "ida" ? "Ida" : "Volta"}</span>
-            </Button>
-          </div>
-        </div>
+        <TripControlBar
+          tripType={tripType}
+          tripStep={tripStep}
+          finishingTrip={finishingTrip}
+          onSelectTrip={handleSelectTrip}
+          onDeclareDeparture={handleDeclareDeparture}
+          onFinishTripModalOpen={() => setIsFinishTripModalOpen(true)}
+        />
 
         {/* Abas de Navegação entre as 3 Listas */}
         <Tabs
